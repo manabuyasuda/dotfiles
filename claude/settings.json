@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '確認が必要です' -sound Glass"
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '入力待ちです' -sound Glass"
+          }
+        ]
+      },
+      {
+        "matcher": "stop",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '処理が完了しました' -sound Glass"
+          }
+        ]
+      }
+    ]
+  }
+}
