@@ -1,2 +1,15 @@
+@axe-core/cli
+@lhci/cli
+@redocly/cli
+@socketsecurity/cli
+bundle-phobia-cli
+colorguard
+dependency-cruiser
+html-validate
 knip
+madge
 npm-check-updates
+nx
+type-coverage
+vercel
+wallace-cli
