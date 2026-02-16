@@ -89,6 +89,31 @@ else
   backup_and_link "nodenv/default-packages" "" "$NODENV_ROOT/default-packages"
 fi
 
+# === gh 拡張機能 ===
+echo ""
+echo "--- gh extensions ---"
+
+if ! command -v gh &>/dev/null; then
+  echo "[SKIP] gh が見つかりません"
+else
+  GH_EXTENSIONS_FILE="$DOTFILES_DIR/gh/extensions"
+  if [[ -f "$GH_EXTENSIONS_FILE" ]]; then
+    installed_extensions="$(gh extension list 2>/dev/null || true)"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      # 空行・コメント行をスキップ
+      [[ -z "$line" || "$line" == \#* ]] && continue
+      if echo "$installed_extensions" | grep -q "$line"; then
+        echo "[OK] インストール済み: $line"
+      else
+        echo "[INSTALL] $line"
+        gh extension install "$line"
+      fi
+    done < "$GH_EXTENSIONS_FILE"
+  else
+    echo "[SKIP] gh/extensions ファイルが見つかりません"
+  fi
+fi
+
 echo ""
 echo "=== 完了 ==="
 
