@@ -11,13 +11,15 @@ macOS環境の設定ファイルを管理するリポジトリ。シンボリッ
 | zsh | `.zshenv` | 全シェル共通の環境変数 |
 | Git | `.gitconfig` | Git のグローバル設定 |
 | Homebrew | `Brewfile` | インストールするパッケージ一覧 |
+| nodenv | `default-packages` | Node.jsインストール時に自動導入するnpmパッケージ |
+| gh | `extensions` | gh拡張機能の一覧 |
 | Claude Code | `CLAUDE.md`, `settings.json`, `skills/` | グローバル指示、hooks、カスタムスキル |
 
 ## ディレクトリ構造
 
 ```
 dotfiles/
-├── setup.sh          # シンボリックリンク管理スクリプト
+├── setup.sh          # セットアップスクリプト
 ├── Brewfile           # Homebrew パッケージ一覧
 ├── zsh/
 │   ├── .zshrc
@@ -25,10 +27,16 @@ dotfiles/
 │   └── .zshenv
 ├── git/
 │   └── .gitconfig
-└── claude/
-    ├── CLAUDE.md
-    ├── settings.json
-    └── skills/
+├── nodenv/
+│   └── default-packages  # グローバルnpmパッケージ一覧
+├── gh/
+│   └── extensions        # gh拡張機能一覧
+├── claude/
+│   ├── CLAUDE.md
+│   ├── settings.json
+│   └── skills/
+└── docs/
+    └── tools/            # 開発ツールのドキュメント
 ```
 
 ## セットアップ
@@ -41,7 +49,11 @@ cd ~/Documents/MY/dotfiles
 ./setup.sh
 ```
 
-`setup.sh` は既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成する。何度実行しても安全（冪等）。
+`setup.sh` は以下を実行する。何度実行しても安全（冪等）。
+
+- 既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成
+- nodenv-default-packagesプラグインのインストールとdefault-packagesのリンク
+- `gh/extensions` に記載されたgh拡張機能のインストール
 
 ### 新しいマシンでのセットアップ
 
@@ -84,7 +96,6 @@ brew bundle dump --file=~/Documents/MY/dotfiles/Brewfile --force
 以下はdotfilesでは管理していない。新しいマシンでは手動インストールが必要。
 
 - **anyenv / nodenv** — `anyenv install --init` → `anyenv install nodenv`
-- **gh extension** — `gh extension install <name>`
 - **VS Code 拡張機能** — GitHubアカウント同期で管理
 
 ## 注意事項
