@@ -22,7 +22,8 @@ SYMLINKS=(
 
 backup_and_link() {
   local src="$DOTFILES_DIR/$1"
-  local dst="$HOME/$2"
+  # 第3引数があれば絶対パスとして使用、なければ $HOME 相対パス
+  local dst="${3:-$HOME/$2}"
   local dst_dir
   dst_dir="$(dirname "$dst")"
 
@@ -65,6 +66,28 @@ for mapping in "${SYMLINKS[@]}"; do
   dst="${mapping##*:}"
   backup_and_link "$src" "$dst"
 done
+
+# === nodenv プラグイン ===
+echo ""
+echo "--- nodenv-default-packages ---"
+
+NODENV_ROOT="${NODENV_ROOT:-$(nodenv root 2>/dev/null)}"
+
+if [[ -z "$NODENV_ROOT" ]]; then
+  echo "[SKIP] nodenv が見つかりません"
+else
+  # nodenv-default-packages プラグインのインストール
+  PLUGIN_DIR="$NODENV_ROOT/plugins/nodenv-default-packages"
+  if [[ -d "$PLUGIN_DIR" ]]; then
+    echo "[OK] nodenv-default-packages インストール済み"
+  else
+    echo "[INSTALL] nodenv-default-packages"
+    git clone https://github.com/nodenv/nodenv-default-packages.git "$PLUGIN_DIR"
+  fi
+
+  # default-packages のシンボリックリンク
+  backup_and_link "nodenv/default-packages" "" "$NODENV_ROOT/default-packages"
+fi
 
 echo ""
 echo "=== 完了 ==="
