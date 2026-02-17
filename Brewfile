@@ -1,5 +1,7 @@
 brew "direnv"
+brew "fd"
 brew "ffmpeg"
+brew "fzf"
 brew "gh"
 brew "git"
 brew "imagemagick"

@@ -58,11 +58,25 @@ dotfiles で管理している CLI ツールのカテゴリ別インデックス
 |---|---|---|
 | [Vercel CLI](vercel.md) | Vercel プラットフォームの CLI | npm |
 
+## ターミナル検索・ナビゲーション
+
+| ツール | 説明 | インストール |
+|---|---|---|
+| [fzf](fzf.md) | 汎用のあいまい検索ツール | brew |
+| [ripgrep](ripgrep.md) | grepの高速な代替（Rust製） | brew |
+| [fd](fd.md) | findの現代的な代替（Rust製） | brew |
+
 ## Git ブランチ管理
 
 | ツール | 説明 | インストール |
 |---|---|---|
 | [gh-poi](gh-poi.md) | マージ済みローカルブランチを安全に一括削除 | gh extension |
+
+## 変更履歴分析
+
+| ツール | 説明 | インストール |
+|---|---|---|
+| [git logワンライナー集](git-log-oneliners.md) | git logベースのホットスポット・結合度分析 | git（組み込み） |
 
 ## パッケージ管理
 
