@@ -63,6 +63,107 @@ git log --format=format: --name-only --since=12.month \
 
 「変更回数 x 行数 = ホットスポットスコア」。code-maatのHotspot分析の簡易版で、よく変更される上に複雑（行数が多い）ファイルを特定する。リファクタリングの投資対効果が最も高い箇所。
 
+## Code churn（コードチャーン）
+
+### ファイルごとの総変更行数
+
+```bash
+git log --numstat --format=format: --since=12.month \
+  | egrep -v '^\s*$' \
+  | awk '{add[$3]+=$1; del[$3]+=$2} END {for(f in add) printf "%d %d %d %s\n", add[f]+del[f], add[f], del[f], f}' \
+  | sort -nr | head -20
+```
+
+出力形式: `総変更行数 追加行数 削除行数 ファイルパス`
+
+```
+520 380 140 src/components/Dashboard.tsx
+310 200 110 src/api/client.ts
+ 85  85   0 src/utils/format.ts
+```
+
+追加行数と削除行数の両方が多いファイルは、書き直しが繰り返されている＝設計が安定していない。追加だけが多いファイル（削除が0に近い）は単純な機能追加なので問題ない。
+
+### 書き換え率が高いファイル（不安定度）
+
+```bash
+git log --numstat --format=format: --since=12.month \
+  | egrep -v '^\s*$' \
+  | awk '{add[$3]+=$1; del[$3]+=$2} END {for(f in add) {total=add[f]+del[f]; if(total>20 && del[f]>0) printf "%.0f%% %d %d %d %s\n", del[f]/total*100, total, add[f], del[f], f}}' \
+  | sort -nr | head -20
+```
+
+出力形式: `削除率 総変更行数 追加行数 削除行数 ファイルパス`
+
+```
+65% 520 182 338 src/api/client.ts    ← 変更の65%が削除＝大幅な書き換え
+42% 310 180 130 src/hooks/useAuth.ts
+```
+
+削除率が高い（50%超）ファイルは、追加してはすぐ消すという不安定な変更が繰り返されている。設計の見直し候補。
+
+## 複雑度の推移
+
+### 純増行数が多いファイル（肥大化の兆候）
+
+```bash
+git log --numstat --format=format: --since=12.month \
+  | egrep -v '^\s*$' \
+  | awk '{add[$3]+=$1; del[$3]+=$2} END {for(f in add) {net=add[f]-del[f]; if(net>0) printf "%d %d %d %s\n", net, add[f], del[f], f}}' \
+  | sort -nr | head -20
+```
+
+出力形式: `純増行数 追加行数 削除行数 ファイルパス`
+
+```
+240 380 140 src/components/Dashboard.tsx  ← 12ヶ月で240行増加
+ 90 200 110 src/api/client.ts
+```
+
+純増行数が大きいファイルは肥大化している。ホットスポットスコアと組み合わせて、「頻繁に変更される上に肥大化している」ファイルがリファクタリングの最優先候補。
+
+### 特定ファイルの行数推移
+
+```bash
+FILE="src/components/Dashboard.tsx"
+git log --format='%H %as' --since=12.month -- "$FILE" \
+  | while read hash date; do
+      lines=$(git show "$hash:$FILE" 2>/dev/null | wc -l)
+      echo "$date $lines"
+    done
+```
+
+出力形式: `日付 行数`
+
+```
+2025-12-15 520
+2025-10-03 480
+2025-07-20 350
+2025-03-10 280
+```
+
+特定ファイルの行数が時系列でどう推移しているかを確認する。急激な増加があった時期をコミットログと突き合わせることで、肥大化の原因を特定できる。
+
+### インデンテーション深度（ネストの複雑さ）
+
+```bash
+git ls-files '*.ts' '*.tsx' | while read file; do
+  lines=$(wc -l < "$file")
+  avg_indent=$(awk '{match($0, /^[ \t]*/); total+=RLENGTH; count++} END {if(count>0) printf "%.1f", total/count}' "$file")
+  echo "$avg_indent $lines $file"
+done | sort -nr | head -20
+```
+
+出力形式: `平均インデント深度 行数 ファイルパス`
+
+```
+8.5 520 src/components/Dashboard.tsx  ← 平均8.5文字分のインデント
+6.2 310 src/api/client.ts
+3.1  85 src/utils/format.ts
+```
+
+行数だけでは捉えられない「ネストの深さ」を可視化する。平均インデントが深いファイルは条件分岐やコールバックが多く、認知的な複雑さが高い。`'*.ts' '*.tsx'` の部分を変えれば対象言語を変更できる。行数と掛け合わせると、code-maatのHotspot分析に近い複雑度指標になる。
+
 ## Temporal Coupling（← code-maatのTemporal coupling相当）
 
 ### 一緒にコミットされがちなファイルペア
@@ -154,6 +255,48 @@ git log --oneline --since=6.month \
 
 一度に数十ファイル変更しているコミットは、レビューが不十分だった可能性やビッグバンリリースのリスクを示唆する。ただし新規ファイルの一括追加は問題ない。既存コードの大量変更に注目する。
 
+### コードの年齢（最終更新からの経過日数）
+
+```bash
+git ls-files '*.ts' '*.tsx' | while read file; do
+  last=$(git log -1 --format='%at' -- "$file")
+  now=$(date +%s)
+  days=$(( (now - last) / 86400 ))
+  lines=$(wc -l < "$file")
+  echo "$days $lines $file"
+done | sort -nr | head -20
+```
+
+出力形式: `経過日数 行数 ファイルパス`
+
+```
+385 520 src/legacy/parser.ts     ← 1年以上放置 x 520行
+210 310 src/utils/deprecated.ts
+ 90  85 src/api/client.ts
+```
+
+長期間変更されていない上に行数が多いファイルは、理解されにくく触ると壊れやすい。経過日数と行数の両方が大きいファイルは技術的負債の候補。
+
+### モジュール単位のバグ密度
+
+```bash
+git log --grep="fix\|bug" -i --format=format: --name-only --since=12.month \
+  | egrep -v '^\s*$' \
+  | awk -F/ '{if(NF>=2) print $1"/"$2; else print $1}' \
+  | sort | uniq -c | sort -nr | head -20
+```
+
+出力形式: `修正回数 ディレクトリ`
+
+```
+18 src/components
+12 src/api
+ 5 src/hooks
+ 2 src/utils
+```
+
+ファイル単位ではなくディレクトリ（モジュール）単位でバグ修正を集計する。特定のモジュールに修正が集中していれば、そのモジュール全体の設計を見直す判断材料になる。`-F/` のフィールド数を変えれば集計の粒度を調整できる。
+
 ## 人・チームの分析（← code-maatのAuthor analysis相当）
 
 ### ファイルごとの著者数（知識の分散度）
@@ -189,6 +332,25 @@ git log --format='%aD' --since=6.month \
 ```
 
 金曜夕方にコミットが集中していたらデプロイリスクの指標になる。
+
+### 所有者の分散（ファイルごとの著者数）
+
+```bash
+git ls-files '*.ts' '*.tsx' | while read file; do
+  authors=$(git log --format='%aN' --since=12.month -- "$file" | sort -u | wc -l)
+  echo "$authors $file"
+done | sort -nr | head -20
+```
+
+出力形式: `著者数 ファイルパス`
+
+```
+ 8 src/components/Dashboard.tsx  ← 8人が触っている
+ 6 src/api/client.ts
+ 1 src/utils/legacy.ts           ← 1人だけが知っている
+```
+
+著者数が多すぎるファイルは責任が曖昧になりやすい。逆に1人しか触っていないファイルはバス係数のリスクがある。チームの知識分布を把握し、ペアプログラミングやレビューの優先度を判断する材料になる。
 
 ## まとめて分析する
 
