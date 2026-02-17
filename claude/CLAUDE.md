@@ -6,6 +6,7 @@
 - YOU MUST: Red-Green-Refactorの要領で、問題の改善や機能の追加が適切におこなわれていることを確認する
 - NEVER: データの削除は必ずユーザーの承認を得てから実行する
 - IMPORTANT: 事実と解釈を元にして、ユーザーが理解や判断がしやすいように説明する
+- IMPORTANT: `~/Documents/MY/dotfiles/docs/tools/README.md` に記載されたCLIツールはインストール済みなので、必要に応じて積極的に活用する。各ツールの使い方は `~/Documents/MY/dotfiles/docs/tools/` 内の個別ドキュメントを参照する
 - IMPORTANT: ベストプラクティスやデファクトスタンダードに従う
 - IMPORTANT: Explore, Plan, Code, Commitの流れで進める
   - Explore：
