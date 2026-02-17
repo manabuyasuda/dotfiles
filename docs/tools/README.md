@@ -66,11 +66,16 @@ dotfiles で管理している CLI ツールのカテゴリ別インデックス
 | [ripgrep](ripgrep.md) | grepの高速な代替（Rust製） | brew |
 | [fd](fd.md) | findの現代的な代替（Rust製） | brew |
 
-## Git ブランチ管理
+## GitHub CLI 拡張
 
 | ツール | 説明 | インストール |
 |---|---|---|
+| [gh-dash](gh-dash.md) | ターミナルでPR/Issueを一覧管理するTUIダッシュボード | gh extension |
+| [gh-f](gh-f.md) | fzfでPR・ブランチ・ログをインタラクティブに操作 | gh extension |
+| [gh-s](gh-s.md) | GitHubリポジトリをインタラクティブに検索 | gh extension |
+| [gh-notify](gh-notify.md) | GitHubの通知をコマンドラインで管理 | gh extension |
 | [gh-poi](gh-poi.md) | マージ済みローカルブランチを安全に一括削除 | gh extension |
+| [gh-clean-branches](gh-clean-branches.md) | リモートにないローカルブランチを安全に削除 | gh extension |
 
 ## 変更履歴分析
 
