@@ -4,7 +4,8 @@
 # 以下を機械的に強制する:
 # 1. descriptionパラメータの必須化（コマンドの理由・目的を明示させる）
 # 2. 破壊的コマンド実行時のユーザー承認（rm, find -delete, unlink等）
-# 3. git commit/push実行時のユーザー承認
+# 3. git push実行時のユーザー承認（リモートへの公開のため特に注意）
+# 4. git commit実行時のユーザー承認
 
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
@@ -16,7 +17,7 @@ if [ -z "$DESCRIPTION" ]; then
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "deny",
-      permissionDecisionReason: "Bashコマンドにはdescriptionパラメータが必須です。コマンドの理由と目的を日本語で記述してください。"
+      permissionDecisionReason: "Bashコマンドにはdescriptionパラメータが必須です。コマンドの理由と目的を【必ず日本語で】記述してください。英語での記述は認められません。"
     }
   }'
   exit 0
@@ -33,19 +34,31 @@ if echo "$COMMAND" | grep -qwE 'rm|unlink|shred|truncate' || \
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "ask",
-      permissionDecisionReason: "データ削除を伴うコマンドです。実行してよいか確認してください。"
+      permissionDecisionReason: "⚠️ データ削除を伴うコマンドです。実行してよいか確認してください。"
     }
   }'
   exit 0
 fi
 
-# --- 3. git commit/push → ユーザー承認を要求 ---
-if echo "$COMMAND" | grep -qE 'git[[:space:]]+(commit|push)'; then
+# --- 3. git push → ユーザー承認を要求（リモートへの公開。特に慎重に）---
+if echo "$COMMAND" | grep -qE 'git[[:space:]]+push'; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "ask",
-      permissionDecisionReason: "gitのcommit/pushはユーザーの承認が必要です。"
+      permissionDecisionReason: "⚠️ git push を実行しようとしています。実行してよいか確認してください。"
+    }
+  }'
+  exit 0
+fi
+
+# --- 4. git commit → ユーザー承認を要求 ---
+if echo "$COMMAND" | grep -qE 'git[[:space:]]+commit'; then
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "ask",
+      permissionDecisionReason: "git commit を実行しようとしています。承認してください。"
     }
   }'
   exit 0
