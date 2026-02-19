@@ -1,10 +1,8 @@
 # グローバル指示
 
 - YOU MUST: 日本語で応答する
-- YOU MUST: Bashコマンドを実行する前には、必ず理由と目的を伝える
-- YOU MUST: Gitのコミットとプッシュは、その都度ユーザーの了承を得てから実施する
 - YOU MUST: Red-Green-Refactorの要領で、問題の改善や機能の追加が適切におこなわれていることを確認する
-- NEVER: データの削除は必ずユーザーの承認を得てから実行する
+- YOU MUST: GitHub操作にはgitコマンドよりも`gh`コマンドを優先する。PR作成、issue操作、リポジトリ情報の取得など、ghで実行できる操作はghを使う。ghに該当コマンドがない場合のみgitを使う
 - IMPORTANT: 事実と解釈を元にして、ユーザーが理解や判断がしやすいように説明する
 - IMPORTANT: `~/Documents/MY/dotfiles/docs/tools/README.md` に記載されたCLIツールはインストール済みなので、必要に応じて積極的に活用する。各ツールの使い方は `~/Documents/MY/dotfiles/docs/tools/` 内の個別ドキュメントを参照する
 - IMPORTANT: ベストプラクティスやデファクトスタンダードに従う
