@@ -164,17 +164,33 @@ open -a SourceTree <WORKTREE_PATH>
 - ブランチ名
 - コピーしたファイル（あれば）
 
-追加の案内（該当する場合）:
-- `.envrc` をコピーした場合 → `direnv allow` の実行が必要
-- 依存パッケージのインストールコマンド。ロックファイルから判定する:
-  - `package-lock.json` → `npm ci`
-  - `yarn.lock` → `yarn install --frozen-lockfile`
-  - `pnpm-lock.yaml` → `pnpm install --frozen-lockfile`
-  - `bun.lockb` → `bun install --frozen-lockfile`
+#### 初期化コマンドをクリップボードにコピーする（スキップ禁止）
 
-必ず実行する（スキップ禁止）:
-- Claude Codeの起動コマンドをクリップボードにコピーする:
-  ```bash
-  echo 'unset CLAUDECODE && claude' | pbcopy
-  ```
-- 「クリップボードにコピーした内容を新しいターミナルで貼り付けてClaude Codeを起動してください」と案内する
+新しいターミナルで1回貼り付けるだけで初期化が完了するよう、必要なコマンドを連結してクリップボードにコピーする。パッケージインストールは時間がかかるためバックグラウンドで実行し、`claude`はすぐにフォアグラウンドで起動する。
+
+コマンドの構成:
+
+1. `.envrc`をコピーした場合 → `direnv allow;`（セミコロンで区切る。環境変数の設定が後続に必要なため先に完了させる）
+2. ロックファイルが存在する場合 → インストールコマンドを`&`でバックグラウンド実行:
+   - `package-lock.json` → `npm ci &`
+   - `yarn.lock` → `yarn install --frozen-lockfile &`
+   - `pnpm-lock.yaml` → `pnpm install --frozen-lockfile &`
+   - `bun.lockb` → `bun install --frozen-lockfile &`
+3. 常に含める → `claude`（フォアグラウンドで即座に起動）
+
+例（.envrcあり、npmの場合）:
+```bash
+echo 'direnv allow; npm ci & claude' | pbcopy
+```
+
+例（.envrcなし、npmの場合）:
+```bash
+echo 'npm ci & claude' | pbcopy
+```
+
+例（ロックファイルも.envrcもない場合）:
+```bash
+echo 'claude' | pbcopy
+```
+
+コピー後、「クリップボードにコピーした内容を新しいターミナルで貼り付けて実行してください」と案内する。
