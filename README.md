@@ -13,7 +13,7 @@ macOS環境の設定ファイルを管理するリポジトリ。シンボリッ
 | Homebrew | `Brewfile` | インストールするパッケージ一覧 |
 | nodenv | `default-packages` | Node.jsインストール時に自動導入するnpmパッケージ |
 | gh | `extensions` | gh拡張機能の一覧 |
-| Claude Code | `CLAUDE.md`, `settings.json`, `skills/` | グローバル指示、hooks、カスタムスキル |
+| Claude Code | `CLAUDE.md`, `settings.json`, `skills/`, `hooks/` | グローバル指示、hooks、カスタムスキル |
 
 ## ディレクトリ構造
 
@@ -34,7 +34,8 @@ dotfiles/
 ├── claude/
 │   ├── CLAUDE.md
 │   ├── settings.json
-│   └── skills/
+│   ├── skills/
+│   └── hooks/
 └── docs/
     └── tools/            # 開発ツールのドキュメント
 ```
@@ -44,7 +45,7 @@ dotfiles/
 ### 既存環境での初回セットアップ
 
 ```bash
-git clone <repository-url> ~/Documents/MY/dotfiles
+git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles
 cd ~/Documents/MY/dotfiles
 ./setup.sh
 ```
@@ -58,9 +59,9 @@ cd ~/Documents/MY/dotfiles
 ### 新しいマシンでのセットアップ
 
 1. Homebrew をインストール
-2. このリポジトリをクローン
+2. このリポジトリをクローン: `git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles`
 3. Homebrew パッケージを復元: `brew bundle --file=~/Documents/MY/dotfiles/Brewfile`
-4. セットアップスクリプトを実行: `./setup.sh`
+4. セットアップスクリプトを実行: `cd ~/Documents/MY/dotfiles && ./setup.sh`
 5. anyenv と nodenv を手動でインストール:
    ```bash
    anyenv install --init
@@ -76,7 +77,7 @@ cd ~/Documents/MY/dotfiles
 ```bash
 cd ~/Documents/MY/dotfiles
 git diff
-git add -A && git commit -m "update: 変更内容"
+git add -A && git commit -m "chore: 変更内容"
 ```
 
 ### Brewfile を更新する場合
@@ -87,7 +88,7 @@ brew bundle dump --file=~/Documents/MY/dotfiles/Brewfile --force
 
 ### Claude Code の設定を追加する場合
 
-`claude/` ディレクトリ（`skills/`, `hooks/`, `agents/`, `rules/`）はディレクトリごとシンボリックリンクされているため、中にファイルを追加すると自動的にリポジトリに反映される。
+`claude/` ディレクトリ（`skills/`, `hooks/`）はディレクトリごとシンボリックリンクされているため、中にファイルを追加すると自動的にリポジトリに反映される。
 
 `keybindings.json` など新しい個別ファイルを追加する場合は、`claude/` に作成してから `./setup.sh` を再実行する。
 
