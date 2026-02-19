@@ -4,21 +4,23 @@ description: フィーチャーブランチをmainブランチにリベースす
 context: fork
 allowed-tools:
   - Bash
+  - Read
+  - Glob
+  - Grep
+  - AskUserQuestion
 ---
 
 # フィーチャーブランチのリベース
 
-## 概要
+フィーチャーブランチにmainブランチの最新変更を、リベースで見通しよく安全に取り込む。
 
-**目的**: フィーチャーブランチにmainブランチの最新変更を、リベースで見通しよく、安全に取り込む。
-
-**フロー**: main checkout → pull → feature checkout → rebase → push
+**フロー**: 状態確認 → main最新化 → リベース → プッシュ
 
 ---
 
 ## 実行手順
 
-### Step 1: 現在の状態を確認
+### Step 1: 現在の状態を確認する
 
 ```bash
 git branch --show-current && git status --short
@@ -27,47 +29,51 @@ git branch --show-current && git status --short
 **ブランチの確認:**
 
 - `main` や `staging` などの保護ブランチにいる場合 → ユーザーにフィーチャーブランチへの切り替えを促して中断する
-- フィーチャーブランチにいることを確認してから次へ進む
+- フィーチャーブランチにいることを確認し、ブランチ名を `FEATURE_BRANCH` として記憶する
 
 **未コミットの変更がある場合:**
 
-- 変更内容をユーザーに提示し、以下のどちらかを選択してもらう:
-  - コミットする → `/commit` で対応
-  - スタッシュする → `git stash` で退避（リベース後に `git stash pop` で復元）
-- ワーキングツリーがクリーンになってから次へ進む
+AskUserQuestionで対応を選択してもらう:
 
-### Step 2: 現在のブランチ名を保存
-
-```bash
-FEATURE_BRANCH=$(git branch --show-current)
-echo "フィーチャーブランチ: $FEATURE_BRANCH"
+```json
+{
+  "question": "未コミットの変更があります。どうしますか？",
+  "options": [
+    { "label": "コミットする", "description": "変更をコミットしてからリベースする" },
+    { "label": "スタッシュする", "description": "git stashで退避し、リベース後に復元する" }
+  ]
+}
 ```
 
-### Step 3: mainブランチを最新化
+ワーキングツリーがクリーンになってから次へ進む。
+
+### Step 2: mainブランチを最新化する
 
 ```bash
 git checkout main && git pull origin main
 ```
 
-### Step 4: フィーチャーブランチに戻ってリベース
+### Step 3: フィーチャーブランチに戻ってリベースする
+
+Step 1で記憶した `FEATURE_BRANCH` を使う。Bashの環境変数はコマンド間で保持されないため、ブランチ名を直接埋め込む:
 
 ```bash
-git checkout "$FEATURE_BRANCH" && git rebase main
+git checkout <FEATURE_BRANCH> && git rebase main
 ```
 
-### Step 5: リモートにプッシュ
+### Step 4: リモートにプッシュする
 
-リベース成功後、force pushする：
+リベース成功後、force pushする。`--force-with-lease` を使うことで、他の人がプッシュした変更を誤って上書きするリスクを軽減する:
 
 ```bash
-git push --force-with-lease origin "$FEATURE_BRANCH"
+git push --force-with-lease origin <FEATURE_BRANCH>
 ```
 
 ---
 
 ## コンフリクト発生時
 
-リベース中にコンフリクトが発生した場合：
+リベース中にコンフリクトが発生した場合:
 
 ### 1. コンフリクトの内容を把握する
 
@@ -76,12 +82,13 @@ git push --force-with-lease origin "$FEATURE_BRANCH"
 
 ### 2. 解消方針をユーザーに提案する
 
-**承認があるまでコードの修正は絶対に実行しない。** 
-以下の情報をユーザーに提示する:
+コンフリクト解消はユーザーの意図に大きく依存する。どちらの変更を残すかは機械的に判断できないため、方針を提示して承認を得る:
 
 - **どちらを優先するか？** main側 / フィーチャーブランチ側 / 両方取り込む
 - **取り込み後に調整が必要か？** 必要なら具体的に何が必要か？
 - **解消後のコード例**
+
+承認を得てからコードを修正する。
 
 ### 3. ユーザーの承認後にコードを修正する
 
@@ -95,21 +102,18 @@ git add <解消したファイル> && git rebase --continue
 ```
 
 - 後続のコミットで同じファイルに再度コンフリクトが発生する場合がある
-- その場合は手順1〜3を繰り返す
-- **同じパターンであっても、再度の承認を得るまでコードの修正は絶対に実行しない。** 
+- その場合は手順1〜3を繰り返す。同じパターンでも再度の承認を得てからコードを修正する
 
 ### 5. すべてのコンフリクト解消後にプッシュする
 
 ```bash
-git push --force-with-lease origin "$(git branch --show-current)"
+git push --force-with-lease origin <FEATURE_BRANCH>
 ```
 
 ---
 
 ## 注意事項
 
-- リベースを使うべきではない場合は処理を中断して、ユーザーに報告する
-- `--force-with-lease` を使用する（`--force` は使わない）
+- リベースを使うべきではない場合（共有ブランチ、公開済みコミットなど）は処理を中断して、ユーザーに報告する
+- `--force` ではなく `--force-with-lease` を使用する
 - mainブランチに直接force pushしない
-- リベース前に未コミットの変更がないことを確認する
-- コンフリクト解消は必ずユーザーの確認を得てから行う
