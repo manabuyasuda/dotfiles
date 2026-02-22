@@ -165,6 +165,18 @@ dotfiles/
    nodenv global <バージョン>
    ```
 
+   Node.jsのインストールにより `default-packages` に記載されたグローバルnpmパッケージが自動導入される（`@anthropic-ai/claude-code` を含む）。以降の手順はClaude Codeに委ねることができる。
+
+   ```bash
+   # CursorでdotfilesリポジトリをREADMEごと開き、Claude Codeを起動する
+   cursor ~/Documents/MY/dotfiles
+   claude
+   ```
+
+   Claude Codeが起動したら、以下のように依頼する:
+
+   > README.mdの「新しいマシンでのセットアップ」を参照して、ステップ10以降を進めてください。
+
 #### アプリの設定
 
 10. 各アプリを設定する（Notionを参照）
