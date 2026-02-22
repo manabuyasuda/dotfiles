@@ -1,4 +1,5 @@
 @axe-core/cli
+create-next-app
 @lhci/cli
 @redocly/cli
 @socketsecurity/cli
