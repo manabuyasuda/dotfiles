@@ -2,41 +2,28 @@
 
 macOS環境の設定ファイルを管理するリポジトリ。シンボリックリンク方式で、実ファイルをこのリポジトリ内に置き、ホームディレクトリからリンクを張る。
 
-## 管理対象
-
-| 領域 | ファイル | 説明 |
-|------|---------|------|
-| zsh | `.zshrc` | シェル設定（anyenv, direnv, PATH） |
-| zsh | `.zprofile` | ログインシェル設定（Homebrew） |
-| zsh | `.zshenv` | 全シェル共通の環境変数 |
-| Git | `.gitconfig` | Git のグローバル設定 |
-| Homebrew | `Brewfile` | インストールするパッケージ一覧 |
-| nodenv | `default-packages` | Node.jsインストール時に自動導入するnpmパッケージ |
-| gh | `extensions` | gh拡張機能の一覧 |
-| Claude Code | `CLAUDE.md`, `settings.json`, `skills/`, `hooks/` | グローバル指示、hooks、カスタムスキル |
-
 ## ディレクトリ構造
 
 ```
 dotfiles/
-├── setup.sh          # セットアップスクリプト（シンボリックリンク作成）
-├── macos.sh          # macOS設定の自動適用スクリプト
-├── Brewfile          # Homebrew パッケージ一覧
+├── setup.sh              # セットアップスクリプト（シンボリックリンク作成）
+├── macos.sh              # macOS設定の自動適用スクリプト
+├── Brewfile              # Homebrewパッケージ一覧
 ├── zsh/
-│   ├── .zshrc
-│   ├── .zprofile
-│   └── .zshenv
+│   ├── .zshrc            # シェル設定（anyenv, direnv, PATH）
+│   ├── .zprofile         # ログインシェル設定（Homebrew）
+│   └── .zshenv           # 全シェル共通の環境変数
 ├── git/
-│   └── .gitconfig
+│   └── .gitconfig        # Gitのグローバル設定
 ├── nodenv/
-│   └── default-packages  # グローバルnpmパッケージ一覧
+│   └── default-packages  # Node.jsインストール時に自動導入するnpmパッケージ
 ├── gh/
 │   └── extensions        # gh拡張機能一覧
 ├── claude/
-│   ├── CLAUDE.md
-│   ├── settings.json
-│   ├── skills/
-│   └── hooks/
+│   ├── CLAUDE.md         # グローバル指示
+│   ├── settings.json     # Claude Code設定
+│   ├── skills/           # カスタムスキル
+│   └── hooks/            # フック設定
 └── docs/
     └── tools/            # 開発ツールのドキュメント
 ```
@@ -192,7 +179,7 @@ dotfiles/
    以下は手動で設定する:
 
    **一般 → ログイン項目**（ログイン時に開く）
-   - AutoRaise、BetterTouchTool、CotEditor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
+   - AutoRaise、BetterTouchTool、CotEditor、Cursor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
 
    **コントロールセンター（メニューバー）**
    - Bluetooth：メニューバーに表示
@@ -252,6 +239,7 @@ brew bundle dump --file=~/Documents/MY/dotfiles/Brewfile --force
 以下はdotfilesでは管理していない。新しいマシンでは手動インストールが必要。
 
 - **anyenv / nodenv** — `anyenv install --init` → `anyenv install nodenv`
+- **HHKB** — [Mac用ドライバ](https://happyhackingkb.com/jp/download/macdownload.html)を手動インストール。設定はステップ4を参照
 - **OpenVPN Connect** — [公式サイト](https://openvpn.net/client/)からインストール。設定はNotionを参照
 - **Automator（FFmpeg/ImageMagick連携）** — [設定手順](https://zenn.dev/chot/articles/8d2b0e6e0f7741)を参照。FFmpegとImageMagickはBrewfileからインストール済み
 - **VS Code 拡張機能** — GitHubアカウント同期で管理
