@@ -1,3 +1,5 @@
+tap "dimentium/autoraise"
+
 brew "direnv"
 brew "fd"
 brew "ffmpeg"
@@ -15,6 +17,7 @@ brew "tree"
 brew "yarn"
 cask "ankerwork"
 cask "appcleaner"
+cask "dimentium/autoraise/autoraiseapp"
 cask "bettertouchtool"
 cask "colour-contrast-analyser"
 cask "coteditor"
