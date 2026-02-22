@@ -13,6 +13,10 @@ echo "=== macOS設定を適用中 ==="
 # スクロールバーを常に表示
 defaults write NSGlobalDomain AppleShowScrollBars -string "Always"
 
+# スクリーンショットの保存先を書類/Screenshotに変更
+mkdir -p ~/Documents/Screenshot
+defaults write com.apple.screencapture location ~/Documents/Screenshot
+
 # 書類を閉じるときに変更内容を保持するかどうかを確認
 defaults write NSGlobalDomain NSCloseAlwaysConfirmsChanges -bool true
 

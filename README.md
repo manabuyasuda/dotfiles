@@ -69,12 +69,20 @@ dotfiles/
    eval "$(/opt/homebrew/bin/brew shellenv)"
    ```
 
-7. dotfilesをクローンしてパッケージをインストールする
+7. ディレクトリを作成してdotfilesをセットアップする
 
    ```bash
+   # 作業ディレクトリを作成する
+   # MY: 個人リポジトリ / PROJECT: 案件リポジトリ / Screenshot: スクリーンショット保存先
+   mkdir -p ~/Documents/MY ~/Documents/PROJECT ~/Documents/Screenshot
+
+   # dotfilesをクローンしてパッケージをインストールする
    git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles
    brew bundle --file=~/Documents/MY/dotfiles/Brewfile
    cd ~/Documents/MY/dotfiles && ./setup.sh
+
+   # 個人リポジトリをクローンする
+   gh repo clone manabuyasuda/manabuyasuda ~/Documents/MY/manabuyasuda
    ```
 
    `setup.sh` は以下を実行する。何度実行しても安全（冪等）。
