@@ -19,8 +19,9 @@ macOS環境の設定ファイルを管理するリポジトリ。シンボリッ
 
 ```
 dotfiles/
-├── setup.sh          # セットアップスクリプト
-├── Brewfile           # Homebrew パッケージ一覧
+├── setup.sh          # セットアップスクリプト（シンボリックリンク作成）
+├── macos.sh          # macOS設定の自動適用スクリプト
+├── Brewfile          # Homebrew パッケージ一覧
 ├── zsh/
 │   ├── .zshrc
 │   ├── .zprofile
@@ -42,31 +43,132 @@ dotfiles/
 
 ## セットアップ
 
-### 既存環境での初回セットアップ
-
-```bash
-git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles
-cd ~/Documents/MY/dotfiles
-./setup.sh
-```
-
-`setup.sh` は以下を実行する。何度実行しても安全（冪等）。
-
-- 既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成
-- nodenv-default-packagesプラグインのインストールとdefault-packagesのリンク
-- `gh/extensions` に記載されたgh拡張機能のインストール
-
 ### 新しいマシンでのセットアップ
 
-1. Homebrew をインストール
-2. このリポジトリをクローン: `git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles`
-3. Homebrew パッケージを復元: `brew bundle --file=~/Documents/MY/dotfiles/Brewfile`
-4. セットアップスクリプトを実行: `cd ~/Documents/MY/dotfiles && ./setup.sh`
-5. anyenv と nodenv を手動でインストール:
+#### 初期設定
+
+1. Wi-Fiを接続する
+2. SafariでNotionにログインする（各種情報を参照するため）
+3. Apple IDでサインインする
+4. [HHKBのMac用ドライバ](https://happyhackingkb.com/jp/download/macdownload.html)をインストールして設定する
+
+#### 開発環境の構築
+
+5. Command Line Toolsをインストールする
+
+   ```bash
+   xcode-select --install
+   ```
+
+6. [Homebrew](https://brew.sh/ja/)をインストールする
+
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+   # Apple Siliconの場合、インストール後に一時的にPATHを通す（.zprofileで永続化される）
+   eval "$(/opt/homebrew/bin/brew shellenv)"
+   ```
+
+7. dotfilesをクローンしてパッケージをインストールする
+
+   ```bash
+   git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles
+   brew bundle --file=~/Documents/MY/dotfiles/Brewfile
+   cd ~/Documents/MY/dotfiles && ./setup.sh
+   ```
+
+   `setup.sh` は以下を実行する。何度実行しても安全（冪等）。
+   - 既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成
+   - nodenv-default-packagesプラグインのインストールとdefault-packagesのリンク
+   - `gh/extensions` に記載されたgh拡張機能のインストール
+
+8. SSH鍵を設定してGitHubに登録する
+
+   ```bash
+   # 鍵を生成（-fで任意のファイル名を指定する）
+   ssh-keygen -t ed25519 -f ~/.ssh/<ファイル名>
+
+   # macOSキーチェーンに登録（再起動後もパスフレーズ入力が不要になる）
+   ssh-add --apple-use-keychain ~/.ssh/<ファイル名>
+
+   # 公開鍵をクリップボードにコピーしてGitHubに登録する
+   pbcopy < ~/.ssh/<ファイル名>.pub
+   # → https://github.com/settings/ssh/new で貼り付けて登録
+   ```
+
+   `~/.ssh/config` に以下を追記する:
+
+   ```
+   Host github.com
+     AddKeysToAgent yes
+     UseKeychain yes
+     IdentityFile ~/.ssh/<ファイル名>
+   ```
+
+   接続を確認する:
+
+   ```bash
+   ssh -T git@github.com
+   ```
+
+9. anyenv と nodenv をインストールする
+
    ```bash
    anyenv install --init
    anyenv install nodenv
+   exec $SHELL -l
+
+   # インストール可能なバージョンを確認して最新LTSを導入
+   nodenv install --list
+   nodenv install <バージョン>
+   nodenv global <バージョン>
    ```
+
+#### アプリの設定
+
+10. 各アプリを設定する（Notionを参照）
+
+#### Macの設定
+
+11. `macos.sh` を実行してシステム設定を一括適用する
+
+   ```bash
+   ~/Documents/MY/dotfiles/macos.sh
+   ```
+
+   以下は手動で設定する:
+
+   **一般 → ログイン項目**（ログイン時に開く）
+   - AutoRaise、BetterTouchTool、CotEditor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
+
+   **コントロールセンター（メニューバー）**
+   - Bluetooth：メニューバーに表示
+   - 画面ミラーリング：メニューバーに表示しない
+   - Spotlight：メニューバーに表示しない
+
+   **キーボード → キーボードショートカット**
+   - LaunchpadとDock → Dockを自動的に表示/非表示のオン/オフ：オフ
+   - Spotlight：すべてオフ（Raycastを使用するため）
+   - Mission Control：すべてオフ
+   - 入力ソース（前の入力ソースを選択）：オフ
+   - 音声入力：オフ
+   - サービス：すべてオフ
+   - [同じアプリケーションの違うウィンドウを選択するショートカット](https://zenn.dev/manabuyasuda/articles/86e0247ea8c712#同じアプリケーションの違うウィンドウを選択するショートカット)を設定する
+
+   **キーボード → 入力ソース → 日本語**
+   - 入力モード：英字にチェックを入れる
+   - Windows風のキー操作：オン
+   - 数字を全角入力：オフ
+   - タイプミスを修正：オフ
+   - 書類ごとに入力ソースを自動的に切り替える：オン
+
+   **キーボード → 入力ソース → ABC** を削除する
+
+   **Apple ID → iCloud**
+   - 写真：オフ
+
+   **インターネットアカウント**
+   - 会社アカウントのメールとカレンダーを追加する（認証が必要）
 
 ## 運用
 
@@ -97,6 +199,8 @@ brew bundle dump --file=~/Documents/MY/dotfiles/Brewfile --force
 以下はdotfilesでは管理していない。新しいマシンでは手動インストールが必要。
 
 - **anyenv / nodenv** — `anyenv install --init` → `anyenv install nodenv`
+- **OpenVPN Connect** — [公式サイト](https://openvpn.net/client/)からインストール。設定はNotionを参照
+- **Automator（FFmpeg/ImageMagick連携）** — [設定手順](https://zenn.dev/chot/articles/8d2b0e6e0f7741)を参照。FFmpegとImageMagickはBrewfileからインストール済み
 - **VS Code 拡張機能** — GitHubアカウント同期で管理
 
 ## 注意事項
