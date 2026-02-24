@@ -173,7 +173,7 @@ open -a SourceTree <WORKTREE_PATH>
 1. `.envrc`をコピーした場合 → `direnv allow;`（セミコロンで区切る。環境変数の設定が後続に必要なため先に完了させる）
 2. ロックファイルが存在する場合 → インストールコマンドを`&`でバックグラウンド実行:
    - `package-lock.json` → `npm ci &`
-   - `yarn.lock` → `yarn install --frozen-lockfile &`
+   - `yarn.lock` → `yarn install --immutable &`
    - `pnpm-lock.yaml` → `pnpm install --frozen-lockfile &`
    - `bun.lockb` → `bun install --frozen-lockfile &`
 3. 常に含める → `claude`（フォアグラウンドで即座に起動）
