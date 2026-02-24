@@ -1,4 +1,5 @@
 {
+  "model": "claude-sonnet-4-6",
   "hooks": {
     "PreToolUse": [
       {
@@ -44,6 +45,5 @@
   },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true
-  },
-  "model": "claude-sonnet-4-6"
+  }
 }
