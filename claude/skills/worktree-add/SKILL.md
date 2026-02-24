@@ -15,74 +15,53 @@ allowed-tools:
 
 # worktree作成
 
-git worktreeの作成に伴う定型作業を自動化する。
-
-このスキルは **ユーザーへの質問 → 実行** の2フェーズで進める。worktree作成はロールバックが面倒なので、必要な情報をすべて集めてから一気に実行する。
-
-## 確定させる変数
-
-以下の変数を上から順に確定させる。後の変数は前の変数に依存するため、必ずこの順番で1つずつ確定させる。
-
-| # | 変数 | 確定方法 |
-|---|------|---------|
-| 1 | `REPO_PATH` | 自動検出 |
-| 2 | `DEFAULT_BRANCH` | 自動検出 |
-| 3 | `BRANCH_NAME` | AskUserQuestionツールで質問 |
-| 4 | `WORKTREE_DIR` | AskUserQuestionツールで質問 |
-| 5 | `EDITOR` | AskUserQuestionツールで質問 |
-
-このフェーズではAskUserQuestionツールを最低3回呼び出す（#3, #4, #5）。ユーザーの意図を正確に反映するために、自分で推測して省略してはならない。
+以下の12ステップを番号順に実行する。各ステップには `[自動]` / `[ユーザー質問]` / `[実行]` のタグを示す。
 
 ---
 
-## フェーズ1: ユーザーへの質問
-
-### 1. `REPO_PATH` を特定する
-
-現在のディレクトリがGitリポジトリ内かどうかを確認する:
+## ステップ1: REPO_PATH を特定する [自動]
 
 ```bash
 git rev-parse --show-toplevel 2>/dev/null
 ```
 
-- **リポジトリ内の場合**: そのパスを `REPO_PATH` とする
-- **リポジトリ外の場合**: 直下のディレクトリからメインリポジトリを探す。メインリポジトリは `.git` がディレクトリで、worktreeは `.git` がファイルなので区別できる:
-  ```bash
-  for d in */; do [ -d "$d.git" ] && echo "$d"; done
-  ```
-  1つなら自動選択。複数あればAskUserQuestionで選択してもらう。
+- リポジトリ内: そのパスを `REPO_PATH` とする
+- リポジトリ外: 直下のディレクトリから `.git` がディレクトリ（ファイルではない）のものを探す
 
-### 2. `DEFAULT_BRANCH` を検出する
+```bash
+for d in */; do [ -d "$d.git" ] && echo "$d"; done
+```
+
+1つなら自動選択。複数ならAskUserQuestionで選んでもらう
+
+## ステップ2: DEFAULT_BRANCH を取得する [自動]
 
 ```bash
 git -C <REPO_PATH> symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'
 ```
 
-### 3. `BRANCH_NAME` — AskUserQuestionツールを呼び出す
+## ステップ3: BRANCH_NAME を確認する [ユーザー質問]
 
-ユーザーは「Other」から自由入力する想定なので、選択肢はブランチ命名の参考として提示する:
+ブランチ名はユーザーが自由に決める。「Other」から入力してもらう想定で、選択肢は命名例として提示する:
 
 ```json
 {
   "question": "作成するブランチ名を「Other」から入力してください",
   "options": [
-    { "label": "feature/...", "description": "機能追加の場合の命名例" },
-    { "label": "fix/...", "description": "バグ修正の場合の命名例" }
+    { "label": "feature/...", "description": "機能追加の命名例" },
+    { "label": "fix/...", "description": "バグ修正の命名例" }
   ]
 }
 ```
 
-ユーザーの入力がブランチ名ではなく作業内容の説明だった場合（例:「ログイン画面を作る」）:
-1. 既存ブランチの命名パターンを確認する: `git -C <REPO_PATH> branch -a`
-2. パターンに合った候補を2〜3個提案し、AskUserQuestionで選んでもらう
+回答後に検証する（検証はここだけで行い、後のステップでは行わない）:
 
-**検証**（ここで行い、実行フェーズでは行わない）:
-- `DEFAULT_BRANCH`と同じ名前 → 禁止。理由を伝えて別名を求める
-- 同名のローカルブランチがすでに存在 → エラーを伝えて別名を求める
+- `DEFAULT_BRANCH` と同名 → 禁止。理由を伝えて別名を求める
+- 同名のローカルブランチが既存: `git -C <REPO_PATH> branch --list <BRANCH_NAME>` で確認。存在すれば別名を求める
 
-### 4. `WORKTREE_DIR` — AskUserQuestionツールを呼び出す
+## ステップ4: WORKTREE_DIR を確認する [ユーザー質問]
 
-`BRANCH_NAME` の `/` を `-` に変換した文字列を `SAFE_BRANCH` とし、それだけを使って選択肢を作る:
+ディレクトリ名はユーザーのプロジェクト規約や好みによって異なるため、自動で決めず必ず確認する。`BRANCH_NAME` の `/` を `-` に変換した `SAFE_BRANCH` を使って選択肢を構成する:
 
 ```json
 {
@@ -96,101 +75,101 @@ git -C <REPO_PATH> symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/
 
 `<SAFE_BRANCH>` は実際の値に置き換えて表示する（例: ブランチ名が `feature/login` なら `worktree-feature-login` と `feature-login`）。
 
-### 5. `EDITOR` — AskUserQuestionツールを呼び出す
+## ステップ5: EDITOR を確認する [ユーザー質問]
+
+エディターはユーザーの好みによるため、自動で決めず必ず確認する。選択肢は以下の順序で提示する:
 
 ```json
 {
   "question": "worktreeを開くエディターを選択してください",
   "options": [
     { "label": "VS Code", "description": "VS Codeの新しいウィンドウで開く" },
-    { "label": "Cursor", "description": "Cursorの新しいウィンドウで開く" },
     { "label": "ターミナルのみ", "description": "エディターは開かない" }
   ]
 }
 ```
 
+## ステップ6: COPY_FILES を検出する [自動]
+
+```bash
+bash ~/.claude/skills/worktree-add/scripts/copy-gitignored-files.sh --list <REPO_PATH>
+```
+
+出力されたパスのリストを `COPY_FILES` として保持する（空でも可）。
+
 ---
 
-## フェーズ2: 実行
+ステップ3〜5の回答がすべて揃ったことを確認してから、以下の実行ステップに進む。
 
-以下の5つがすべてユーザーの回答で確定していることを確認する。1つでも欠けていたらフェーズ1に戻る。
+---
 
-- [ ] `REPO_PATH` — 確定済み
-- [ ] `DEFAULT_BRANCH` — 確定済み
-- [ ] `BRANCH_NAME` — AskUserQuestionで回答済み
-- [ ] `WORKTREE_DIR` — AskUserQuestionで回答済み
-- [ ] `EDITOR` — AskUserQuestionで回答済み
-
-すべてのgit操作は `git -C <REPO_PATH>` で行う。
-
-### Step 1: デフォルトブランチを最新化する
+## ステップ7: デフォルトブランチを最新化する [実行]
 
 ```bash
 git -C <REPO_PATH> checkout <DEFAULT_BRANCH> && git -C <REPO_PATH> pull origin <DEFAULT_BRANCH>
 ```
 
-### Step 2: worktreeを作成する
-
-`REPO_PATH` の親ディレクトリに `WORKTREE_DIR` を作成する:
+## ステップ8: worktreeを作成する [実行]
 
 ```bash
 git -C <REPO_PATH> worktree add "../<WORKTREE_DIR>" -b <BRANCH_NAME>
 ```
 
-### Step 3: .envrcをコピーする
+`WORKTREE_PATH` は `$(dirname <REPO_PATH>)/<WORKTREE_DIR>` とする。
 
-メインworktreeに `.envrc` がある場合のみコピーする:
+## ステップ9: ファイルパスをコピーする [実行]
 
 ```bash
-[ -f "<REPO_PATH>/.envrc" ] && cp "<REPO_PATH>/.envrc" "<WORKTREE_PATH>/.envrc"
+bash ~/.claude/skills/worktree-add/scripts/copy-gitignored-files.sh <REPO_PATH> <WORKTREE_PATH>
 ```
 
-### Step 4: エディターとSourceTreeで開く
+## ステップ10: エディターで開く [実行]
 
-`EDITOR` の選択に応じて:
+EDITOR の回答に応じて実行する:
 - **VS Code**: `code -n <WORKTREE_PATH>`
-- **Cursor**: `cursor -n <WORKTREE_PATH>`
-- **ターミナルのみ**: `cd <WORKTREE_PATH>` を案内
+- **ターミナルのみ**: `cd <WORKTREE_PATH>` を案内する
 
-SourceTreeでも開く:
+## ステップ11: SourceTreeで開く [実行]
+
 ```bash
 open -a SourceTree <WORKTREE_PATH>
 ```
 
-### Step 5: 完了案内
+## ステップ12: 未完了ステップの確認と再実行 [確認]
+
+ステップ1〜11が実際に実行されたか確認し、実行されていないものがあれば実行してから次に進む:
+
+- [ ] ステップ1: REPO_PATH を特定した
+- [ ] ステップ2: DEFAULT_BRANCH を取得した
+- [ ] ステップ3: BRANCH_NAME をユーザーに確認した
+- [ ] ステップ4: WORKTREE_DIR をユーザーに確認した
+- [ ] ステップ5: EDITOR をユーザーに確認した
+- [ ] ステップ6: `copy-gitignored-files.sh --list` で COPY_FILES を検出した
+- [ ] ステップ7: `git pull` でデフォルトブランチを最新化した
+- [ ] ステップ8: `git worktree add` でworktreeを作成した
+- [ ] ステップ9: `copy-gitignored-files.sh` でファイルをコピーした
+- [ ] ステップ10: エディターで開いた（またはターミナルのみを選択した）
+- [ ] ステップ11: `open -a SourceTree` を実行した
+
+## ステップ13: 完了案内 [実行]
 
 以下を表示する:
 - worktreeのパス
 - ブランチ名
-- コピーしたファイル（あれば）
+- コピーしたファイル一覧（`COPY_FILES`。空なら「なし」）
 
-#### 初期化コマンドをクリップボードにコピーする（スキップ禁止）
+続けて、新しいターミナルで1回貼り付けるだけで初期化が完了する初期化コマンドを作り、クリップボードにコピーする:
 
-新しいターミナルで1回貼り付けるだけで初期化が完了するよう、必要なコマンドを連結してクリップボードにコピーする。パッケージインストールは時間がかかるためバックグラウンドで実行し、`claude`はすぐにフォアグラウンドで起動する。
-
-コマンドの構成:
-
-1. `.envrc`をコピーした場合 → `direnv allow;`（セミコロンで区切る。環境変数の設定が後続に必要なため先に完了させる）
-2. ロックファイルが存在する場合 → インストールコマンドを`&`でバックグラウンド実行:
+1. `COPY_FILES` に `.envrc` が含まれる → 先頭に `direnv allow;`（環境変数を後続コマンドより先に反映させるため）
+2. ロックファイルが存在する場合 → インストールコマンドをバックグラウンドで実行（`&`）:
    - `package-lock.json` → `npm ci &`
    - `yarn.lock` → `yarn install --immutable &`
    - `pnpm-lock.yaml` → `pnpm install --frozen-lockfile &`
    - `bun.lockb` → `bun install --frozen-lockfile &`
-3. 常に含める → `claude`（フォアグラウンドで即座に起動）
+3. 末尾に必ず追加 → `claude`
 
-例（.envrcあり、npmの場合）:
 ```bash
-echo 'direnv allow; npm ci & claude' | pbcopy
+echo '<コマンド文字列>' | pbcopy
 ```
 
-例（.envrcなし、npmの場合）:
-```bash
-echo 'npm ci & claude' | pbcopy
-```
-
-例（ロックファイルも.envrcもない場合）:
-```bash
-echo 'claude' | pbcopy
-```
-
-コピー後、「クリップボードにコピーした内容を新しいターミナルで貼り付けて実行してください」と案内する。
+「クリップボードにコピーしました。新しいターミナルで貼り付けて実行してください」と案内する。
