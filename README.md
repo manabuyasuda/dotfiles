@@ -68,10 +68,14 @@ dotfiles/
 
 #### 初期設定
 
-1. Wi-Fiを接続する
+1. macOSのセットアップウィザードでWi-Fiの接続とApple IDのサインインを行う
 2. SafariでNotionにログインする（各種情報を参照するため）
-3. Apple IDでサインインする
-4. [HHKBのMac用ドライバ](https://happyhackingkb.com/jp/download/macdownload.html)をインストールして設定する
+3. [HHKBのMac用ドライバ](https://happyhackingkb.com/jp/download/macdownload.html)をインストールして設定する
+   - キーボード設定アシスタントは表示されない場合もある。表示された場合は指示に従う
+4. 外部ディスプレイとマウスを設定する（Macの詳細設定は後の手順で行うため、作業しやすくするための最小限の設定）
+   - システム設定 → ディスプレイ → 配置で外部モニターを主ディスプレイに設定する
+   - 解像度を変更する（27インチ4Kの場合は3008×1692）
+   - マウスを接続し、システム設定 → マウスで速度を最大に設定する
 
 #### 開発環境の構築
 
@@ -99,11 +103,26 @@ dotfiles/
 
    # dotfilesをクローンしてパッケージをインストールする
    git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles
-   brew bundle --file=~/Documents/MY/dotfiles/Brewfile
+   brew bundle install --file=~/Documents/MY/dotfiles/Brewfile --verbose
    cd ~/Documents/MY/dotfiles && ./setup.sh
 
    # 個人リポジトリをクローンする
-   gh repo clone manabuyasuda/manabuyasuda ~/Documents/MY/manabuyasuda
+   git clone https://github.com/manabuyasuda/manabuyasuda ~/Documents/MY/manabuyasuda
+   ```
+
+   `brew bundle install` が完了すると以下のように表示される:
+
+   ```
+   Homebrew Bundle complete! XX Brewfile dependencies now installed.
+   ```
+
+   アプリによってはパスワードを求められる場合がある。
+
+   **AnkerWorkでエラーになる場合:** ロックファイルが残っていると競合で失敗することがある。ロックファイルを削除して再実行する:
+
+   ```bash
+   rm -f ~/Library/Caches/Homebrew/downloads/*AnkerWork*.incomplete
+   brew bundle install --file=~/Documents/MY/dotfiles/Brewfile --verbose
    ```
 
    `setup.sh` は以下を実行する。何度実行しても安全（冪等）。
@@ -114,24 +133,26 @@ dotfiles/
 8. SSH鍵を設定してGitHubに登録する
 
    ```bash
-   # 鍵を生成（-fで任意のファイル名を指定する）
+   # 鍵を生成（-fは省略可能）
    ssh-keygen -t ed25519 -f ~/.ssh/<ファイル名>
 
    # macOSキーチェーンに登録（再起動後もパスフレーズ入力が不要になる）
    ssh-add --apple-use-keychain ~/.ssh/<ファイル名>
 
-   # 公開鍵をクリップボードにコピーしてGitHubに登録する
+   # 公開鍵をクリップボードにコピーしてブラウザでGitHubに登録する
    pbcopy < ~/.ssh/<ファイル名>.pub
-   # → https://github.com/settings/ssh/new で貼り付けて登録
+   open https://github.com/settings/ssh/new
    ```
 
-   `~/.ssh/config` に以下を追記する:
+   `~/.ssh/config` に設定を追記する:
 
-   ```
+   ```bash
+   cat >> ~/.ssh/config << 'EOF'
    Host github.com
      AddKeysToAgent yes
      UseKeychain yes
      IdentityFile ~/.ssh/<ファイル名>
+   EOF
    ```
 
    接続を確認する:
@@ -140,24 +161,34 @@ dotfiles/
    ssh -T git@github.com
    ```
 
-9. anyenv と nodenv をインストールする
+9. anyenvとnodenvをインストールする
 
    ```bash
    anyenv install --init
    anyenv install nodenv
    exec $SHELL -l
+   ```
 
-   # インストール可能なバージョンを確認して最新LTSを導入
-   nodenv install --list
-   nodenv install <バージョン>
-   nodenv global <バージョン>
+   最新LTSのバージョン番号を変数に格納して確認する（メジャーバージョンが偶数のものがLTS）:
+
+   ```bash
+   NODE_LTS=$(nodenv install --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | awk -F. 'int($1)%2==0' | tail -1)
+   echo $NODE_LTS
+   ```
+
+   表示されたバージョンをインストールしてデフォルトに設定する:
+
+   ```bash
+   nodenv install $NODE_LTS
+   nodenv global $NODE_LTS
    ```
 
    Node.jsのインストールにより `default-packages` に記載されたグローバルnpmパッケージが自動導入される（`@anthropic-ai/claude-code` を含む）。以降の手順はClaude Codeに委ねることができる。
 
+   iTerm2（インストール済み）を開いて以下を実行する:
+
    ```bash
-   # CursorでdotfilesリポジトリをREADMEごと開き、Claude Codeを起動する
-   cursor ~/Documents/MY/dotfiles
+   code ~/Documents/MY/dotfiles
    claude
    ```
 
@@ -165,51 +196,61 @@ dotfiles/
 
    > README.mdの「新しいマシンでのセットアップ」を参照して、ステップ10以降を進めてください。
 
+10. フォントをインストールする
+
+    Noto Sans JPはBrewfileからインストール済み。Source Code Proはコマンドで手動インストールする。
+
+    ```bash
+    curl -LO https://github.com/adobe-fonts/source-code-pro/archive/release.zip
+    unzip release.zip
+    cp -a source-code-pro-release/TTF/* ~/Library/Fonts
+    rm -rf release.zip source-code-pro-release
+    ```
+
 #### アプリの設定
 
-10. 各アプリを設定する（Notionを参照）
+11. 各アプリを設定する（Notionを参照）
+
+    brewでインストールしたアプリはFinderから1つずつ起動して設定を進める。アクセシビリティやファイルアクセスなど、セキュリティに関する許可を求められるため、1つずつ確認しながら進めるとわかりやすい。
 
 #### Macの設定
 
-11. `macos.sh` を実行してシステム設定を一括適用する
+12. `macos.sh` を実行してシステム設定を一括適用する
 
-   ```bash
-   ~/Documents/MY/dotfiles/macos.sh
-   ```
+    ```bash
+    ~/Documents/MY/dotfiles/macos.sh
+    ```
 
-   以下は手動で設定する:
+    以下は手動で設定する:
 
-   **一般 → ログイン項目**（ログイン時に開く）
-   - AutoRaise、BetterTouchTool、CotEditor、Cursor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
+    **一般 → ログイン項目**（ログイン時に開く）
+    - AutoRaise、BetterTouchTool、CotEditor、Cursor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
 
-   **コントロールセンター（メニューバー）**
-   - Bluetooth：メニューバーに表示
-   - 画面ミラーリング：メニューバーに表示しない
-   - Spotlight：メニューバーに表示しない
+    **コントロールセンター（メニューバー）**
+    - Spotlight：メニューバーに表示しない
 
-   **キーボード → キーボードショートカット**
-   - LaunchpadとDock → Dockを自動的に表示/非表示のオン/オフ：オフ
-   - Spotlight：すべてオフ（Raycastを使用するため）
-   - Mission Control：すべてオフ
-   - 入力ソース（前の入力ソースを選択）：オフ
-   - 音声入力：オフ
-   - サービス：すべてオフ
-   - [同じアプリケーションの違うウィンドウを選択するショートカット](https://zenn.dev/manabuyasuda/articles/86e0247ea8c712#同じアプリケーションの違うウィンドウを選択するショートカット)を設定する
+    **デスクトップとDock**
+    -
 
-   **キーボード → 入力ソース → 日本語**
-   - 入力モード：英字にチェックを入れる
-   - Windows風のキー操作：オン
-   - 数字を全角入力：オフ
-   - タイプミスを修正：オフ
-   - 書類ごとに入力ソースを自動的に切り替える：オン
+    **キーボード → キーボードショートカット**
+    - Spotlight：すべてオフ（Raycastを使用するため）
+    - 入力ソース（前の入力ソースを選択）：オフ
+    - 「次のウィンドウを操作対象にする…」を選択、ショートカットの表示をクリックしてから設定したいショートカットを入力する
 
-   **キーボード → 入力ソース → ABC** を削除する
+    **キーボード → 入力ソース → 日本語**
+    - 入力モード：英字にチェックを入れる
+    - タイプミスを修正：オフ
+    - Windows風のキー操作：オン
+    - 数字を全角入力：オフ
 
-   **Apple ID → iCloud**
-   - 写真：オフ
+    **キーボード → 入力ソース → ABC** を削除する
 
-   **インターネットアカウント**
-   - 会社アカウントのメールとカレンダーを追加する（認証が必要）
+    **iCloud → iCloudに保存済み → すべて見る**
+    - 写真：クリックして「このMacを同期」のチェックを外して「Macから削除」
+
+13. Macを再起動する
+
+    ひととおりの設定が完了したら再起動する。システム設定の変更が反映され、アプリの許可ダイアログなどが表示される。
 
 ## 運用
 
@@ -239,13 +280,13 @@ brew bundle dump --file=~/Documents/MY/dotfiles/Brewfile --force
 
 以下はdotfilesでは管理していない。新しいマシンでは手動インストールが必要。
 
-- **anyenv / nodenv** — `anyenv install --init` → `anyenv install nodenv`
-- **HHKB** — [Mac用ドライバ](https://happyhackingkb.com/jp/download/macdownload.html)を手動インストール。設定はステップ4を参照
+- **anyenv / nodenv** — anyenvはBrewfileからインストール済み。初期化はステップ9を参照
+- **HHKB** — [Mac用ドライバ](https://happyhackingkb.com/jp/download/macdownload.html)を手動インストール。設定はステップ3を参照
 - **OpenVPN Connect** — [公式サイト](https://openvpn.net/client/)からインストール。設定はNotionを参照
 - **Automator（FFmpeg/ImageMagick連携）** — [設定手順](https://zenn.dev/chot/articles/8d2b0e6e0f7741)を参照。FFmpegとImageMagickはBrewfileからインストール済み
 - **VS Code 拡張機能** — GitHubアカウント同期で管理
 
 ## 注意事項
 
-- `.zprofile`のHomebrewパス(`/opt/homebrew`)はApple Silicon専用。Intel Macでは異なる
+- `.zprofile`のHomebrewパス（`/opt/homebrew`）はApple Silicon専用。Intel Macでは異なる
 - `.gitconfig`が参照する`.gitignore_global`と`.stCommitMsg`は管理対象外
