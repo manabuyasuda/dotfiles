@@ -1,12 +1,13 @@
 @anthropic-ai/claude-code
 @axe-core/cli
-create-next-app
 @lhci/cli
 @redocly/cli
 @socketsecurity/cli
 bundle-phobia-cli
 colorguard
+create-next-app
 dependency-cruiser
+firebase-tools
 html-validate
 knip
 madge
