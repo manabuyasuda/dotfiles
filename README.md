@@ -101,13 +101,10 @@ dotfiles/
    # MY: 個人リポジトリ / PROJECT: 案件リポジトリ / Screenshot: スクリーンショット保存先
    mkdir -p ~/Documents/MY ~/Documents/PROJECT ~/Documents/Screenshot
 
-   # dotfilesをクローンしてパッケージをインストールする
+   # dotfilesをクローンしてパッケージをインストールする（SSH設定前のためHTTPSを使用）
    git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles
    brew bundle install --file=~/Documents/MY/dotfiles/Brewfile --verbose
    cd ~/Documents/MY/dotfiles && ./setup.sh
-
-   # 個人リポジトリをクローンする
-   git clone https://github.com/manabuyasuda/manabuyasuda ~/Documents/MY/manabuyasuda
    ```
 
    `brew bundle install` が完了すると以下のように表示される:
@@ -159,6 +156,13 @@ dotfiles/
 
    ```bash
    ssh -T git@github.com
+   ```
+
+   SSHが使えるようになったので、dotfilesのリモートURLをSSHに変更し、個人リポジトリをクローンする:
+
+   ```bash
+   git -C ~/Documents/MY/dotfiles remote set-url origin git@github.com:manabuyasuda/dotfiles.git
+   git clone git@github.com:manabuyasuda/manabuyasuda ~/Documents/MY/manabuyasuda
    ```
 
 9. anyenvとnodenvをインストールする
