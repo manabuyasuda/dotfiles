@@ -102,8 +102,8 @@ git -C <REPO_PATH> symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/
 {
   "question": "worktreeを開くエディターを選択してください",
   "options": [
-    { "label": "Cursor", "description": "Cursorの新しいウィンドウで開く" },
     { "label": "VS Code", "description": "VS Codeの新しいウィンドウで開く" },
+    { "label": "Cursor", "description": "Cursorの新しいウィンドウで開く" },
     { "label": "ターミナルのみ", "description": "エディターは開かない" }
   ]
 }
@@ -148,8 +148,8 @@ git -C <REPO_PATH> worktree add "../<WORKTREE_DIR>" -b <BRANCH_NAME>
 ### Step 4: エディターとSourceTreeで開く
 
 `EDITOR` の選択に応じて:
-- **Cursor**: `cursor -n <WORKTREE_PATH>`
 - **VS Code**: `code -n <WORKTREE_PATH>`
+- **Cursor**: `cursor -n <WORKTREE_PATH>`
 - **ターミナルのみ**: `cd <WORKTREE_PATH>` を案内
 
 SourceTreeでも開く:
