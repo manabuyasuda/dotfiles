@@ -17,7 +17,7 @@ if [ -z "$DESCRIPTION" ]; then
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "deny",
-      permissionDecisionReason: "Bashコマンドにはdescriptionパラメータが必須です。コマンドの理由と目的を【必ず日本語で】記述してください。英語での記述は認められません。"
+      permissionDecisionReason: "Bashコマンドにはdescriptionパラメータが必須です。以下の3点を【必ず日本語で】記述してください。英語での記述は認められません。\n(1) コマンドの理由と目的\n(2) リスク度合い（大／中／小）\n(3) 起きうる問題（例: ファイルが削除される、リモートに公開される、設定が上書きされる など）"
     }
   }'
   exit 0
