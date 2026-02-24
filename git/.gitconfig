@@ -1,5 +1,5 @@
 [core]
-	excludesfile = ~/.gitignore_global
+	excludesfile = /Users/my/.gitignore_global
 	ignorecase = false
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
@@ -8,7 +8,7 @@
 	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
 [user]
-	name = manabuyasuda
+	name = 安田学
 	email = 19850318m.yasuda@gmail.com
 [commit]
 	template = ~/.stCommitMsg
