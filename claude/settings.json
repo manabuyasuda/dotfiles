@@ -63,6 +63,45 @@
       }
     ]
   },
+  "permissions": {
+    "allow": [
+      "Bash(gh pr list*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr diff*)",
+      "Bash(gh pr checks*)",
+      "Bash(gh pr status*)",
+      "Bash(gh pr checkout*)",
+      "Bash(gh notify*)",
+      "Bash(gh repo view*)",
+      "Bash(gh api repos*)",
+      "Bash(git log*)",
+      "Bash(git status*)",
+      "Bash(git stash list*)",
+      "Bash(git branch --show-current*)",
+      "Bash(git diff*)",
+      "Bash(git show*)",
+      "Bash(git remote*)",
+      "Bash(gh issue list*)",
+      "Bash(gh issue view*)",
+      "Bash(gh run list*)",
+      "Bash(gh run view*)",
+      "Bash(madge*)",
+      "Bash(knip*)",
+      "Bash(depcruise*)",
+      "Bash(semgrep*)",
+      "Bash(type-coverage*)"
+    ],
+    "deny": [
+      "Bash(gh repo delete*)",
+      "Bash(gh secret*)",
+      "Bash(gh api --method DELETE*)",
+      "Bash(gh api -X DELETE*)",
+      "Bash(gh pr merge*)",
+      "Bash(npm publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(yarn publish*)"
+    ]
+  },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true
   }
