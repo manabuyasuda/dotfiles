@@ -1,4 +1,5 @@
 tap "dimentium/autoraise"
+tap "satococoa/tap"
 
 brew "anyenv"
 brew "direnv"
@@ -15,6 +16,7 @@ brew "ripgrep"
 brew "semgrep"
 brew "terminal-notifier"
 brew "tree"
+brew "satococoa/tap/wtp"
 brew "yarn"
 cask "ankerwork"
 cask "appcleaner"
