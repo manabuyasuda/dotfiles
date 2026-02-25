@@ -8,7 +8,6 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 |---|---|---|
 | [Knip](knip.md) | 未使用ファイル・エクスポート・依存関係を検出。不要コードの削減やプロジェクトの整理に使う | npm |
 | [type-coverage](type-coverage.md) | TypeScriptの型カバレッジを計測。`any`型や型推論が不十分な箇所を検出し、型安全性の向上を支援する | npm |
-| [Semgrep](semgrep.md) | セキュリティ脆弱性やバグをコードパターンで検出。多言語対応で、カスタムルールも定義できる | brew |
 | [html-validate](html-validate.md) | HTMLのオフラインバリデーション。W3C仕様に基づく構文チェックに加え、アクセシビリティやベストプラクティスのルールも提供する | npm |
 
 ## 依存関係・モジュール分析
@@ -57,6 +56,16 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 | ツール | 説明 | インストール |
 |---|---|---|
 | [Vercel CLI](vercel.md) | Vercelプラットフォームの CLI。ローカルからのデプロイ、環境変数管理、プロジェクト設定を行う | npm |
+| [Firebase CLI](firebase-tools.md) | Firebase Hosting・Functions・Firestore などの管理・デプロイを行う公式 CLI。Emulator Suite でローカル開発にも使う | npm |
+
+## ローカル開発環境
+
+| ツール | 説明 | インストール |
+|---|---|---|
+| [direnv](direnv.md) | `.envrc` ファイルでディレクトリごとに環境変数を自動ロード・アンロードする。プロジェクト切り替え時の設定管理に使う | brew |
+| [mkcert](mkcert.md) | ローカル開発用の信頼された HTTPS 証明書を発行する。ブラウザ警告なしに localhost を HTTPS で動かせる | brew |
+| [ngrok](ngrok.md) | ローカルサーバーを外部公開するトンネリングツール。Webhook のテストやスマートフォンでの実機確認に使う | cask |
+| [wtp](wtp.md) | `git worktree` の拡張 CLI。`.wtp.yml` で配置ディレクトリを設定でき、ブランチ名から自動でパスを決定する | brew |
 
 ## ターミナル検索・ナビゲーション
 
@@ -88,3 +97,28 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 | ツール | 説明 | インストール |
 |---|---|---|
 | [npm-check-updates](npm-check-updates.md) | package.jsonの依存関係を最新バージョンに更新。メジャー/マイナー/パッチの選択的更新やフィルタリングが可能 | npm |
+
+## メディア処理
+
+| ツール | 説明 | インストール |
+|---|---|---|
+| [ffmpeg](ffmpeg.md) | 動画・音声の変換・トリミング・結合などを行うマルチメディア CLI。フォーマット変換からサムネイル生成まで幅広く使える | brew |
+| [ImageMagick](imagemagick.md) | 画像の変換・リサイズ・クロップ・一括処理を行う CLI。スクリプトからの画像操作に使う | brew |
+
+## プロジェクト初期化
+
+| ツール | 説明 | インストール |
+|---|---|---|
+| [create-next-app](create-next-app.md) | Next.js プロジェクトのスキャフォールディングツール。TypeScript・Tailwind CSS・App Router などの構成を対話形式で選択して生成する | npm |
+
+## AI 開発支援
+
+| ツール | 説明 | インストール |
+|---|---|---|
+| [Claude Code](claude-code.md) | Anthropic 製の AI コーディングアシスタント CLI。コードの編集・実行・Git 操作を Claude と対話しながら行える。hooks による自動化にも対応 | npm |
+
+## 通知
+
+| ツール | 説明 | インストール |
+|---|---|---|
+| [terminal-notifier](terminal-notifier.md) | macOS のデスクトップ通知をターミナルから送信する。長時間処理の完了通知や Claude Code のフックによる通知に使う | brew |
