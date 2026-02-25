@@ -55,12 +55,12 @@ fi
 # --- 4. git commit → Explore.md/Plan.md チェック + ユーザー承認 ---
 if echo "$COMMAND" | grep -qE 'git[[:space:]]+commit'; then
   STAGED=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" diff --cached --name-only 2>/dev/null || echo "")
-  if echo "$STAGED" | grep -qE '(^|/)(Explore|Plan)\.md$'; then
+  if echo "$STAGED" | grep -qE '(^|/)(Explore|Plan|Retrospective)\.md$'; then
     jq -n '{
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
-        permissionDecisionReason: "⛔ Explore.md または Plan.md がステージされています。これらはコミットできません。\n以下を実行してから再度コミットしてください:\n  git restore --staged Explore.md Plan.md"
+        permissionDecisionReason: "⛔ Explore.md、Plan.md、または Retrospective.md がステージされています。これらはコミットできません。\n以下を実行してから再度コミットしてください:\n  git restore --staged Explore.md Plan.md Retrospective.md"
       }
     }'
     exit 0
