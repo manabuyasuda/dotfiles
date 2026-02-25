@@ -1,6 +1,6 @@
 # Firebase CLI (firebase-tools)
 
-Firebase プロジェクトの管理・デプロイを行う公式 CLI ツール。Hosting・Functions・Firestore・Emulator Suite などの操作をターミナルから行える。
+Firebaseプロジェクトの管理・デプロイを行う公式CLIツール。Hosting・Functions・Firestore・Emulator Suiteなどの操作をターミナルから行える。
 
 ## インストール
 

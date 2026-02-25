@@ -1,6 +1,6 @@
 # Claude Code
 
-Anthropic 製の AI コーディングアシスタント CLI。ターミナルから直接 Claude と対話しながらコードの編集・実行・デバッグ・Git 操作を行える。
+Anthropic製のAIコーディングアシスタントCLI。ターミナルから直接Claudeと対話しながらコードの編集・実行・デバッグ・Git操作を行える。
 
 ## インストール
 
@@ -48,7 +48,7 @@ claude /path/to/project
 
 ## Hooks
 
-Claude Code のイベントに応じてシェルコマンドを実行できる仕組み。`settings.json` に設定する。
+Claude Codeのイベントに応じてシェルコマンドを実行できる仕組み。`settings.json`に設定する。
 
 | イベント | 説明 |
 |---|---|
@@ -57,7 +57,7 @@ Claude Code のイベントに応じてシェルコマンドを実行できる�
 | `PreToolUse` | ツール実行前に呼ばれる。ブロックすることも可能 |
 | `Notification` | 通知イベント（`permission_prompt` / `idle_prompt` / `stop`）が発生したときに呼ばれる |
 
-このリポジトリの hooks は `~/.claude/hooks/` に配置されている。
+このリポジトリのhooksは`~/.claude/hooks/`に配置されている。
 
 ## スラッシュコマンド（対話中）
 

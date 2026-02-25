@@ -1,6 +1,6 @@
 # wtp (Worktree Plus)
 
-`git worktree` を拡張した CLI ツール。`.wtp.yml` で worktree の配置ディレクトリを設定でき、ブランチ名から自動でパスを決定してくれる。
+`git worktree`を拡張したCLIツール。`.wtp.yml`でworktreeの配置ディレクトリを設定でき、ブランチ名から自動でパスを決定してくれる。
 
 ## インストール
 

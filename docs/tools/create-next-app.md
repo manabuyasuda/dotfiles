@@ -1,6 +1,6 @@
 # create-next-app
 
-Next.js プロジェクトのスキャフォールディングツール。対話形式でオプションを選択するだけで、TypeScript・ESLint・Tailwind CSS・App Router などを含む初期構成を自動生成できる。
+Next.jsプロジェクトのスキャフォールディングツール。対話形式でオプションを選択するだけで、TypeScript・ESLint・Tailwind CSS・App Routerなどを含む初期構成を自動生成できる。
 
 ## インストール
 
