@@ -4,7 +4,7 @@
 #
 # `claude --worktree <branch>` 実行時に自動で呼ばれる。
 # wtp でworktreeを作成し、gitignored ファイルのコピー、
-# クリップボードへの初期化コマンド生成、SourceTree での起動を行う。
+# クリップボードへの初期化コマンド生成、VS Code・SourceTree での起動を行う。
 #
 # 入力: {"name": "<branch-name>"} (stdin経由)
 # 出力: worktreeのパス (stdout) → Claude Code がこのパスに切り替える
@@ -59,6 +59,9 @@ fi
 
 CLIPBOARD_CMD="${CLIPBOARD_CMD}claude"
 echo "$CLIPBOARD_CMD" | pbcopy >&2
+
+# VS Code で開く
+code -n "$WORKTREE_PATH" >&2 || echo "VS Code が見つかりません、スキップします" >&2
 
 # SourceTree で開く
 open -a SourceTree "$WORKTREE_PATH" >&2 || echo "SourceTree が見つかりません、スキップします" >&2
