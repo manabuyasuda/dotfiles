@@ -1,99 +1,93 @@
 ---
 name: pr-dashboard
 description: >
-  自分に関連するPRの状況を一覧表示する。作成したPRのレビュー状態や、
-  自分へのレビュー依頼の未対応分をテーブルで確認できる。
-  「PR確認」「PR状況」「自分のPR」「やること確認」「今日のタスク」
-  「レビュー依頼は？」「ダッシュボード」で発火する。
+  PR・レビュー・GitHub通知の確認をghコマンドで答えるアシスタント。
+  「自分のPR確認して」「レビュー依頼は？」「通知確認して」「#123のdiff見せて」
+  「マージ済みPR一覧」など、PRやGitHub操作に関する依頼に対して適切なghコマンドや
+  gh拡張機能を使って結果を返す。PRやレビューについて聞かれたら積極的にこのスキルを使う。
 context: fork
 allowed-tools:
   - Bash
-  - AskUserQuestion
 ---
 
-# PRダッシュボード
+# gh PRアシスタント
 
-現在のリポジトリで自分に関連するPRの状況をテーブル表示し、次にやるべきことを把握する。
+ユーザーの意図を読み取り、最適なghコマンドまたはgh拡張機能を実行・案内する。
+対話を通じて必要な情報を掘り下げていく。
 
-## 実行手順
+## コマンド選択の方針
 
-### Step 1: リポジトリ情報を取得する
+gh拡張機能を優先して使う。構造化データとして取り出す必要がある場合に限り `gh pr` コマンドを使う。
 
-```bash
-gh repo view --json nameWithOwner --jq '.nameWithOwner'
-```
+### Claudeが実行して結果を返す
 
-取得した値を `REPO` として記憶する。Bashの環境変数はコマンド間で保持されないため、値を直接埋め込んで使う。
+| 意図 | コマンド |
+|---|---|
+| 自分のオープンなPR | `gh pr list --author @me --state open --json number,title,reviewDecision,reviewRequests,latestReviews,comments,updatedAt,isDraft` |
+| レビュー依頼されているPR | `gh pr list --search "review-requested:@me" --state open --json number,title,author,reviewDecision,reviewRequests,latestReviews,comments,updatedAt` |
+| 特定PRの詳細 | `gh pr view <number>` |
+| 特定PRのdiff | `gh pr diff <number>` |
+| 特定PRのCIチェック | `gh pr checks <number>` |
+| 現在ブランチのPR状態 | `gh pr status` |
+| GitHub通知一覧 | `gh notify -s` |
 
-### Step 2: 自分が作成したオープンなPRを取得する
+フィルターオプション（必要に応じて付加）:
+- リポジトリ指定: `--repo owner/repo`
+- 期間フィルター: `--search "updated:>=YYYY-MM-DD"`
+- マージ済み: `--state merged`
 
-過去4日間に更新されたPRを取得する（週末・連休を考慮した期間）:
+### インタラクティブ操作として案内する
 
-```bash
-gh pr list --author @me --state open \
-  --search "updated:>=$(date -v-4d +%Y-%m-%d)" \
-  --json number,title,reviewDecision,updatedAt,url,isDraft \
-  --repo <REPO>
-```
+TUIやfzfを使うgh拡張機能はClaudeが実行できないため、コマンドをユーザーに案内する。
 
-### Step 3: 自分にレビュー依頼されているPRを取得する
+| 意図 | コマンド | 説明 |
+|---|---|---|
+| PRを一覧で操作したい | `gh dash` | TUIダッシュボード。diff・チェックアウト・コメントをその場で実行 |
+| PRをfzfで絞り込みたい | `gh f -p` | fzfでPRを検索・チェックアウト・diff確認 |
+| 通知をインタラクティブに確認 | `gh notify -w` | fzfで通知をプレビュー・既読化・ブラウザで開く |
 
-期間フィルターは付けない。古いレビュー依頼を見落とすと作業漏れにつながるため、未対応のものはすべて表示する:
+## 結果の表示
 
-```bash
-gh pr list --search "review-requested:@me" \
-  --state open \
-  --json number,title,author,updatedAt,url \
-  --repo <REPO>
-```
+JSONで取得したデータはテーブルに整形する。更新日時は相対時間（「2時間前」「1日前」）で表示。
 
-### Step 4: テーブルで表示する
+### 表示カラムの構成
 
-取得した情報を2つのセクションに分けてテーブル表示する。
-
-#### 自分が作成したPR
-
-```
-| PR | タイトル | 状態 | 更新 |
-|----|---------|------|------|
-| #123 | feat: ログイン機能追加 | 要対応 | 2時間前 |
-| #456 | fix: バリデーション修正 | 承認済み | 1日前 |
-| #789 | feat: 検索機能 | レビュー待ち | 3日前 |
-```
-
-状態の判定:
-- `isDraft: true` → ドラフト
-- `reviewDecision: "CHANGES_REQUESTED"` → 要対応
-- `reviewDecision: "APPROVED"` → 承認済み
-- `reviewDecision: "REVIEW_REQUIRED"`または空 → レビュー待ち
-
-#### レビュー依頼されているPR
+PR一覧には以下のカラムを**常に**表示する（値が空・0でも省略しない）。
 
 ```
-| PR | タイトル | 作成者 | 更新 |
-|----|---------|-------|------|
-| #234 | feat: 検索API追加 | @alice | 1日前 |
+| PR | タイトル | 状態 | レビュアー | 💬 | 更新 |
+|----|---------|------|-----------|-----|------|
+| #123 | feat: ログイン | 要対応 | alice ❌ bob ✅ charlie ⏳ | 5 | 2時間前 |
+| #456 | fix: バリデーション | 承認済み | alice ✅ | 0 | 1日前 |
+| #789 | feat: 検索 | レビュー待ち | — | 0 | 3日前 |
 ```
 
-該当するPRがない場合はそのセクションに「該当なし」と表示する。
+### 状態（reviewDecision）の表示
 
-更新日時は相対時間（「2時間前」「1日前」など）で表示すると直感的に把握しやすい。
+- `CHANGES_REQUESTED` → 要対応
+- `APPROVED` → 承認済み
+- `REVIEW_REQUIRED` / 空 → レビュー待ち
+- `isDraft: true` → ドラフト（状態より優先）
 
-### Step 5: アクションを提案する
+### レビュアーカラムの構成
 
-テーブル表示後、AskUserQuestionツールを呼び出す:
+`latestReviews`（レビュー済み）と `reviewRequests`（依頼中・未レビュー）を合わせて表示する。
 
-```json
-{
-  "question": "PRに対してアクションを実行しますか？",
-  "options": [
-    { "label": "ブラウザで開く", "description": "PR番号を指定してブラウザで開く" },
-    { "label": "レビューする", "description": "/review-pr でレビューを開始する" },
-    { "label": "終了", "description": "何もしない" }
-  ]
-}
-```
+- レビュー済み（latestReviews）:
+  - `APPROVED` → `名前 ✅`
+  - `CHANGES_REQUESTED` → `名前 ❌`
+  - `COMMENTED` → `名前 💬`
+  - `DISMISSED` → `名前 ➖`
+- 依頼中・未レビュー（reviewRequests） → `名前 ⏳`
+- 誰も依頼されていない場合 → `—`
 
-- **ブラウザで開く**: PR番号をAskUserQuestionで聞いて `gh pr view <number> --web --repo <REPO>` で開く
-- **レビューする**: 「`/review-pr <number>`を実行してください」と案内する
-- **終了**: 何もしない
+### コメント数の表示
+
+`comments` 配列の長さをコメント数として表示する。0件も省略せず表示する。
+
+## 会話の進め方
+
+- PR番号など不足情報は自然に聞く
+- 結果表示後、文脈に応じて次の操作を提案する
+- インタラクティブ操作が適している場合はコマンドを案内する（実行はしない）
+- レビューの実施は `/review-pr` スキルに案内する
