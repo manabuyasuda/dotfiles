@@ -3,9 +3,10 @@
 #
 # 以下を機械的に強制する:
 # 1. descriptionパラメータの必須化（コマンドの理由・目的を明示させる）
-# 2. 破壊的コマンド実行時のユーザー承認（rm, find -delete, unlink等）
-# 3. git push実行時のユーザー承認（リモートへの公開のため特に注意）
-# 4. git commit実行時のユーザー承認
+# 2. バックスラッシュ改行（継続行）の禁止（glob が改行文字にマッチせず不要な承認が発生するため）
+# 3. 破壊的コマンド実行時のユーザー承認（rm, find -delete, unlink等）
+# 4. git push実行時のユーザー承認（リモートへの公開のため特に注意）
+# 5. git commit実行時のユーザー承認
 
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
@@ -23,7 +24,21 @@ if [ -z "$DESCRIPTION" ]; then
   exit 0
 fi
 
-# --- 2. 破壊的なファイル操作 → ユーザー承認を要求 ---
+# --- 2. バックスラッシュ改行（継続行）→ ブロック ---
+# glob の * は改行文字にマッチしないため、複数行コマンドは許可済みパターンでも
+# 承認プロンプトが発生する。コマンドを1行で書き直させることで回避する。
+if printf '%s' "$COMMAND" | grep -qP '\\\n'; then
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: "⛔ バックスラッシュ改行（継続行）が含まれています。\nallow パターンの glob は改行文字にマッチしないため、承認プロンプトが発生します。\nコマンドをバックスラッシュなしの1行に書き直してください。"
+    }
+  }'
+  exit 0
+fi
+
+# --- 3. 破壊的なファイル操作 → ユーザー承認を要求 ---
 # rm, unlink, shred: ファイル・ディレクトリの削除
 # find -delete: findの結果を直接削除
 # find -exec rm: findの結果をrmで削除
@@ -40,7 +55,7 @@ if echo "$COMMAND" | grep -qwE 'rm|unlink|shred|truncate' || \
   exit 0
 fi
 
-# --- 3. git push → ユーザー承認を要求（リモートへの公開。特に慎重に）---
+# --- 4. git push → ユーザー承認を要求（リモートへの公開。特に慎重に）---
 if echo "$COMMAND" | grep -qE 'git[[:space:]]+push'; then
   jq -n '{
     hookSpecificOutput: {
@@ -52,7 +67,7 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+push'; then
   exit 0
 fi
 
-# --- 4. git commit → Explore.md/Plan.md チェック + ユーザー承認 ---
+# --- 5. git commit → Explore.md/Plan.md チェック + ユーザー承認 ---
 if echo "$COMMAND" | grep -qE 'git[[:space:]]+commit'; then
   STAGED=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" diff --cached --name-only 2>/dev/null || echo "")
   if echo "$STAGED" | grep -qE '(^|/)(Explore|Plan|Retrospective)\.md$'; then
