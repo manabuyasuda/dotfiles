@@ -64,19 +64,7 @@ git checkout <FEATURE_BRANCH> && git rebase main
 
 ### Step 4: リモートにプッシュする
 
-プッシュ前にAskUserQuestionで確認する:
-
-```json
-{
-  "question": "リベースが完了しました。リモートにforce pushしますか？",
-  "options": [
-    { "label": "プッシュする", "description": "git push --force-with-lease でリモートを更新する" },
-    { "label": "中断する", "description": "プッシュせずに終了する（手動でプッシュする場合）" }
-  ]
-}
-```
-
-承認を得た場合のみ実行する。`--force-with-lease` を使うことで、他の人がプッシュした変更を誤って上書きするリスクを軽減する:
+`--force-with-lease` を使うことで、他の人がプッシュした変更を誤って上書きするリスクを軽減する:
 
 ```bash
 git push --force-with-lease origin <FEATURE_BRANCH>
