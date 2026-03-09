@@ -61,6 +61,7 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 
 | ツール | 説明 | インストール |
 |---|---|---|
+| [Docker Desktop](docker.md) | Dockerコンテナの管理GUIアプリ。`docker compose` コマンドのバックエンドとして動作する。フロントエンドのビルド環境やバックエンドのAPIをローカルで立ち上げる際に使う | cask |
 | [direnv](direnv.md) | `.envrc` ファイルでディレクトリごとに環境変数を自動ロード・アンロードする。プロジェクト切り替え時の設定管理に使う | brew |
 | [mkcert](mkcert.md) | ローカル開発用の信頼された HTTPS 証明書を発行する。ブラウザ警告なしに localhost を HTTPS で動かせる | brew |
 | [ngrok](ngrok.md) | ローカルサーバーを外部公開するトンネリングツール。Webhook のテストやスマートフォンでの実機確認に使う | cask |
