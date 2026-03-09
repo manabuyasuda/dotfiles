@@ -87,7 +87,7 @@ mkdir -p ~/.aws
 touch ~/.aws/config ~/.aws/credentials
 ```
 
-作成後、エディターで各ファイルに以下を追記する。
+作成後、エディターで各ファイルに以下を追記する。`<aws-profile-name>`は以降の設定で同じ値を指定していれば、どのような値を使用しても問題ない。
 
 ```ini
 # ~/.aws/config
@@ -182,6 +182,23 @@ arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-son
 ```
 
 ARNはAWSコンソールの「Amazon Bedrock > 推論プロファイル」から確認できる。
+
+## VS CodeでBedrockを使う
+
+ターミナルで設定した環境変数はVS CodeのClaude Code拡張には引き継がれない。VS Codeからも使う場合は、ユーザー設定（`~/Library/Application Support/Code/User/settings.json`）に以下を追加する。
+
+```json
+"claudeCode.environmentVariables": [
+    {
+        "name": "CLAUDE_CODE_USE_BEDROCK",
+        "value": "1"
+    },
+    {
+        "name": "AWS_PROFILE",
+        "value": "<aws-profile-name>"
+    }
+]
+```
 
 ## BedrockとMaxプランをAliasで切り分ける
 
