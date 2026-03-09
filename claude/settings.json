@@ -1,68 +1,4 @@
 {
-  "model": "claude-sonnet-4-6",
-  "hooks": {
-    "WorktreeCreate": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/worktree-create.sh"
-          }
-        ]
-      }
-    ],
-    "WorktreeRemove": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/worktree-remove.sh"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/bash-guard.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "permission_prompt",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '確認が必要です' -sound Glass"
-          }
-        ]
-      },
-      {
-        "matcher": "idle_prompt",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '入力待ちです' -sound Glass"
-          }
-        ]
-      },
-      {
-        "matcher": "stop",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '処理が完了しました' -sound Glass"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(gh pr list*)",
@@ -147,6 +83,70 @@
       "Bash(npm publish*)",
       "Bash(pnpm publish*)",
       "Bash(yarn publish*)"
+    ]
+  },
+  "model": "claude-sonnet-4-6",
+  "hooks": {
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/worktree-create.sh"
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/worktree-remove.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/bash-guard.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '確認が必要です' -sound Glass"
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '入力待ちです' -sound Glass"
+          }
+        ]
+      },
+      {
+        "matcher": "stop",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '処理が完了しました' -sound Glass"
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
