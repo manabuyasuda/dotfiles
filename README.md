@@ -70,8 +70,12 @@ dotfiles/
 
 1. macOSのセットアップウィザードでWi-Fiの接続とApple IDのサインインを行う
 2. SafariでNotionにログインする（各種情報を参照するため）
-3. [HHKBのMac用ドライバ](https://happyhackingkb.com/jp/download/macdownload.html)をインストールして設定する
+3. [HHKBキーマップ変更ツール](https://happyhackingkb.com/jp/download/#keymap)をインストールして設定する
    - キーボード設定アシスタントは表示されない場合もある。表示された場合は指示に従う
+   - **ファームウェアの更新:** ツールのメニュー「ヘルプ → 更新プログラムの確認 → HHKBファームウェア」で「最新版が利用可能です。」と表示されたらリンク先のページから `.hfb` ファイルをダウンロードする。ツールの「キーボードファームウェア更新」ボタンからダウンロードしたファイルを選択し、「HHKBへ書込み」→「アップデートする」で適用する（数分かかる）
+   - **Bluetoothペアリング（初回）:** `Fn + Control + 1〜4` のいずれかを長押しするとLEDが点滅してペアリングモードになる。Mac側のBluetooth設定から「HHKB-Hybrid_〇」を選択して接続する（スロット1〜4に最大4台まで登録可能）
+   - **Bluetooth接続先の切り替え:** `Fn + Control + 1〜4` で登録済みスロットに切り替える
+   - **USB-Cへの切り替え:** `Fn + Control + 0` でUSB-C接続に切り替える（ファームウェア更新時はBluetoothではなくUSB-C接続が必要なため、先にこのキー操作を行う）
 4. 外部ディスプレイとマウスを設定する（Macの詳細設定は後の手順で行うため、作業しやすくするための最小限の設定）
    - システム設定 → ディスプレイ → 配置で外部モニターを主ディスプレイに設定する
    - 解像度を変更する（27インチ4Kの場合は3008×1692）
@@ -320,7 +324,7 @@ brew bundle dump --file=~/Documents/MY/dotfiles/Brewfile --force
 以下はdotfilesでは管理していない。新しいマシンでは手動インストールが必要。
 
 - **anyenv / nodenv** — anyenvはBrewfileからインストール済み。初期化はステップ9を参照
-- **HHKB** — [Mac用ドライバ](https://happyhackingkb.com/jp/download/macdownload.html)を手動インストール。設定はステップ3を参照
+- **HHKB** — [キーマップ変更ツール](https://happyhackingkb.com/jp/download/#keymap)を手動インストール。設定はステップ3を参照
 - **OpenVPN Connect** — [公式サイト](https://openvpn.net/client/)からインストール。設定はNotionを参照
 - **Automator（FFmpeg/ImageMagick連携）** — [設定手順](https://zenn.dev/chot/articles/8d2b0e6e0f7741)を参照。FFmpegとImageMagickはBrewfileからインストール済み
 - **VS Code 拡張機能** — GitHubアカウント同期で管理
