@@ -129,40 +129,75 @@ dotfiles/
 
 8. SSH鍵を設定してGitHubに登録する
 
+   GitHubアカウントごとに鍵とホストエイリアスを分けて管理する。個人アカウントは `my`、案件・会社アカウントは案件名など任意のプレフィックスをホスト名に付ける。
+
+   **個人アカウント用の鍵を作成する:**
+
    ```bash
-   # 鍵を生成（-fは省略可能）
-   ssh-keygen -t ed25519 -f ~/.ssh/<ファイル名>
+   # 鍵を生成
+   ssh-keygen -t ed25519 -f ~/.ssh/my_id_ed25519
 
    # macOSキーチェーンに登録（再起動後もパスフレーズ入力が不要になる）
-   ssh-add --apple-use-keychain ~/.ssh/<ファイル名>
+   ssh-add --apple-use-keychain ~/.ssh/my_id_ed25519
 
-   # 公開鍵をクリップボードにコピーしてブラウザでGitHubに登録する
-   pbcopy < ~/.ssh/<ファイル名>.pub
+   # 公開鍵をクリップボードにコピーして個人GitHubアカウントに登録する
+   pbcopy < ~/.ssh/my_id_ed25519.pub
    open https://github.com/settings/ssh/new
    ```
 
-   `~/.ssh/config` に設定を追記する:
+   **案件・会社アカウント用の鍵を作成する（アカウントごとに繰り返す）:**
 
    ```bash
-   cat >> ~/.ssh/config << 'EOF'
-   Host github.com
+   # <prefix> は案件名や会社名など（例: acme → acme.github.com）
+   ssh-keygen -t ed25519 -f ~/.ssh/<prefix>_id_ed25519
+   ssh-add --apple-use-keychain ~/.ssh/<prefix>_id_ed25519
+   pbcopy < ~/.ssh/<prefix>_id_ed25519.pub
+   open https://github.com/settings/ssh/new
+   ```
+
+   **`~/.ssh/config` に設定を追記する:**
+
+   ```
+   # 個人アカウント
+   Host my.github.com
+     HostName github.com
      AddKeysToAgent yes
      UseKeychain yes
-     IdentityFile ~/.ssh/<ファイル名>
-   EOF
+     IdentityFile ~/.ssh/my_id_ed25519
+     IdentitiesOnly yes
+
+   # 案件・会社アカウント（アカウントごとに追加する）
+   Host <prefix>.github.com
+     HostName github.com
+     AddKeysToAgent yes
+     UseKeychain yes
+     IdentityFile ~/.ssh/<prefix>_id_ed25519
+     IdentitiesOnly yes
    ```
 
-   接続を確認する:
+   `IdentitiesOnly yes` はSSHエージェントに他の鍵が読み込まれていても、指定した鍵のみを使うようにする設定。複数アカウントの混線を防ぐために必須。
+
+   **接続を確認する:**
 
    ```bash
-   ssh -T git@github.com
+   ssh -T git@my.github.com
+   # → Hi <個人アカウント名>! You've successfully authenticated...
+
+   ssh -T git@<prefix>.github.com
+   # → Hi <案件アカウント名>! You've successfully authenticated...
    ```
 
-   SSHが使えるようになったので、dotfilesのリモートURLをSSHに変更し、個人リポジトリをクローンする:
+   **SSHが使えるようになったので、dotfilesのリモートURLをSSHに変更し、個人リポジトリをクローンする:**
 
    ```bash
-   git -C ~/Documents/MY/dotfiles remote set-url origin git@github.com:manabuyasuda/dotfiles.git
-   git clone git@github.com:manabuyasuda/manabuyasuda ~/Documents/MY/manabuyasuda
+   git -C ~/Documents/MY/dotfiles remote set-url origin git@my.github.com:manabuyasuda/dotfiles.git
+   git clone git@my.github.com:manabuyasuda/manabuyasuda ~/Documents/MY/manabuyasuda
+   ```
+
+   **案件リポジトリをクローンする場合:**
+
+   ```bash
+   git clone git@<prefix>.github.com:<org-or-user>/<repo>.git ~/Documents/PROJECT/<repo>
    ```
 
 9. anyenvとnodenvをインストールする
