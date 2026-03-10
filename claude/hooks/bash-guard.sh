@@ -39,10 +39,12 @@ if printf '%s' "$COMMAND" | grep -qP '\\\n'; then
 fi
 
 # --- 3. 破壊的なファイル操作 → ユーザー承認を要求 ---
-# rm, unlink, shred: ファイル・ディレクトリの削除
+# rm, unlink, shred, truncate: コマンドとして実行される場合のみ検出
 # find -delete: findの結果を直接削除
 # find -exec rm: findの結果をrmで削除
-if echo "$COMMAND" | grep -qwE 'rm|unlink|shred|truncate' || \
+# xargs rm/unlink/shred: xargs経由の削除
+if echo "$COMMAND" | grep -qE '(^|[|;&])[[:space:]]*(sudo[[:space:]]+)?(rm|unlink|shred|truncate)([[:space:]]|$)' || \
+   echo "$COMMAND" | grep -qE 'xargs[[:space:]]+(sudo[[:space:]]+)?(rm|unlink|shred)' || \
    echo "$COMMAND" | grep -qE 'find[[:space:]].*-delete' || \
    echo "$COMMAND" | grep -qE 'find[[:space:]].*-exec[[:space:]]+rm'; then
   jq -n '{
