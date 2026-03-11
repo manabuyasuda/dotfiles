@@ -113,7 +113,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/mermaid-guard.sh",
+            "command": "$HOME/.claude/hooks/mermaid-guard/post.sh",
             "timeout": 30
           }
         ]
@@ -126,6 +126,16 @@
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/bash-guard.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/mermaid-guard/pre.sh",
             "timeout": 10
           }
         ]
