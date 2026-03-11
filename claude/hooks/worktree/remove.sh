@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# worktree-remove.sh - WorktreeRemove hook
+# worktree/remove.sh - WorktreeRemove hook
 #
 # `claude --worktree` セッション終了時に "remove" を選択すると自動で呼ばれる。
 # wtp で worktree を削除し、ブランチクリーンアップコマンドをクリップボードにコピーする。

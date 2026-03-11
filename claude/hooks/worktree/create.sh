@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# worktree-create.sh - WorktreeCreate hook
+# worktree/create.sh - WorktreeCreate hook
 #
 # `claude --worktree <branch>` 実行時に自動で呼ばれる。
 # wtp でworktreeを作成し、gitignored ファイルのコピー、

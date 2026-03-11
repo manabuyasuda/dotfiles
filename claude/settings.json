@@ -92,7 +92,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/worktree-create.sh"
+            "command": "$HOME/.claude/hooks/worktree/create.sh"
           }
         ]
       }
@@ -102,7 +102,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/worktree-remove.sh"
+            "command": "$HOME/.claude/hooks/worktree/remove.sh"
           }
         ]
       }
