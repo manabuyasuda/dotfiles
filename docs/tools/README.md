@@ -44,6 +44,12 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 | [Socket](socket.md) | npmパッケージのサプライチェーンリスクを検出。悪意あるパッケージやタイポスクワッティングを識別する | npm |
 | [Semgrep](semgrep.md) | パターンベースの静的解析・セキュリティスキャン。OWASP Top 10等のルールセットで脆弱性を検出する | brew |
 
+## ドキュメント・図表
+
+| ツール | 説明 | インストール |
+|---|---|---|
+| [mermaid-cli](mermaid-cli.md) | Mermaid 記法のダイアグラムを SVG・PNG・PDF に変換する CLI。`.mmd` ファイルや Markdown 内の mermaid ブロックを一括変換できる | npm |
+
 ## APIドキュメント
 
 | ツール | 説明 | インストール |
