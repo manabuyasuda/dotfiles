@@ -13,7 +13,7 @@ allowed-tools:
 
 フィーチャーブランチにベースブランチの最新変更を、リベースで見通しよく安全に取り込む。
 
-**フロー**: ブランチ確定 → 状態確認 → ベースブランチ最新化 → リベース → [コンフリクト解消 →] プッシュ
+**フロー**: ブランチ確定 → 状態確認 → ベースブランチ最新化 → リベース →[コンフリクト解消 →]プッシュ
 
 ---
 
@@ -33,7 +33,7 @@ git branch --show-current
 
 **ベースブランチの確定:**
 
-ユーザーの最初の指示にブランチ名が含まれている場合（例:「developを取り込んで」「stagingにrebaseして」）は、そのブランチ名を提示してAskUserQuestionで確認する（yesまたは正しいブランチ名を入力してもらう）:
+ユーザーの最初の指示にブランチ名が含まれている場合（例:「developを取り込んで」「stagingにrebaseして」）は、そのブランチ名を提示してAskUserQuestionで確認する（yesまたは正しいブランチ名を入力してもらう）。
 
 ```json
 {
@@ -44,7 +44,7 @@ git branch --show-current
 }
 ```
 
-含まれていない場合は、利用可能なローカルブランチを確認した上でAskUserQuestionで確認する:
+含まれていない場合は、利用可能なローカルブランチを確認してからAskUserQuestionで確認する。
 
 ```bash
 git branch | grep -v '^\*'
@@ -71,7 +71,7 @@ git branch | grep -v '^\*'
 git status --short
 ```
 
-変更がある場合はAskUserQuestionで対応を選択してもらう:
+変更がある場合はAskUserQuestionで対応を選択してもらう。
 
 ```json
 {
@@ -87,7 +87,7 @@ git status --short
 
 ### Step 2: ベースブランチを最新化する
 
-Step 1で確定した `BASE_BRANCH` を使う:
+Step 1で確定した `BASE_BRANCH` を使う。
 
 ```bash
 git checkout <BASE_BRANCH> && git pull origin <BASE_BRANCH>
@@ -95,7 +95,7 @@ git checkout <BASE_BRANCH> && git pull origin <BASE_BRANCH>
 
 ### Step 3: フィーチャーブランチに戻ってリベースする
 
-Step 1で記憶した `FEATURE_BRANCH` と `BASE_BRANCH` を使う。Bashの環境変数はコマンド間で保持されないため、ブランチ名を直接埋め込む:
+Step 1で記憶した `FEATURE_BRANCH` と `BASE_BRANCH` を使う。Bashの環境変数はコマンド間で保持されないため、ブランチ名を直接埋め込む。
 
 ```bash
 git checkout <FEATURE_BRANCH> && git rebase <BASE_BRANCH>
@@ -105,7 +105,7 @@ git checkout <FEATURE_BRANCH> && git rebase <BASE_BRANCH>
 
 ### Step 4: リモートにプッシュする
 
-`--force-with-lease` を使うことで、他の人がプッシュした変更を誤って上書きするリスクを軽減する:
+`--force-with-lease` を使うことで、他の人がプッシュした変更を誤って上書きするリスクを軽減する。
 
 ```bash
 git push --force-with-lease origin <FEATURE_BRANCH>
@@ -115,7 +115,7 @@ git push --force-with-lease origin <FEATURE_BRANCH>
 
 ## コンフリクト発生時
 
-リベース中にコンフリクトが発生した場合は、以下の手順を繰り返す。すべて解消できたら Step 4 に進む。
+リベース中にコンフリクトが発生した場合は、以下の手順を繰り返す。すべて解消できたらStep 4に進む。
 
 ### 1. コンフリクトの内容を把握する
 
@@ -124,7 +124,7 @@ git push --force-with-lease origin <FEATURE_BRANCH>
 
 ### 2. 解消方針をユーザーに確認する
 
-コンフリクト解消はユーザーの意図に大きく依存するため、各コンフリクト箇所の内容と解消後のコード例を提示した上でAskUserQuestionで承認を得る:
+コンフリクト解消はユーザーの意図に大きく依存するため、各コンフリクト箇所の内容と解消後のコード例を提示してAskUserQuestionで承認を得る。
 
 ```json
 {
@@ -145,7 +145,7 @@ git push --force-with-lease origin <FEATURE_BRANCH>
 git add <解消したファイル> && git rebase --continue
 ```
 
-後続のコミットで同じファイルに再度コンフリクトが発生する場合がある。その場合は手順1〜3を繰り返す。同じパターンでも再度の承認を得てからコードを修正する。
+後続のコミットで同じファイルに再度コンフリクトが発生することもある。その場合は手順1〜3を繰り返す。同じパターンでも再度の承認を得てからコードを修正する。
 
 ---
 

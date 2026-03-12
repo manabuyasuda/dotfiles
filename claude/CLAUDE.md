@@ -3,11 +3,11 @@
 - YOU MUST: 日本語で応答する
 - YOU MUST: GitHub操作にはgitコマンドよりも`gh`コマンドを優先する。PR作成、issue操作、リポジトリ情報の取得など、ghで実行できる操作はghを使う。ghに該当コマンドがない場合のみgitを使う
 - IMPORTANT: 事実と解釈を元にして、ユーザーが理解や判断がしやすいように説明する
-- IMPORTANT: `~/Documents/MY/dotfiles/docs/tools/README.md` に記載されたCLIツールはインストール済みなので、必要に応じて積極的に活用する。各ツールの使い方は `~/Documents/MY/dotfiles/docs/tools/` 内の個別ドキュメントを参照する
+- IMPORTANT: `~/Documents/MY/dotfiles/docs/tools/README.md` に記載されたCLIツールはインストール済みなので、対応するツールがある場合は積極的に活用する。各ツールの使い方は `~/Documents/MY/dotfiles/docs/tools/` 内の個別ドキュメントを参照する
 - IMPORTANT: Explore, Plan, Code, Commitの流れで進める
   - Explore：
     - 該当ファイル、依存関係、関連ファイルを把握する
-    - 必要に応じてコミット履歴を確認する
+    - 変更経緯が不明な場合はコミット履歴を確認する
     - 依存関係やファイルの記述内容から複雑度を判定する。JS/TSプロジェクトでは以下のツールを活用する:
       - `dependency-cruiser`: 安定度メトリクス（`--metrics`）、循環参照検出、影響範囲の可視化（`--affected`）
       - `madge`: 依存数サマリー（`--summary`）、循環参照検出（`--circular`）、逆依存の調査（`--depends`）
@@ -22,7 +22,7 @@
   - Code：
     - planの通りに機械的に実装を進める
     - 実装が完了したら、実装内容が適切かユーザーが判断できるように説明をする
-    - 説明と合わせてコミットメッセージを提案する。ユーザーが内容を確認してそのままコミットに進めるようにする
+    - 説明と合わせてコミットメッセージを提案する。ユーザーが内容を確認してそのままコミットへ進めるようにする
   - Commit：
     - レビュアーが変更意図を理解しやすく、かつ後からdiffで実際の変更箇所を追跡できる粒度にコミットを分割する
     - プロジェクトにコミット規約の設定（commitlint、.gitmessage等）がある場合はそれに従う。規約でカバーされていない部分にはConventional Commitsの形式を補完的に適用する。規約がない場合はConventional Commitsに従う
