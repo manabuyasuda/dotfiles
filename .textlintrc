@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "preset-ja-technical-writing": {
+      "sentence-length": { "max": 150 },
+      "no-mix-dearu-desumasu": false,
+      "ja-no-weak-phrase": false,
+      "no-exclamation-question-mark": false,
+      "max-kanji-continuous-len": { "max": 10 },
+      "ja-no-mixed-period": false
+    },
+    "preset-ja-spacing": true,
+    "prh": {
+      "rulePaths": ["./dict/prh.yml"]
+    },
+    "@textlint-ja/preset-ai-writing": true
+  }
+}

@@ -1,5 +1,18 @@
 {
   "files.associations": {
     "**/.claude/skills/*/SKILL.md": "markdown"
-  }
+  },
+  "textlint.autoFixOnSave": true,
+  "cSpell.words": [
+    "dearu",
+    "desumasu",
+    "halfwidth",
+    "icsmedia",
+    "joshi",
+    "kangxi",
+    "nakaguro",
+    "textlint",
+    "textlintignore",
+    "textlintrc"
+  ]
 }

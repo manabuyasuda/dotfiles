@@ -1,0 +1,9 @@
+version: 1
+imports:
+  - ./prh_web_technology.yml
+  - ./prh_cho_on.yml
+  - ./prh_idiom.yml
+  - ./prh_duplicate.yml
+  - ./prh_open_close.yml
+  - ./prh_redundancy.yml
+  - ./prh_corporation.yml
