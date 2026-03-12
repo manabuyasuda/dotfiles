@@ -7,6 +7,7 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 | ツール | 説明 | インストール |
 |---|---|---|
 | [Knip](knip.md) | 未使用ファイル・エクスポート・依存関係を検出。不要コードの削減やプロジェクトの整理に使う | npm |
+| [textlint](textlint.md) | Markdown・テキストファイルの文章校正ツール。日本語向けプリセットと prh による表記ゆれ統一を組み合わせて使う | npm |
 | [type-coverage](type-coverage.md) | TypeScriptの型カバレッジを計測。`any`型や型推論が不十分な箇所を検出し、型安全性の向上を支援する | npm |
 | [html-validate](html-validate.md) | HTMLのオフラインバリデーション。W3C仕様に基づく構文チェックに加え、アクセシビリティやベストプラクティスのルールも提供する | npm |
 
@@ -67,7 +68,7 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 
 | ツール | 説明 | インストール |
 |---|---|---|
-| [Docker Desktop](docker.md) | Dockerコンテナの管理GUIアプリ。`docker compose` コマンドのバックエンドとして動作する。フロントエンドのビルド環境やバックエンドのAPIをローカルで立ち上げる際に使う | cask |
+| [Docker Desktop](docker.md) | Dockerコンテナーの管理GUIアプリ。`docker compose` コマンドのバックエンドとして動作する。フロントエンドのビルド環境やバックエンドのAPIをローカルで立ち上げる際に使う | cask |
 | [direnv](direnv.md) | `.envrc` ファイルでディレクトリごとに環境変数を自動ロード・アンロードする。プロジェクト切り替え時の設定管理に使う | brew |
 | [mkcert](mkcert.md) | ローカル開発用の信頼された HTTPS 証明書を発行する。ブラウザ警告なしに localhost を HTTPS で動かせる | brew |
 | [ngrok](ngrok.md) | ローカルサーバーを外部公開するトンネリングツール。Webhook のテストやスマートフォンでの実機確認に使う | cask |
