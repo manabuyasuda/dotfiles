@@ -1,6 +1,6 @@
 # mermaid-cli (mmdc)
 
-Mermaid 記法で書いたダイアグラムを SVG・PNG・PDF に変換するCLIツール。`.mmd` ファイルだけでなく、Markdown ファイル内の mermaid コードブロックを一括変換することもできる。
+Mermaid記法で書いたダイアグラムをSVG・PNG・PDFに変換するCLIツール。`.mmd` ファイルだけでなく、Markdownファイル内のmermaidコードブロックも一括変換できる。
 
 ## インストール
 
@@ -62,7 +62,7 @@ mmdc -i diagram.mmd -o diagram.png -t dark -b transparent
 mmdc -i docs.template.md -o docs.md
 ```
 
-Markdown 内の ` ```mermaid ` ブロックを検出し、SVG ファイルを生成してリンクに差し替える。ドキュメントの自動ビルドに組み込みやすい。
+Markdown内の ` ```mermaid ` ブロックを検出し、SVGファイルを生成してリンクに差し替える。ドキュメントの自動ビルドに組み込みやすい。
 
 ### 構文チェックのみ行う
 
@@ -70,7 +70,7 @@ Markdown 内の ` ```mermaid ` ブロックを検出し、SVG ファイルを生
 mmdc -i diagram.mmd -o /dev/null
 ```
 
-出力先を `/dev/null` にすることで、ファイルを生成せずに構文エラーだけを検出できる。CI でのバリデーションに使える。
+出力先を `/dev/null` にすることで、ファイルを生成せずに構文エラーだけを検出できる。CIでのバリデーションに使える。
 
 ## 参考リンク
 

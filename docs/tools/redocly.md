@@ -40,7 +40,7 @@ npm install -g @redocly/cli
 | --- | --- |
 | `-o, --output <path>` | 出力ファイルのパスを指定する |
 | `--ext <ext>` | 出力ファイルの拡張子を指定する（`json`、`yaml`、`yml`） |
-| `-d, --dereferenced` | `$ref`を完全に展開したバンドルを生成する |
+| `-d, --dereferenced` | `$ref`をすべて展開したバンドルを生成する |
 | `--remove-unused-components` | 未使用のコンポーネントを除去する |
 
 ## 基本的な使い方
@@ -122,7 +122,7 @@ redocly lint openapi.yaml --generate-ignore-file
 redocly lint openapi.yaml
 ```
 
-既存プロジェクトにlintを導入する際、既存の問題を一旦無視し、新規に追加される問題のみを検出する運用ができる。既存の問題は計画的に修正していく。
+既存プロジェクトにlintを導入する際、既存の問題をいったん無視し、新規に追加される問題のみを検出する運用ができる。既存の問題は計画的に修正していく。
 
 ### ローカルでAPIドキュメントを確認する
 

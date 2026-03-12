@@ -78,8 +78,8 @@ gh clean-branches --force
 
 ## gh-poiとの使い分け
 
-- **gh-poi**: GitHub PRのマージ状態を基に判定。squashマージ・リベースマージに対応
-- **gh-clean-branches**: リモートブランチの存在有無を基に判定。PRを使わないワークフローでも有効
+- **gh-poi** — GitHub PRのマージ状態を基に判定。squashマージ・リベースマージに対応
+- **gh-clean-branches** — リモートブランチの存在有無を基に判定。PRを使わないワークフローでも有効
 
 ## 参考リンク
 

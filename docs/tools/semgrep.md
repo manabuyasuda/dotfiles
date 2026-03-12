@@ -56,7 +56,7 @@ semgrep scan --config auto --json
 | `--json` | JSON形式で出力する |
 | `--sarif` | SARIF形式で出力する |
 | `--output=FILE` | 結果をファイルに保存する |
-| `--severity=LEVEL` | 重要度でフィルタする（`INFO` / `WARNING` / `ERROR`） |
+| `--severity=LEVEL` | 重要度でフィルターする（`INFO` / `WARNING` / `ERROR`） |
 | `--exclude=PATTERN` | パターンに一致するファイルをスキップする |
 | `--include=PATTERN` | パターンに一致するファイルのみスキャンする |
 | `--error` | 検出結果がある場合にexit code 1を返す |
@@ -99,7 +99,7 @@ semgrep scan --config auto --autofix
 
 ルールにautofixが定義されている場合、検出した問題を自動修正する。`--dryrun`を併用すると変更内容を事前に確認できる。
 
-### 重要度でフィルタしてスキャンする
+### 重要度でフィルターしてスキャンする
 
 ```bash
 semgrep scan --config auto --severity=ERROR

@@ -15,7 +15,7 @@ brew install mkcert nss  # nss は Firefox 向け
 mkcert -install
 ```
 
-これにより、mkcertが発行する証明書がシステム・ブラウザから信頼される。
+これにより、mkcertが発行する証明書はシステム・ブラウザから信頼される。
 
 ## 基本的な使い方
 

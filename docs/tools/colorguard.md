@@ -49,7 +49,7 @@ cat styles.css | colorguard
 |---|---|
 | `threshold` | 色差の閾値 |
 | `allowEquivalentNotation` | 同一色の異なる表記を許可 |
-| `ignore` | 完全に無視する色を16進数で指定 |
+| `ignore` | 対象から除外する色を16進数で指定 |
 | `whitelist` | 許可する色ペアの配列（ペアごとに`[色A, 色B]`） |
 
 ## ユースケース

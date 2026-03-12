@@ -23,15 +23,15 @@ npx create-next-app@latest my-app
 create-next-app .
 ```
 
-対話中に以下を選択できる：
+対話中に以下を選択できる。
 
-- TypeScript を使うか
-- ESLint を使うか
-- Tailwind CSS を使うか
+- TypeScriptを使うか
+- ESLintを使うか
+- Tailwind CSSを使うか
 - `src/` ディレクトリを使うか
-- App Router を使うか（推奨）
-- Turbopack を使うか
-- import エイリアス（`@/*`）をカスタマイズするか
+- App Routerを使うか（推奨）
+- Turbopackを使うか
+- importエイリアス（`@/*`）をカスタマイズするか
 
 ## オプション（非対話モード）
 
@@ -46,7 +46,7 @@ create-next-app .
 | `--import-alias <alias>` | import エイリアスを指定する（例: `@/*`） |
 | `--use-pnpm` / `--use-yarn` | パッケージマネージャーを指定する |
 | `--example <name>` | 公式サンプルをテンプレートにする |
-| `--yes`, `-y` | 全てデフォルト値で作成する |
+| `--yes`, `-y` | すべてデフォルト値で作成する |
 
 ## ユースケース
 

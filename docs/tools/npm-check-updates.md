@@ -1,6 +1,6 @@
 # npm-check-updates
 
-`package.json` の依存関係を最新バージョンに更新するツール。npm の `npm outdated` よりも柔軟なフィルタリングと更新機能を提供する。
+`package.json` の依存関係を最新バージョンに更新するツール。npmの `npm outdated` よりも柔軟なフィルタリングと更新機能を提供する。
 
 ## インストール
 
@@ -41,7 +41,7 @@ ncu -i
 | `-u, --upgrade` | `package.json`を更新後のバージョンで上書きする（指定しない場合は一覧表示のみ） |
 | `-i, --interactive` | 依存関係ごとにインタラクティブに更新を選択する（`-u`を暗黙的に含む） |
 | `-t, --target <value>` | 更新先バージョンの決定方法。`latest`（デフォルト）, `newest`, `greatest`, `minor`, `patch`, `semver`, `@tag` |
-| `-m, --minimal` | semverの範囲で既に満たされているバージョンはアップグレードしない |
+| `-m, --minimal` | semverの範囲ですでに満たされているバージョンはアップグレードしない |
 | `--install <value>` | 自動インストールの制御。`always`, `never`, `prompt`（デフォルト） |
 
 ### フィルタリング
@@ -108,7 +108,7 @@ ncu --filter "/eslint/" -u
 npm install
 ```
 
-正規表現フィルタでESLint関連パッケージのみを対象にして更新する。
+正規表現フィルターでESLint関連パッケージのみを対象にして更新する。
 
 ### doctorモードで破壊的変更を特定する
 

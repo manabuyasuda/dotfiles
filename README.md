@@ -39,7 +39,7 @@ dotfiles/
 #### 事前準備
 
 1. 重要なデータをバックアップする（Time Machineまたはクラウド・外付けディスクへ手動コピー）
-   - **Raycast**: Advanced → ExportでDropboxに設定ファイルをエクスポートする
+   - **Raycast** — Advanced → ExportでDropboxに設定ファイルをエクスポートする
 2. Apple IDをサインアウトする（システム設定 → Apple ID → サインアウト）
    - Find My Macが有効な場合、サインアウトせずに初期化するとアクティベーションロックが残り、初期化後の再セットアップ時にApple IDとパスワードの入力が必要になる
    - 「すべてのコンテンツと設定を消去」を使う場合はウィザードがサインアウトまで誘導するため、事前の手動対応は不要
@@ -59,7 +59,7 @@ dotfiles/
 - Apple Silicon: 電源ボタンを長押し →「オプション」を選択
 - Intel Mac: 再起動して `Command + R` を長押し
 
-復元モード内で以下を実施する:
+復元モード内で以下を実施する。
 
 1. Disk Utility → Macintosh HDを選択 → 消去（APFS形式）
 2. macOSを再インストール
@@ -75,7 +75,7 @@ dotfiles/
    - **ファームウェアの更新:** ツールのメニュー「ヘルプ → 更新プログラムの確認 → HHKBファームウェア」で「最新版が利用可能です。」と表示されたらリンク先のページから `.hfb` ファイルをダウンロードする。ツールの「キーボードファームウェア更新」ボタンからダウンロードしたファイルを選択し、「HHKBへ書込み」→「アップデートする」で適用する（数分かかる）
    - **Bluetoothペアリング（初回）:** `Fn + Control + 1〜4` のいずれかを長押しするとLEDが点滅してペアリングモードになる。Mac側のBluetooth設定から「HHKB-Hybrid_〇」を選択して接続する（スロット1〜4に最大4台まで登録可能）
    - **Bluetooth接続先の切り替え:** `Fn + Control + 1〜4` で登録済みスロットに切り替える
-   - **USB-Cへの切り替え:** `Fn + Control + 0` でUSB-C接続に切り替える（ファームウェア更新時はBluetoothではなくUSB-C接続が必要なため、先にこのキー操作を行う）
+   - **USB-Cへの切り替え:** `Fn + Control + 0` でUSB-C接続に切り替える（ファームウェア更新時はBluetoothではなくUSB-C接続が必要なため、先にこのキー操作をする）
 4. 外部ディスプレイとマウスを設定する（Macの詳細設定は後の手順で行うため、作業しやすくするための最小限の設定）
    - システム設定 → ディスプレイ → 配置で外部モニターを主ディスプレイに設定する
    - 解像度を変更する（27インチ4Kの場合は3008×1692）
@@ -108,7 +108,7 @@ dotfiles/
    # dotfilesをクローンしてパッケージをインストールする（SSH設定前のためHTTPSを使用）
    git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles
    brew bundle install --file=~/Documents/MY/dotfiles/Brewfile --verbose
-   cd ~/Documents/MY/dotfiles && ./setup.sh
+   cd ~/Documents/MY/dotfiles && ./setup.sh && npm ci
    ```
 
    `brew bundle install` が完了すると以下のように表示される:
@@ -275,7 +275,7 @@ dotfiles/
     **コントロールセンター（メニューバー）**
     - Spotlight：メニューバーに表示しない
 
-    **デスクトップとDock**
+    デスクトップとDock（設定なし）
     -
 
     **キーボード → キーボードショートカット**
