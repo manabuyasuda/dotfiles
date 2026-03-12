@@ -258,3 +258,4 @@ npm install @textlint-ja/textlint-rule-preset-ai-writing
 - [GitHub - preset-jtf-style](https://github.com/textlint-ja/textlint-rule-preset-JTF-style)
 - [GitHub - preset-ai-writing](https://github.com/textlint-ja/textlint-rule-preset-ai-writing)
 - [GitHub - textlint-rule-preset-icsmedia](https://github.com/ics-creative/textlint-rule-preset-icsmedia)
+- [GitHub - textlint-rule-preset-smarthr](https://github.com/kufu/textlint-rule-preset-smarthr)

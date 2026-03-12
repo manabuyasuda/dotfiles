@@ -12,6 +12,10 @@
     "prh": {
       "rulePaths": ["./dict/prh.yml"]
     },
-    "@textlint-ja/preset-ai-writing": true
+    "@textlint-ja/preset-ai-writing": true,
+    "no-hankaku-kana": true,
+    "ja-no-abusage": true,
+    "no-mixed-zenkaku-and-hankaku-alphabet": true,
+    "@textlint-rule/no-unmatched-pair": true
   }
 }
