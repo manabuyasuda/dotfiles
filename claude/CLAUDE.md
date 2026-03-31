@@ -4,6 +4,7 @@
 - YOU MUST: GitHub操作にはgitコマンドよりも`gh`コマンドを優先する。PR作成、issue操作、リポジトリ情報の取得など、ghで実行できる操作はghを使う。ghに該当コマンドがない場合のみgitを使う
 - IMPORTANT: 事実と解釈を元にして、ユーザーが理解や判断がしやすいように説明する
 - IMPORTANT: `~/Documents/MY/dotfiles/docs/tools/README.md` に記載されたCLIツールはインストール済みなので、対応するツールがある場合は積極的に活用する。各ツールの使い方は `~/Documents/MY/dotfiles/docs/tools/` 内の個別ドキュメントを参照する
+- IMPORTANT: ドキュメントには信頼性のある情報のリンクと引用（原文ママ、英語の場合は日本語の翻訳を併記）をなるべく反映する
 - IMPORTANT: Explore, Plan, Code, Commitの流れで進める
   - Explore：
     - 該当ファイル、依存関係、関連ファイルを把握する
