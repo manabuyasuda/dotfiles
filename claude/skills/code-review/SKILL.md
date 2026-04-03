@@ -45,6 +45,27 @@ allowed-tools:
 
 ---
 
+## 使用するCLIツール
+
+各コマンドはローカルインストール（`node_modules/.bin/`）→ グローバルインストール → `npx -y`（一時実行）の順に解決して実行する。
+
+| ツール | 用途 | 解決方法 |
+|---|---|---|
+| `madge` | 循環参照・依存数サマリー | ローカル → グローバル → `npx -y` |
+| `knip` | 未使用エクスポート検出 | ローカル → グローバル → `npx -y` |
+| `markuplint` | アクセシビリティ静的解析 | ローカル → グローバル → `npx -y` |
+| `react-doctor` | Reactコンポーネント診断 | ローカル → グローバル → `npx -y` |
+| `socket` | サプライチェーンリスク検出 | ローカル → グローバル → `npx -y` |
+| `semgrep` | セキュリティ静的解析 | **インストール推奨**（`brew install semgrep` / `mise use semgrep`） |
+| `gh` | PR情報取得・レビュー投稿 | **インストール推奨**（`brew install gh` / `mise use gh`） |
+| `npm audit` | CVE検出 | npmに同梱（インストール不要） |
+
+`semgrep`はPythonツールのためnpxで実行できない。未インストールの場合はセキュリティ静的解析をスキップする。
+
+`gh`はGitHub CLIのためnpxで実行できない。未インストールの場合はPRベース（`REVIEW_MODE=pr`）を選択できず、`local`のみ実行可能。
+
+---
+
 ## Step 1: レビューモードを決定する
 
 ### 1-1. 引数からPR番号を読み取る（あれば）
@@ -52,6 +73,16 @@ allowed-tools:
 引数中の数字、GitHub PR URL、またはブランチ名からPR番号を特定し、`PR_NUMBER`に格納する。見つからなくてもよい。
 
 ### 1-2. AskUserQuestionでレビューモードを選択する
+
+`gh`がインストールされているかを事前に確認する。
+
+```bash
+command -v gh >/dev/null 2>&1 && echo "gh: available" || echo "gh: not found"
+```
+
+`gh`が見つからない場合は「ローカル」のみ選択可能であることをユーザーに伝え、`REVIEW_MODE=local`に確定してStep 2Bへ進む。
+
+`gh`が利用可能な場合はAskUserQuestionで選択を促す。
 
 ```json
 {
@@ -229,22 +260,6 @@ done
 ## Step 4: 自動解析を実行する
 
 変更ファイルの種類に応じて該当するCLIを実行する。ツール未インストール・コマンドエラーの場合はスキップして次に進む。
-
-### 使用するCLIツール
-
-各コマンドはローカルインストール（`node_modules/.bin/`）→ グローバルインストール → `npx -y`（一時実行）の順に解決して実行する。
-
-| ツール | 用途 | 解決方法 |
-|---|---|---|
-| `madge` | 循環参照・依存数サマリー | ローカル → グローバル → `npx -y` |
-| `knip` | 未使用エクスポート検出 | ローカル → グローバル → `npx -y` |
-| `markuplint` | アクセシビリティ静的解析 | ローカル → グローバル → `npx -y` |
-| `react-doctor` | Reactコンポーネント診断 | ローカル → グローバル → `npx -y` |
-| `socket` | サプライチェーンリスク検出 | ローカル → グローバル → `npx -y` |
-| `semgrep` | セキュリティ静的解析 | **インストール必須**（`brew install semgrep`） |
-| `npm audit` | CVE検出 | npmに同梱（インストール不要） |
-
-`semgrep`はPythonツールのためnpxで実行できない（`brew install semgrep` / `mise use semgrep`等でインストールが必要）。
 
 ### git履歴コンテキスト（.ts / .tsx / .js / .jsxが含まれる場合）
 
