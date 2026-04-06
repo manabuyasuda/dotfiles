@@ -60,6 +60,11 @@ if echo "$cmd" | grep -qiE 'DROP[[:space:]]+DATABASE'; then
   _deny "ERROR: データベース全体を削除します。バックアップなしでは復元できません。実行したい場合はターミナルで手動実行してください: $cmd"
 fi
 
+# git clean: 未追跡ファイルを削除。-x オプションで .gitignore 対象（node_modules, .env 等）も含む。復元不可。
+if echo "$cmd" | grep -qiE 'git[[:space:]]+clean[[:space:]]+-[[:alpha:]]*[fdx]'; then
+  _deny "ERROR: git 管理外のファイルを削除します（-x オプションがある場合は .gitignore 対象も含む）。削除したファイルは復元できません。実行したい場合はターミナルで手動実行してください: $cmd"
+fi
+
 # curl/wget | sh/bash: リモートスクリプトをダウンロードして即座に実行。内容未確認の実行はセキュリティリスク。
 if echo "$cmd" | grep -qiE '(curl|wget).*\|.*(sh|bash)'; then
   _deny "ERROR: リモートスクリプトをダウンロードして即座に実行します。内容未確認の実行はシステムが危険にさらされます。スクリプトの内容を確認してからターミナルで手動実行してください: $cmd"
