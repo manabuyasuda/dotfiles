@@ -123,7 +123,7 @@ test_tools=""
 if [ -d "node_modules/@testing-library" ];                                        then test_tools="${test_tools} @testing-library"; _env "export TESTING_LIBRARY=true";  else _env "export TESTING_LIBRARY=false"; fi
 if [ -d "node_modules/@playwright/test" ] || [ -x "node_modules/.bin/playwright" ]; then test_tools="${test_tools} playwright";     _env "export PLAYWRIGHT=true";       else _env "export PLAYWRIGHT=false";      fi
 if [ -d "node_modules/msw" ];                                                     then test_tools="${test_tools} msw";             _env "export MSW=true";              else _env "export MSW=false";            fi
-if [ -d "node_modules/@storybook/core" ] || [ -d ".storybook" ];                  then test_tools="${test_tools} storybook";       _env "export STORYBOOK=true";        else _env "export STORYBOOK=false";      fi
+if [ -d "node_modules/@storybook/core" ] || [ -d "node_modules/storybook" ] || [ -d ".storybook" ]; then test_tools="${test_tools} storybook"; _env "export STORYBOOK=true"; else _env "export STORYBOOK=false"; fi
 if [ -d "node_modules/cypress" ] || [ -x "node_modules/.bin/cypress" ];           then test_tools="${test_tools} cypress";         _env "export CYPRESS=true";          else _env "export CYPRESS=false";        fi
 if [ -d "node_modules/axe-core" ] || [ -d "node_modules/jest-axe" ];              then test_tools="${test_tools} axe";             _env "export AXE=true";              else _env "export AXE=false";            fi
 [ -n "$test_tools" ] && echo "Test utilities:${test_tools}"
@@ -149,10 +149,12 @@ _env "export MONOREPO=$monorepo"
 
 # コード品質・解析ツール
 quality_tools=""
+if [ -n "$(_find_tool react-doctor)" ];  then quality_tools="${quality_tools} react-doctor";       _env "export REACT_DOCTOR=true";  else _env "export REACT_DOCTOR=false";  fi
 if [ -n "$(_find_tool depcruise)" ];     then quality_tools="${quality_tools} dependency-cruiser"; _env "export DEPCRUISER=true";    else _env "export DEPCRUISER=false";    fi
 if [ -n "$(_find_tool type-coverage)" ]; then quality_tools="${quality_tools} type-coverage";      _env "export TYPE_COVERAGE=true"; else _env "export TYPE_COVERAGE=false"; fi
 if [ -n "$(_find_tool lhci)" ];          then quality_tools="${quality_tools} lighthouse-ci";      _env "export LIGHTHOUSE_CI=true"; else _env "export LIGHTHOUSE_CI=false"; fi
 if [ -n "$(_find_tool semgrep)" ];       then quality_tools="${quality_tools} semgrep";            _env "export SEMGREP=true";       else _env "export SEMGREP=false";       fi
+if [ -n "$(_find_tool socket)" ];        then quality_tools="${quality_tools} socket";             _env "export SOCKET=true";        else _env "export SOCKET=false";        fi
 [ -n "$quality_tools" ] && echo "Quality tools:${quality_tools}"
 
 # --- セッション復帰コンテキスト ---
