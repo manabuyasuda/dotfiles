@@ -1,92 +1,56 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gh pr list*)",
-      "Bash(gh pr view*)",
-      "Bash(gh pr diff*)",
-      "Bash(gh pr checks*)",
-      "Bash(gh pr status*)",
-      "Bash(gh pr checkout*)",
-      "Bash(gh pr comment*)",
-      "Bash(gh pr review*)",
-      "Bash(gh notify*)",
-      "Bash(gh repo view*)",
-      "Bash(gh repo list*)",
-      "Bash(gh api repos*)",
-      "Bash(gh api notifications*)",
-      "Bash(gh api graphql*)",
-      "Bash(gh api user*)",
-      "Bash(gh search*)",
-      "Bash(gh dash*)",
-      "Bash(gh f*)",
-      "Bash(gh s*)",
-      "Bash(git log*)",
-      "Bash(git status*)",
-      "Bash(git stash list*)",
-      "Bash(git branch --show-current*)",
-      "Bash(git diff*)",
-      "Bash(git show*)",
-      "Bash(git remote*)",
-      "Bash(gh issue list*)",
-      "Bash(gh issue view*)",
-      "Bash(gh run list*)",
-      "Bash(gh run view*)",
-      "Bash(madge*)",
-      "Bash(knip*)",
-      "Bash(depcruise*)",
-      "Bash(semgrep*)",
-      "Bash(type-coverage*)",
-      "Bash(fd*)",
-      "Bash(tree*)",
-      "Bash(html-validate*)",
-      "Bash(ncu)",
-      "Bash(ncu --filter*)",
-      "Bash(ncu --format*)",
-      "Bash(ncu --target*)",
-      "Bash(ncu --global*)",
-      "Bash(ncu -g*)",
-      "Bash(ncu --peer*)",
-      "Bash(ncu --packageFile*)",
-      "Bash(ncu --reject*)",
-      "Bash(ncu --dep*)",
-      "Bash(ncu --packageManager*)",
-      "Bash(wallace*)",
-      "Bash(colorguard*)",
-      "Bash(bundle-phobia*)",
-      "Bash(axe*)",
-      "Bash(firebase list*)",
-      "Bash(firebase functions:list*)",
+      "Bash(gh pr list*)", "Bash(gh pr view*)", "Bash(gh pr diff*)",
+      "Bash(gh pr checks*)", "Bash(gh pr status*)", "Bash(gh pr checkout*)",
+      "Bash(gh pr comment*)", "Bash(gh pr review*)", "Bash(gh notify*)",
+      "Bash(gh repo view*)", "Bash(gh repo list*)",
+      "Bash(gh api repos*)", "Bash(gh api notifications*)",
+      "Bash(gh api graphql*)", "Bash(gh api user*)",
+      "Bash(gh search*)", "Bash(gh dash*)", "Bash(gh f*)", "Bash(gh s*)",
+      "Bash(git log*)", "Bash(git status*)", "Bash(git stash list*)",
+      "Bash(git branch --show-current*)", "Bash(git diff*)",
+      "Bash(git show*)", "Bash(git remote*)",
+      "Bash(gh issue list*)", "Bash(gh issue view*)",
+      "Bash(gh run list*)", "Bash(gh run view*)",
+      "Bash(madge*)", "Bash(knip*)", "Bash(depcruise*)",
+      "Bash(semgrep*)", "Bash(type-coverage*)",
+      "Bash(fd*)", "Bash(tree*)", "Bash(html-validate*)",
+      "Bash(ncu)", "Bash(ncu --filter*)", "Bash(ncu --format*)",
+      "Bash(ncu --target*)", "Bash(ncu --global*)", "Bash(ncu -g*)",
+      "Bash(ncu --peer*)", "Bash(ncu --packageFile*)",
+      "Bash(ncu --reject*)", "Bash(ncu --dep*)", "Bash(ncu --packageManager*)",
+      "Bash(wallace*)", "Bash(colorguard*)", "Bash(bundle-phobia*)", "Bash(axe*)",
+      "Bash(firebase list*)", "Bash(firebase functions:list*)",
       "Bash(firebase hosting:channel:list*)",
-      "Bash(vercel ls*)",
-      "Bash(vercel list*)",
-      "Bash(vercel inspect*)",
-      "Bash(vercel logs*)",
-      "Bash(vercel whoami*)",
-      "Bash(vercel projects*)",
-      "Bash(lhci collect*)",
-      "Bash(lhci assert*)",
-      "Bash(lhci open*)",
+      "Bash(vercel ls*)", "Bash(vercel list*)", "Bash(vercel inspect*)",
+      "Bash(vercel logs*)", "Bash(vercel whoami*)", "Bash(vercel projects*)",
+      "Bash(lhci collect*)", "Bash(lhci assert*)", "Bash(lhci open*)",
       "Bash(lhci healthcheck*)",
-      "Bash(redocly lint*)",
-      "Bash(redocly stats*)",
-      "Bash(redocly bundle*)",
-      "Bash(redocly split*)",
-      "Bash(redocly check-config*)",
-      "Bash(redocly build-docs*)"
+      "Bash(redocly lint*)", "Bash(redocly stats*)", "Bash(redocly bundle*)",
+      "Bash(redocly split*)", "Bash(redocly check-config*)", "Bash(redocly build-docs*)"
     ],
     "deny": [
       "Bash(gh repo delete*)",
-      "Bash(gh secret*)",
-      "Bash(gh api --method DELETE*)",
-      "Bash(gh api -X DELETE*)",
+      "Bash(gh secret set*)", "Bash(gh secret delete*)", "Bash(gh secret remove*)",
+      "Bash(gh api --method DELETE*)", "Bash(gh api -X DELETE*)",
       "Bash(gh pr merge*)",
-      "Bash(npm publish*)",
-      "Bash(pnpm publish*)",
-      "Bash(yarn publish*)"
+      "Bash(npm publish*)", "Bash(pnpm publish*)", "Bash(yarn publish*)"
     ]
   },
   "model": "claude-sonnet-4-6",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/session-start/session-start.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "WorktreeCreate": [
       {
         "hooks": [
@@ -107,65 +71,92 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/mermaid-guard/post.sh",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Edit|MultiEdit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/bash-guard.sh",
+            "command": "$HOME/.claude/hooks/pre-tool-use/branch-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-use/file-protect.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-use/mermaid-guard.sh",
             "timeout": 10
           }
         ]
       },
       {
-        "matcher": "Write|Edit",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/mermaid-guard/pre.sh",
+            "command": "$HOME/.claude/hooks/pre-tool-use/bash-guard.sh",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-use/dangerous-guard.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/post-tool-use/format.sh",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/post-tool-use/install.sh",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/post-tool-use/test.sh",
+            "timeout": 90
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/post-tool-use/typecheck.sh",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/post-tool-use/mermaid-guard.sh",
+            "timeout": 30
           }
         ]
       }
     ],
     "Notification": [
       {
-        "matcher": "permission_prompt",
+        "matcher": "permission_prompt|idle_prompt|elicitation_dialog",
         "hooks": [
           {
             "type": "command",
-            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '確認が必要です' -sound Glass"
+            "command": "$HOME/.claude/hooks/notification/notify.sh"
           }
         ]
-      },
+      }
+    ],
+    "Stop": [
       {
-        "matcher": "idle_prompt",
         "hooks": [
           {
             "type": "command",
-            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '入力待ちです' -sound Glass"
-          }
-        ]
-      },
-      {
-        "matcher": "stop",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "terminal-notifier -sender com.apple.Terminal -title \"Claude Code: $(basename \"$CLAUDE_PROJECT_DIR\")\" -message '処理が完了しました' -sound Glass"
+            "command": "$HOME/.claude/hooks/notification/notify.sh"
           }
         ]
       }
@@ -173,5 +164,8 @@
   },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true
+  },
+  "env": {
+    "CLAUDE_CODE_NO_FLICKER": "1"
   }
 }
