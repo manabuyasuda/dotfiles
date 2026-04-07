@@ -19,6 +19,8 @@
 #      通常:                                ユーザー確認を取る
 # 6. 保護ブランチ上での git merge は実行を拒否する（PR 経由を強制）
 # 7. git reset --hard はユーザー確認を取る
+# 8. gh pr merge はユーザー確認を取る
+# 9. gh issue close はユーザー確認を取る
 #
 # 注: rm -rf / shred / xargs rm / find -delete 等は pre-tool-use/dangerous-guard.sh で拒否済み。
 #     並列実行のため、dangerous-guard.sh の拒否がこちらの確認より優先される。
@@ -163,6 +165,30 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+reset[[:space:]]+--hard'; then
       hookEventName: "PreToolUse",
       permissionDecision: "ask",
       permissionDecisionReason: "git reset --hard を実行しようとしています。未コミットの変更は失われます（コミット済みは reflog で復元可能）。実行してよいか確認してください。"
+    }
+  }'
+  exit 0
+fi
+
+# --- 8. gh pr merge → ask ---
+if echo "$COMMAND" | grep -qE 'gh[[:space:]]+pr[[:space:]]+merge'; then
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "ask",
+      permissionDecisionReason: "gh pr merge を実行しようとしています。PRをマージします。実行してよいか確認してください。"
+    }
+  }'
+  exit 0
+fi
+
+# --- 9. gh issue close → ask ---
+if echo "$COMMAND" | grep -qE 'gh[[:space:]]+issue[[:space:]]+close'; then
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "ask",
+      permissionDecisionReason: "gh issue close を実行しようとしています。issueをクローズします。実行してよいか確認してください。"
     }
   }'
   exit 0
