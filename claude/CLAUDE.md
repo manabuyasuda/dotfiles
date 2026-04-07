@@ -46,3 +46,25 @@
 - `bundle-phobia`: npmパッケージのバンドルサイズ確認
 - `axe`: WCAG基準のアクセシビリティ違反検出
 - `ncu`: npm依存パッケージの更新確認
+## 使用可能なスキル
+
+`/スキル名` で呼び出す。
+
+| スキル | 使う場面 |
+|---|---|
+| `code-review` | PRまたはローカルブランチのコードをレビューするとき |
+| `hotspot-refactoring` | リファクタリング対象の優先順位を決めたいとき（git log・循環参照・不安定性メトリクスを分析） |
+| `pr-dashboard` | 自分のPR・レビュー依頼・GitHub通知をまとめて確認したいとき |
+| `rebasing-feature-branch` | フィーチャーブランチをベースブランチ（main等）に追従させるとき |
+| `retrospective` | セッション終了時にKPTAふりかえりを実施し`retrospective/`に記録するとき |
+| `web-design-guidelines` | UIのアクセシビリティ・UX・デザインをWeb Interface Guidelinesに基づいてレビューするとき |
+| `vercel-react-best-practices` | React/Next.jsのコンポーネント・データフェッチ・バンドル最適化をレビュー・実装するとき |
+| `vercel-composition-patterns` | boolean propが増えたコンポーネントを整理したい・再利用可能なAPIを設計するとき |
+
+## 使用可能なエージェント
+
+`@エージェント名` で呼び出す。
+
+| エージェント | 使うとき |
+|---|---|
+| `@digg` | 技術ドキュメント・調査結果が実装着手できる状態か批判的に検証したいとき。不足している観点を質問リストとして返す |
