@@ -14,7 +14,7 @@
 #      通常:               リモート公開として確認
 # 5. git commit はパターンに応じて動作が変わる
 #      --amend フラグあり:                  公開済みコミット書き換えリスクを伝えてユーザー確認
-#      Explore/Plan/Retrospective.md が     作業記録ファイルはコミット禁止のため実行を拒否
+#      WORK_RECORD_FILES がステージ済み:     作業記録ファイルはコミット禁止のため実行を拒否（config.sh で定義）
 #      ステージ済み:
 #      通常:                                ユーザー確認を取る
 # 6. 保護ブランチ上での git merge は実行を拒否する（PR 経由を強制）
@@ -113,12 +113,16 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+commit'; then
     exit 0
   fi
   STAGED=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" diff --cached --name-only 2>/dev/null || echo "")
-  if echo "$STAGED" | grep -qE '(^|/)(Explore|Plan|Retrospective)\.md$'; then
-    jq -n '{
+  # WORK_RECORD_FILES から正規表現パターンを生成（config.sh で定義）
+  work_record_pattern=$(IFS='|'; echo "${WORK_RECORD_FILES[*]}" | sed 's/\./\\./g')
+  if echo "$STAGED" | grep -qE "(^|/)($work_record_pattern)$"; then
+    files_list=$(IFS='、'; echo "${WORK_RECORD_FILES[*]}")
+    restore_args=$(printf '%s ' "${WORK_RECORD_FILES[@]}")
+    jq -n --arg msg "ERROR: ${files_list} がステージされています。WHY: これらはセッション中の作業記録であり、コミット履歴に含めてはいけません。FIX: git restore --staged ${restore_args}を実行してから再度コミットしてください。" '{
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
-        permissionDecisionReason: "ERROR: Explore.md、Plan.md、または Retrospective.md がステージされています。WHY: これらはセッション中の作業記録であり、コミット履歴に含めてはいけません。FIX: git restore --staged Explore.md Plan.md Retrospective.md を実行してから再度コミットしてください。"
+        permissionDecisionReason: $msg
       }
     }'
     exit 0

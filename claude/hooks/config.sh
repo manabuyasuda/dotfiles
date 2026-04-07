@@ -14,6 +14,14 @@
 #   "release/*" のようなパターンはクォートが必要（シェル展開を防ぐため）。
 # =============================================================================
 
+# 作業記録ファイル（コミット禁止）
+# git commit 時にステージされていた場合、bash-guard.sh が deny する。
+WORK_RECORD_FILES=(
+  Explore.md
+  Plan.md
+  Retrospective.md
+)
+
 # 保護ブランチ（直接編集・ローカルマージを禁止）（glob パターン可）
 PROTECTED_BRANCHES=(
   # デフォルトブランチ
