@@ -176,7 +176,7 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 | `git push --force` / `-f` | **ask**（リモート履歴の上書きとして確認） |
 | `git push`（通常） | **ask**（リモート公開として確認） |
 | `git commit --amend` | **ask**（公開済みコミット書き換えリスクを確認） |
-| `git commit`（Explore/Plan/Retrospective.md がステージ済み） | **deny**（作業記録ファイルはコミット禁止） |
+| `git commit`（作業記録ファイル・ディレクトリがステージ済み） | **deny**（`WORK_RECORD_FILES` / `WORK_RECORD_DIRS` に一致するファイルはコミット禁止） |
 | `git commit`（通常） | **ask** |
 | `git merge`（保護ブランチ上） | **deny**（PR 経由を強制） |
 | `git reset --hard` | **ask**（未コミット変更消失を確認） |
@@ -258,7 +258,13 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 #### `hooks/config.sh`
 
-保護ブランチの定義を一元管理する（デフォルト: `main`, `release/*`, `production`等）。`pre-tool-use/branch-guard.sh` と `pre-tool-use/bash-guard.sh` が `source` して使用する。
+保護ブランチと作業記録ファイルの定義を一元管理する。`pre-tool-use/branch-guard.sh` と `pre-tool-use/bash-guard.sh` が `source` して使用する。
+
+| 変数 | 内容 |
+|---|---|
+| `PROTECTED_BRANCHES` | 直接編集・ローカルマージを禁止するブランチ（デフォルト: `main`, `release/*`, `production` 等） |
+| `WORK_RECORD_FILES` | コミット禁止の作業記録ファイル（`explore.md`, `plan.md`, `retrospective.md`） |
+| `WORK_RECORD_DIRS` | コミット禁止の作業記録ディレクトリ（配下のファイル全て禁止: `explore/`, `plan/`, `retrospective/`） |
 
 ---
 
@@ -319,7 +325,7 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 | `hooks/pre-tool-use/` | 「このミスを二度とさせない」とき |
 | `hooks/post-tool-use/` | 「編集後に自動で走らせたいチェック」が増えたとき |
 | `hooks/session-start/` | 検出すべきツールやコンテキストが変わったとき |
-| `hooks/config.sh` | 保護ブランチの構成が変わったとき |
+| `hooks/config.sh` | 保護ブランチ・作業記録ファイルの構成が変わったとき |
 | `skills/` | 定型ワークフローを切り出すとき |
 | `agents/` | 特定の調査・検証タスクを自律化するとき |
 | `README.md` | 上記のいずれかを変更したとき（実態と乖離させない） |

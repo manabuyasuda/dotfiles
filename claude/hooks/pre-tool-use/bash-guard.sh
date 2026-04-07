@@ -113,12 +113,13 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+commit'; then
     exit 0
   fi
   STAGED=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" diff --cached --name-only 2>/dev/null || echo "")
-  # WORK_RECORD_FILES から正規表現パターンを生成（config.sh で定義）
-  work_record_pattern=$(IFS='|'; echo "${WORK_RECORD_FILES[*]}" | sed 's/\./\\./g')
-  if echo "$STAGED" | grep -qE "(^|/)($work_record_pattern)$"; then
-    files_list=$(IFS='、'; echo "${WORK_RECORD_FILES[*]}")
-    restore_args=$(printf '%s ' "${WORK_RECORD_FILES[@]}")
-    jq -n --arg msg "ERROR: ${files_list} がステージされています。WHY: これらはセッション中の作業記録であり、コミット履歴に含めてはいけません。FIX: git restore --staged ${restore_args}を実行してから再度コミットしてください。" '{
+  # WORK_RECORD_FILES（特定ファイル）と WORK_RECORD_DIRS（ディレクトリ配下全て）を検出
+  file_pattern=$(IFS='|'; echo "${WORK_RECORD_FILES[*]}" | sed 's/\./\\./g')
+  dir_pattern=$(IFS='|'; echo "${WORK_RECORD_DIRS[*]}")
+  matched=$(echo "$STAGED" | grep -E "(^|/)($file_pattern)$|(^|/)($dir_pattern)/")
+  if [ -n "$matched" ]; then
+    restore_args=$(echo "$matched" | tr '\n' ' ')
+    jq -n --arg msg "ERROR: 作業記録ファイルがステージされています。WHY: これらはセッション中の作業記録であり、コミット履歴に含めてはいけません。FIX: git restore --staged ${restore_args}を実行してから再度コミットしてください。" '{
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
