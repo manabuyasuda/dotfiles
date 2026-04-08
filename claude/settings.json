@@ -35,7 +35,7 @@
       "Bash(gh repo delete*)",
       "Bash(gh secret set*)", "Bash(gh secret delete*)", "Bash(gh secret remove*)",
       "Bash(gh api --method DELETE*)", "Bash(gh api -X DELETE*)",
-      "Bash(gh pr merge*)",
+
       "Bash(npm publish*)", "Bash(pnpm publish*)", "Bash(yarn publish*)"
     ]
   },
