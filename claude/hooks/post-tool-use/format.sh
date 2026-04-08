@@ -42,12 +42,19 @@ if [[ "$file" =~ \.(js|jsx|ts|tsx)$ ]]; then
     exit 1
   fi
   echo '{"feedback": "Formatting applied.", "suppressOutput": true}'
-elif [[ "$file" =~ \.md$ ]] && [ -x "node_modules/.bin/textlint" ]; then
-  output=$(node_modules/.bin/textlint --fix "$file" 2>&1)
-  if [ $? -ne 0 ]; then
-    echo '{"feedback": "textlint: some issues could not be auto-fixed."}' >&2
-    echo "$output" >&2
-  else
-    echo '{"feedback": "textlint: auto-fix applied.", "suppressOutput": true}'
+elif [[ "$file" =~ \.md$ ]]; then
+  if [ -x "node_modules/.bin/textlint" ]; then
+    textlint_cmd="node_modules/.bin/textlint"
+  elif command -v textlint &>/dev/null; then
+    textlint_cmd="textlint"
+  fi
+  if [ -n "$textlint_cmd" ]; then
+    output=$($textlint_cmd --fix "$file" 2>&1)
+    if [ $? -ne 0 ]; then
+      echo '{"feedback": "textlint: some issues could not be auto-fixed."}' >&2
+      echo "$output" >&2
+    else
+      echo '{"feedback": "textlint: auto-fix applied.", "suppressOutput": true}'
+    fi
   fi
 fi

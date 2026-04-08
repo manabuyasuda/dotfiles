@@ -4,20 +4,17 @@
 - YOU MUST: 思い込みをせず事実を根拠に、明確な根拠を示して説明する
 - IMPORTANT: コミットはプロジェクトの規約（commitlintや.gitmessage、AIエージェントのコミットSkills）に従う
   - 規約がない場合はConventional Commitsを使う
-- IMPORTANT: ドキュメントには信頼性のある情報のリンクと引用を積極的に記載する
-```
-＜英語の引用＞
-＜日本語訳（日本語を引用する場合は省略）＞
-＜[引用した情報のタイトル](URL)＞
-```
 
 ## 作業記録ディレクトリ
 
 プロジェクトルートに作成する（bash-guard.shによりコミットを禁止されている）。
 
-- `explore/` — 調査・依存関係・影響範囲の記録
-- `plan/` — 実装計画・手順
-- `retrospective/` — セッションのふりかえりと改善
+- `explore/` — 調査結果の一時キャッシュ（同じ探索の繰り返しを防ぎトークンを節約する）
+- `plan/` — アプローチ・目的の検討と具体的な実装計画（標準のplan modeより優先する）
+- `retrospective/` — セッションのふりかえり（最新ファイルに随時追記、なければ当日日付で作成）
+  - Keep（随時）: ユーザー依頼の達成・うまくいった設定や判断
+  - Problem（随時）: 手戻り・やり直し・暗黙のルールの見落とし
+  - Try/Action: `/retrospective` スキルが追加してファイルに記録する
 
 ## 使用可能なCLIツール
 
@@ -46,25 +43,12 @@
 - `bundle-phobia`: npmパッケージのバンドルサイズ確認
 - `axe`: WCAG基準のアクセシビリティ違反検出
 - `ncu`: npm依存パッケージの更新確認
-## 使用可能なスキル
+## スキルとエージェント
 
-`/スキル名` で呼び出す。
+タスク着手前に該当スキルを確認する。
 
-| スキル | 使う場面 |
-|---|---|
-| `code-review` | PRまたはローカルブランチのコードをレビューするとき |
-| `hotspot-refactoring` | リファクタリング対象の優先順位を決めたいとき（git log・循環参照・不安定性メトリクスを分析） |
-| `pr-dashboard` | 自分のPR・レビュー依頼・GitHub通知をまとめて確認したいとき |
-| `rebasing-feature-branch` | フィーチャーブランチをベースブランチ（main等）に追従させるとき |
-| `retrospective` | セッション終了時にKPTAふりかえりを実施し`retrospective/`に記録するとき |
-| `web-design-guidelines` | UIのアクセシビリティ・UX・デザインをWeb Interface Guidelinesに基づいてレビューするとき |
-| `vercel-react-best-practices` | React/Next.jsのコンポーネント・データフェッチ・バンドル最適化をレビュー・実装するとき |
-| `vercel-composition-patterns` | boolean propが増えたコンポーネントを整理したい・再利用可能なAPIを設計するとき |
-
-## 使用可能なエージェント
-
-`@エージェント名` で呼び出す。
-
-| エージェント | 使うとき |
-|---|---|
-| `@digg` | 技術ドキュメント・調査結果が実装着手できる状態か批判的に検証したいとき。不足している観点を質問リストとして返す |
+- `/code-review` — PR・ブランチのコードレビュー
+- `/retrospective` — セッション終了時のKPTA
+- `/hotspot-refactoring` — リファクタリング優先順位の決定
+- `/rebasing-feature-branch` — フィーチャーブランチをベースブランチに追従
+- `@digg` — 技術ドキュメント・調査結果の批判的検証
