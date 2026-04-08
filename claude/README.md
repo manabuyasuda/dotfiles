@@ -14,12 +14,15 @@ claude/
   README.md           このファイル
   skills/             スキル定義（/skill-name で呼び出す）
   agents/             サブエージェント定義
+  rules/              ファイルパターン別ルール（paths: 指定で必要な時だけ適用）
   hooks/              hooks スクリプト
 ```
 
 ---
 
 ## スキル一覧
+
+### ローカルスキル（`claude/skills/` で管理）
 
 `/スキル名` または自然言語で呼び出す。
 
@@ -29,11 +32,18 @@ claude/
 | `hotspot-refactoring` | 「hotspot」「リファクタリング提案して」 | git log の hotspot 分析・循環参照・不安定性メトリクスからリファクタリング優先候補を提案 |
 | `pr-dashboard` | 「自分のPR確認して」「通知確認して」 | PR・レビュー依頼・GitHub 通知を gh コマンドで確認するアシスタント |
 | `rebasing-feature-branch` | 「リベースして」「mainを取り込んで」 | フィーチャーブランチをベースブランチにリベースするワークフロー |
-| `retrospective` | 「ふりかえりして」 | セッションの KPTA ふりかえりを実施し `Retrospective.md` に記録 |
-| `vercel-composition-patterns` | 「コンポーネント設計を見て」 | React のコンポジションパターン（boolean prop 削減・Compound Components など） |
-| `vercel-react-best-practices` | 「パフォーマンスレビューして」 | Vercel Engineering の React / Next.js パフォーマンス最適化ガイドライン |
-| `vercel-react-native-skills` | 「React Native のコードを見て」 | React Native / Expo のパフォーマンス・アニメーション・リスト最適化 |
-| `web-design-guidelines` | 「UIをレビューして」「アクセシビリティ確認して」 | Web Interface Guidelines に基づく UI・アクセシビリティ・UX のレビュー |
+| `retrospective` | 「ふりかえりして」 | セッションの KPTA ふりかえりを実施し `retrospective/YYYY-MM-DD.md` に記録 |
+
+### 3rd party スキル
+
+プロジェクトのリポジトリ側でインストールして使う。dotfilesでは管理しない。
+
+```bash
+# プロジェクトルートで実行
+npx skills add vercel-labs/agent-skills
+```
+
+ソース: [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)（vercel-composition-patterns / vercel-react-best-practices / web-design-guidelines）
 
 ---
 
@@ -52,6 +62,14 @@ claude/
 ### モデル
 
 `claude-sonnet-4-6`
+
+### showThinkingSummaries
+
+```json
+{ "showThinkingSummaries": true }
+```
+
+回答前の思考要約を表示する。「調査が不十分なまま編集に入っている」と感じたときに、どのファイルを読んだか・読んでいないかを確認できる。思考が浅いと判断したらタスクを中断して `/effort high` をかけ直す。
 
 ### 権限（permissions）
 
@@ -76,11 +94,37 @@ claude/
 
 | コマンド | 理由 |
 |---|---|
+| `Read/Edit/Write(.env*)` | `.env` ファイルの読み取り・編集（シークレット漏洩防止） |
 | `gh repo delete*` | リポジトリ削除 |
 | `gh secret set/delete/remove*` | シークレット書き込み・削除（`gh secret list` は許可） |
 | `gh api --method DELETE*` / `gh api -X DELETE*` | GitHub API 経由の DELETE |
 | `gh pr merge*` | PR マージ |
 | `npm/pnpm/yarn publish*` | パッケージ公開 |
+
+---
+
+## Rules（ファイルパターン別ルール）
+
+`claude/rules/` に置いたMarkdownファイルは、`paths:` frontmatterで指定したファイルパターンに一致する作業をするときだけ自動適用される。CLAUDE.mdに書くと常に読み込まれる内容を、関係するファイルを編集するときだけ有効にできる。
+
+```markdown
+---
+paths:
+  - "**/*.md"
+---
+
+ここに **/*.md ファイルを編集するときだけ適用したいルールを書く。
+```
+
+### 現在のルール一覧
+
+| ファイル | 対象 | 内容 |
+|---|---|---|
+| `rules/markdown.md` | `**/*.md` | Markdown 文書の記述ルール（見出し・強調・情報源の明記など） |
+
+### ルールを追加するとき
+
+CLAUDE.mdに書いていた指示のうち「特定のファイル種別を編集するときだけ必要」なものを `rules/` に移すとCLAUDE.mdの注意コストを下げられる。
 
 ---
 
@@ -264,55 +308,58 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 |---|---|
 | `PROTECTED_BRANCHES` | 直接編集・ローカルマージを禁止するブランチ（デフォルト: `main`, `release/*`, `production` 等） |
 | `WORK_RECORD_FILES` | コミット禁止の作業記録ファイル（`explore.md`, `plan.md`, `retrospective.md`） |
-| `WORK_RECORD_DIRS` | コミット禁止の作業記録ディレクトリ（配下のファイル全て禁止: `explore/`, `plan/`, `retrospective/`） |
+| `WORK_RECORD_DIRS` | コミット禁止の作業記録ディレクトリ（配下のファイルすべて禁止: `explore/`, `plan/`, `retrospective/`） |
 
 ---
 
 ## 設定の改善タイミング
 
-ハーネスエンジニアリングの原則「エージェントのミスごとにフィードバックを強化する」に基づき、以下のトリガーで改善を検討する。
+セッション中に気づいた改善点は `retrospective/YYYY-MM-DD.md` にK/Pとして記録する。
+振り返るときは `/retrospective` を呼ぶ。
 
-### トリガーと改善対象ファイルの対応
+### トリガーと対応ファイル
 
-#### エージェントが同じミスを繰り返す
-`hooks/pre-tool-use/` にdeny/askルールを追加する。
+#### 同じ deny / ask が複数回発生する
+`hooks/pre-tool-use/` にルールを追加する。
 
 | 例 | 対応 |
 |---|---|
 | 特定コマンドを無断実行する | `dangerous-guard.sh` / `bash-guard.sh` にパターン追加 |
 | 保護すべきファイルを直接編集する | `file-protect.sh` に対象パターン追加 |
-| 特定ブランチで直接作業する | `config.sh` の PROTECTED_BRANCHES に追加 |
+| 特定ブランチで直接作業する | `config.sh` の `PROTECTED_BRANCHES` に追加 |
+
+#### 同じ permission を何度も承認している
+`settings.json` のallowに昇格させる。  
+逆に「毎回askが出るが毎回許可している」場合も同様。
 
 #### よく使うワークフローが定型化してきた
 
+Q1: 毎回同じ手順で実行できるか？  
+→ YES: `skills/` に切り出す（`/スキル名` で呼び出す）  
+→ NO（状況で判断が変わる）: `agents/` に切り出す（`@エージェント名` で呼び出す）
+
+Q2: ユーザーが明示的に呼び出すか、自律的に動かすか？  
+→ 明示的: `skills/`  
+→ 自律的（サブタスク委譲）: `agents/`
+
+#### 特定の指示・判断基準を毎回伝えている
+
 | 条件 | 対応 |
 |---|---|
-| 手順が決まっていて毎回同じ操作をしている | `skills/` に切り出す（`/スキル名` で呼び出す） |
-| 調査内容・判断が状況によって変わる | `agents/` に切り出す（`@エージェント名` で呼び出す） |
+| すべての会話に共通する制約（短く書ける） | `CLAUDE.md` に追記 |
+| 手順が定まっていてスキルとして呼び出したい | `skills/` に切り出す |
+| 自律的に判断させたいタスク | `agents/` に切り出す |
 
-#### 特定のレビュー観点・判断基準を毎回伝えている
-
-| 条件 | 対応 |
-|---|---|
-| すべての会話に共通する制約・原則（短く書ける） | `CLAUDE.md` に追記 |
-| 手順が定まっていて `/スキル名` で呼び出したい | `skills/` に切り出す |
-| 調査・検証など自律的に判断させたいタスク | `agents/` に切り出す |
-
-`CLAUDE.md` は50行以下を維持する。
-詳細情報はskills/agentsに分離し、ユーザーが `/スキル名` または `@エージェント名` で明示的に呼び出したときだけ読み込まれる設計を保つ。
+`CLAUDE.md` は最小限に保つ（目安100行以内）。詳細は `skills/` / `agents/` に分離し、呼び出されたときだけ読み込まれる設計を維持する。
 
 #### 新しいツール・サービスを導入した
-`settings.json` のallow/deny + `hooks/session-start/session-start.sh` のツール検出する。
+`settings.json` のallow/denyにコマンドを追加し、`hooks/session-start/session-start.sh` に検出ロジックを追加する。
 
-#### フィードバックが遅い・チェックがCIのみになっている
-`hooks/post-tool-use/` に移す。
+#### フィードバックが遅い・チェックが CI のみになっている
+`hooks/post-tool-use/` に移す。編集後すぐに走るほど速いフィードバックが得られる。
 
-コード編集後に走る静的解析・リンターはPostToolUseフックに置くほど速いフィードバックが得られる。
-
-#### hookがうるさい・ノイズが多い
-該当hookの条件を絞る。
-
-「毎回askが出るが毎回許可している」ならそのルールを緩和するかallowに昇格させる。
+#### キーバインドを変えたい
+`keybindings.json` を編集する（`/keybindings-help` スキルを使う）。
 
 ---
 
@@ -320,12 +367,17 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 | ファイル | 更新するとき |
 |---|---|
-| `CLAUDE.md` | 行動原則・作業フローが変わったとき（50行以下を維持） |
-| `settings.json` | allow/denyの追加・hookの登録変更 |
+| `CLAUDE.md` | 行動原則・作業フローが変わったとき（目安100行以内） |
+| `rules/` | 特定ファイル種別の編集時だけ適用するルールを追加・変更するとき |
+| `memory/` | セッション横断で記憶すべき好みや知見が生まれたとき |
+| `settings.json` | allow/deny の追加・hook の登録変更・モデル変更 |
+| `settings.json#env` | Claude Code の環境変数を調整するとき |
+| `settings.json#enabledPlugins` | プラグインの有効/無効を変えるとき |
+| `keybindings.json` | キーバインドを変更・追加するとき |
 | `hooks/pre-tool-use/` | 「このミスを二度とさせない」とき |
 | `hooks/post-tool-use/` | 「編集後に自動で走らせたいチェック」が増えたとき |
 | `hooks/session-start/` | 検出すべきツールやコンテキストが変わったとき |
 | `hooks/config.sh` | 保護ブランチ・作業記録ファイルの構成が変わったとき |
 | `skills/` | 定型ワークフローを切り出すとき |
-| `agents/` | 特定の調査・検証タスクを自律化するとき |
+| `agents/` | 自律的な調査・検証タスクを切り出すとき |
 | `README.md` | 上記のいずれかを変更したとき（実態と乖離させない） |

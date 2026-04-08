@@ -18,7 +18,6 @@ SYMLINKS=(
   "claude/hooks:.claude/hooks"
   "claude/agents:.claude/agents"
   "claude/rules:.claude/rules"
-  "agents:.agents"
 )
 
 backup_and_link() {

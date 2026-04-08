@@ -84,8 +84,8 @@ lint対象はグロブで指定し、除外は `.textlintignore` で管理する
 `.textlintignore` はディレクトリを `/**` 形式で指定する（trailing `/` 形式は機能しない）。
 
 ```
-claude/skills/vercel-*/**
-claude/skills/web-design-guidelines/**
+# 例: 3rd party スキルを追加した場合
+# claude/skills/vercel-*/**
 ```
 
 ## 主要プリセット

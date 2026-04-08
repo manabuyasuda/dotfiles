@@ -118,7 +118,7 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+commit'; then
   # WORK_RECORD_FILES（特定ファイル）と WORK_RECORD_DIRS（ディレクトリ配下全て）を検出
   file_pattern=$(IFS='|'; echo "${WORK_RECORD_FILES[*]}" | sed 's/\./\\./g')
   dir_pattern=$(IFS='|'; echo "${WORK_RECORD_DIRS[*]}")
-  matched=$(echo "$STAGED" | grep -E "(^|/)($file_pattern)$|(^|/)($dir_pattern)/")
+  matched=$(echo "$STAGED" | grep -E "(^|/)($file_pattern)$|^($dir_pattern)/")
   if [ -n "$matched" ]; then
     restore_args=$(echo "$matched" | tr '\n' ' ')
     jq -n --arg msg "ERROR: 作業記録ファイルがステージされています。WHY: これらはセッション中の作業記録であり、コミット履歴に含めてはいけません。FIX: git restore --staged ${restore_args}を実行してから再度コミットしてください。" '{
