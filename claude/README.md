@@ -77,6 +77,20 @@ npx skills add vercel-labs/agent-skills -g -a claude-code
 
 `npx skills add` 実行後に `.skill-lock.json` が生成・更新される。このファイルをPRに含めることでレビュー時にスキルの追加・変更を把握できる。
 
+#### クローン後の初回セットアップ
+
+`.gitignore` でスキルファイルを管理対象外にしているプロジェクトでは、クローン後に2ステップで復元する。
+
+```bash
+# Step 1: skills-lock.json に記録されたスキルを .agents/skills/ に復元（npm ci 相当）
+npx skills experimental_install
+
+# Step 2: Claude Code 用に .agents/skills/ から .claude/skills/ へコピー
+cp -r .agents/skills/* .claude/skills/
+```
+
+> **既知の問題（v1.4.9 時点）**: `npx skills check` / `npx skills update` がロックファイルを検知できず「No skills tracked in lock file」と表示される場合がある。詳細は [skills-sh.md](skills-sh.md) の「既知の問題」を参照。
+
 利用可能なスキル一覧: [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)（react-best-practices / web-design-guidelines / composition-patterns 等）
 
 詳細は [skills-sh.md](skills-sh.md) を参照。
