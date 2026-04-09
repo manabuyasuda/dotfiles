@@ -72,6 +72,7 @@ npx skills add vercel-labs/agent-skills --skill react-best-practices -g -a claud
 | `npx skills update` | 全スキルを最新版に更新（`check`で確認後に実行するのが安全） |
 | `npx skills remove [skills]` | スキルを削除 |
 | `npx skills init [name]` | `SKILL.md`テンプレートを生成 |
+| `npx skills experimental_install` | `skills-lock.json` に記録されたスキルを `.agents/skills/` に復元する（`npm ci` 相当）。リポジトリクローン直後の初回セットアップで使用する |
 
 ## .skill-lock.json
 
@@ -79,51 +80,47 @@ npx skills add vercel-labs/agent-skills --skill react-best-practices -g -a claud
 Node.jsの`package-lock.json`と同様に、インストール済みスキルの情報をバージョン固定で記録する。
 このファイルをリポジトリにコミットすることで、チームメンバーが同一環境を再現できる。
 
-現行（v3）フォーマットのサンプル。`npx skills add`実行後に生成される実際のファイルはこの形式。
+v1.4.9で生成されるフォーマット（2026-04-09確認）。
 
 ```json
 {
-  "version": 3,
+  "version": 1,
   "skills": {
-    "react-best-practices": {
+    "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
-      "sourceUrl": "https://github.com/vercel-labs/agent-skills",
-      "skillFolderHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a",
-      "installedAt": "2026-04-08T00:00:00.000Z",
-      "updatedAt": "2026-04-08T00:00:00.000Z"
+      "computedHash": "575757e3e25761c8c562d6e395d29f0b76c98b1273c0bd72d88e6ab1bc9c7d42"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "43ca6c197f8ec13055079da7053232d477068b03ca443f9ac1bc819b95cdd432"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
     }
   }
 }
 ```
 
-v1/v2のロックファイル（`"version": 1`または`"version": 2`）がある場合、v3のCLIは自動的にリセットして再インストールを要求する。
-
-### ロックファイルのバージョン履歴
-
-| バージョン | ハッシュフィールド | 説明 |
-|---|---|---|
-| v1 | `computedHash` | 初期フォーマット |
-| v2 | `computedHash` | 中間フォーマット（v1 と同フィールド、内部構造が変更） |
-| v3（現行） | `skillFolderHash` | GitHub Trees API から取得したフォルダー全体の SHA。スキルフォルダー内の任意ファイルが変更されると値が変わる |
-
-v2 → v3の移行は後方互換性がなく、v3のCLIがv2以前のロックファイルを読み込んだ場合は自動的にリセットして再インストールを要求する。
-（出典: [vercel-labs/skills skill-lock.ts](https://github.com/vercel-labs/skills/blob/main/src/skill-lock.ts) のコードコメント "Bumped from 2 to 3 for folder hash support"）
-
-現行（v3）の`SkillLockEntry`の主なフィールドは以下のとおり。
-
-| フィールド | 型 | 説明 |
-|---|---|---|
-| `source` | `string` | 正規化されたソース識別子（例: `"owner/repo"`） |
-| `sourceType` | `string` | ソースの種別（`github` / `local`など） |
-| `sourceUrl` | `string` | インストール時に使用した元 URL |
-| `ref` | `string?` | インストールに使用したブランチ・タグ |
-| `skillPath` | `string?` | リポジトリ内のサブパス |
-| `skillFolderHash` | `string` | GitHub tree SHA（フォルダー全体のハッシュ） |
-| `installedAt` | `string` | 初回インストール日時（ISO 8601） |
-| `updatedAt` | `string` | 最終更新日時（ISO 8601） |
+`npx skills check` が「No skills tracked in lock file」と表示する既知問題の原因は未特定（2026-04-09時点）。
 
 グローバルロックファイルの保存先は`~/.agents/.skill-lock.json`（`$XDG_STATE_HOME`が設定されている場合は`$XDG_STATE_HOME/skills/.skill-lock.json`）。
+
+### 既知の問題（v1.4.9 時点）
+
+`npx skills check` を実行してもロックファイルが検知されず、以下のメッセージが表示される場合がある（2026-04-09 確認）。
+
+```
+Checking for skill updates...
+
+No skills tracked in lock file.
+Install skills with npx skills add <package>
+```
+
+この場合は `npx skills check` / `npx skills update` による更新確認はできないため、`npx skills add` で再インストールするか、v1.4.9 より新しいバージョンで修正されているかを確認する。
 
 ## 注目スキル
 
