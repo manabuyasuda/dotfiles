@@ -35,6 +35,12 @@ _deny() {
   exit 0
 }
 
+_ask() {
+  jq -n --arg msg "$1" \
+    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":$msg}}'
+  exit 0
+}
+
 # 環境変数・設定（秘密情報含む）
 if echo "$file" | grep -qE '(^|/)\.env$|(^|/)\.env\.|(^|/)\.npmrc$|(^|/)\.netrc$'; then
   _deny "ERROR: $file は環境変数・認証情報を含む機密ファイルです。直接編集すると秘密情報が漏洩または破損する可能性があります。エディタで手動編集してください。"
@@ -63,6 +69,11 @@ fi
 # lock files（Ruby / PHP / Go / Rust）
 if echo "$file" | grep -qE 'Gemfile\.lock$|composer\.lock$|go\.sum$|Cargo\.lock$'; then
   _deny "ERROR: $file は lock file です。直接編集すると依存関係の整合性が壊れます。各パッケージマネージャー経由で更新してください。"
+fi
+
+# Claude Code の hooks・settings（カナリア: 書き換えによるガード無効化を検知する）
+if echo "$file" | grep -qE '(^|/)\.?claude/hooks/|(^|/)\.?claude/settings\.json$'; then
+  _ask "CAUTION: $file を変更しようとしています。意図した変更であれば承認してください。※この確認が表示されずに変更が行われた場合はガードが無効化されている可能性があります。"
 fi
 
 # Terraform 状態・変数

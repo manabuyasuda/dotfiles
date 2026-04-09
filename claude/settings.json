@@ -7,7 +7,7 @@
       "Bash(gh repo view*)", "Bash(gh repo list*)",
       "Bash(gh api repos*)", "Bash(gh api notifications*)",
       "Bash(gh api graphql*)", "Bash(gh api user*)",
-      "Bash(gh search*)", "Bash(gh dash*)", "Bash(gh f*)", "Bash(gh s*)",
+      "Bash(gh search*)", "Bash(gh dash*)", "Bash(gh f)", "Bash(gh s)",
       "Bash(git log*)", "Bash(git status*)", "Bash(git stash list*)",
       "Bash(git branch --show-current*)", "Bash(git diff*)",
       "Bash(git show*)", "Bash(git remote*)",
@@ -32,12 +32,27 @@
     ],
     "deny": [
       "Read(.env*)", "Edit(.env*)", "Write(.env*)",
+      "Read(~/.ssh/*)", "Bash(cat ~/.ssh/*)",
+      "Read(~/.aws/*)", "Bash(cat ~/.aws/*)",
+      "Read(~/.gcloud/*)", "Bash(cat ~/.gcloud/*)",
+      "Read(~/.config/gcloud/*)", "Bash(cat ~/.config/gcloud/*)",
+      "Read(~/.azure/*)", "Bash(cat ~/.azure/*)",
+      "Read(~/.kube/config)", "Bash(cat ~/.kube/config)",
+      "Read(~/.docker/config.json)", "Bash(cat ~/.docker/config.json)",
+      "Read(~/.npmrc)", "Bash(cat ~/.npmrc)",
+      "Read(~/.netrc)", "Bash(cat ~/.netrc)",
+      "Read(~/.config/gh/*)", "Bash(cat ~/.config/gh/*)",
+      "Bash(security find-generic-password*)",
       "Bash(gh repo delete*)",
       "Bash(gh secret set*)", "Bash(gh secret delete*)", "Bash(gh secret remove*)",
       "Bash(gh api --method DELETE*)", "Bash(gh api -X DELETE*)",
-
-      "Bash(npm publish*)", "Bash(pnpm publish*)", "Bash(yarn publish*)"
-    ]
+      "Bash(npm publish*)", "Bash(pnpm publish*)", "Bash(yarn publish*)", "Bash(bun publish*)",
+      "Bash(op item edit*)", "Bash(bw item edit*)",
+      "Bash(aws secretsmanager put-secret-value*)", "Bash(gcloud secrets versions add*)", "Bash(vault kv put*)",
+      "Bash(doppler secrets set*)", "Bash(infisical secrets set*)",
+      "Bash(vercel env add*)", "Bash(netlify env:set*)", "Bash(firebase functions:config:set*)", "Bash(supabase secrets set*)"
+    ],
+    "disableBypassPermissionsMode": "disable"
   },
   "showThinkingSummaries": true,
   "model": "claude-sonnet-4-6",
