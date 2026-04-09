@@ -21,6 +21,7 @@
 # 7. git reset --hard はユーザー確認を取る
 # 8. gh pr merge はユーザー確認を取る
 # 9. gh issue close はユーザー確認を取る
+# 10. gh api 書き込みメソッド（POST/PUT/PATCH/DELETE, -f）はユーザー確認を取る
 #
 # 注: rm -rf / shred / xargs rm / find -delete 等は pre-tool-use/dangerous-guard.sh で拒否済み。
 #     並列実行のため、dangerous-guard.sh の拒否がこちらの確認より優先される。
@@ -34,8 +35,9 @@ INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 DESCRIPTION=$(echo "$INPUT" | jq -r '.tool_input.description // ""')
 
-# --- 1. description が空ならブロック ---
-if [ -z "$DESCRIPTION" ]; then
+# --- 1. description が空（空白のみを含む）ならブロック ---
+DESCRIPTION_TRIMMED="${DESCRIPTION//[[:space:]]/}"
+if [ -z "$DESCRIPTION_TRIMMED" ]; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -189,6 +191,19 @@ if echo "$COMMAND" | grep -qE 'gh[[:space:]]+issue[[:space:]]+close'; then
       hookEventName: "PreToolUse",
       permissionDecision: "ask",
       permissionDecisionReason: "gh issue close を実行しようとしています。issueをクローズします。実行してよいか確認してください。"
+    }
+  }'
+  exit 0
+fi
+
+# --- 10. gh api 書き込みメソッド → ask ---
+if echo "$COMMAND" | grep -qE 'gh[[:space:]]+api' && \
+   echo "$COMMAND" | grep -qE -- '--method[[:space:]]+(POST|PUT|PATCH|DELETE)|-X[[:space:]]+(POST|PUT|PATCH|DELETE)|--field[[:space:]]|-f[[:space:]]'; then
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "ask",
+      permissionDecisionReason: "gh api で書き込みリクエスト（POST/PUT/PATCH/DELETE）を送ろうとしています。意図した操作か確認してください。"
     }
   }'
   exit 0
