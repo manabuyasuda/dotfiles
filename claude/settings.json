@@ -31,7 +31,9 @@
       "Bash(redocly split*)", "Bash(redocly check-config*)", "Bash(redocly build-docs*)"
     ],
     "deny": [
-      "Read(.env*)", "Edit(.env*)", "Write(.env*)",
+      "Glob(**/.env*)",
+      "Read(**/.env*)", "Edit(**/.env*)", "Write(**/.env*)",
+      "Bash(cat **/.env*)",
       "Read(~/.ssh/*)", "Bash(cat ~/.ssh/*)",
       "Read(~/.aws/*)", "Bash(cat ~/.aws/*)",
       "Read(~/.gcloud/*)", "Bash(cat ~/.gcloud/*)",
@@ -56,6 +58,7 @@
   },
   "showThinkingSummaries": true,
   "model": "claude-sonnet-4-6",
+  "effortLevel": "high",
   "hooks": {
     "SessionStart": [
       {
