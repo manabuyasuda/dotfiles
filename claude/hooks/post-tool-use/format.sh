@@ -19,7 +19,7 @@
 # 出力（Claude Code の feedback 機能）:
 #   成功: {"feedback": "Formatting applied.", "suppressOutput": true}
 #         suppressOutput: true でエージェントの出力に表示しない
-#   失敗: {"feedback": "Formatting failed..."} を stderr に出力
+#   失敗: {"feedback": "Formatting failed..."} を stdout に出力
 #         exit 1 でエージェントに構文エラーを修正させる
 #
 # 入力 : $CLAUDE_TOOL_INPUT_FILE_PATH（編集されたファイルのパス）
@@ -38,21 +38,30 @@ if [[ "$file" =~ \.(js|jsx|ts|tsx)$ ]]; then
     npx prettier --write "$file" 2>&1
   fi
   if [ $? -ne 0 ]; then
-    echo '{"feedback": "Formatting failed. Check file for syntax errors."}' >&2
+    echo '{"feedback": "Formatting failed. Check file for syntax errors."}'
     exit 1
   fi
   echo '{"feedback": "Formatting applied.", "suppressOutput": true}'
 elif [[ "$file" =~ \.md$ ]]; then
-  if [ -x "node_modules/.bin/textlint" ]; then
-    textlint_cmd="node_modules/.bin/textlint"
-  elif command -v textlint &>/dev/null; then
-    textlint_cmd="textlint"
-  fi
+  # ファイルのディレクトリから上に向かって node_modules/.bin/textlint を探す
+  textlint_cmd=""
+  search_dir="$(dirname "$file")"
+  while [ "$search_dir" != "/" ]; do
+    if [ -x "$search_dir/node_modules/.bin/textlint" ]; then
+      textlint_cmd="$search_dir/node_modules/.bin/textlint"
+      textlint_cwd="$search_dir"
+      break
+    fi
+    search_dir="$(dirname "$search_dir")"
+  done
   if [ -n "$textlint_cmd" ]; then
-    output=$($textlint_cmd --fix "$file" 2>&1)
+    # --fix を適用後、再チェックで残存エラーを検出（--fix は残存エラーがあっても exit 0 するため）
+    cd "$textlint_cwd" && $textlint_cmd --fix "$file" > /dev/null 2>&1
+    remaining=$(cd "$textlint_cwd" && $textlint_cmd "$file" 2>&1)
     if [ $? -ne 0 ]; then
-      echo '{"feedback": "textlint: some issues could not be auto-fixed."}' >&2
-      echo "$output" >&2
+      feedback=$(printf '%s' "$remaining" | python3 -c "import json,sys; print(json.dumps({'feedback': 'textlint: 自動修正できないエラーがあります。修正してください。\n' + sys.stdin.read()}))")
+      echo "$feedback"
+      exit 1
     else
       echo '{"feedback": "textlint: auto-fix applied.", "suppressOutput": true}'
     fi
