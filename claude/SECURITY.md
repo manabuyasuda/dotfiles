@@ -296,7 +296,8 @@ allowを追加するときは、そのパターンが想定外のサブコマン
 
 | コマンド | 理由 |
 |---|---|
-| `Read/Edit/Write(.env*)` | `.env`には秘密情報が含まれる。読み取りも拒否してインジェクション経由の漏洩を防ぐ |
+| `Glob(**/.env*)` / `Read(**/.env*)` / `Edit(**/.env*)` / `Write(**/.env*)` | `.env`には秘密情報が含まれる。読み取りも拒否してインジェクション経由の漏洩を防ぐ。`**/`パターンでサブディレクトリ（モノレポの`apps/web/.env`等）もカバー。`Glob`を禁止しないとファイルの存在自体が漏れる |
+| `Bash(cat **/.env*)` | BashサブプロセスはRead denyの対象外のため個別にブロックが必要（[§permissions.deny の注意点](#permissionsdeny-の注意点)参照）|
 | `Read(~/.ssh/*)` / `Bash(cat ~/.ssh/*)` | SSH 秘密鍵へのアクセス。インジェクション成功時の窃取経路を断つ |
 | `Read(~/.aws/*)` / `Bash(cat ~/.aws/*)` | AWS クレデンシャルへのアクセス |
 | `Read(~/.gcloud/*)` / `Read(~/.config/gcloud/*)` | Google Cloud認証情報・サービスアカウントキー |
@@ -360,7 +361,9 @@ allowを追加するときは、そのパターンが想定外のサブコマン
       "Bash(git branch --show-current*)"
     ],
     "deny": [
-      "Read(.env*)", "Edit(.env*)", "Write(.env*)",
+      "Glob(**/.env*)",
+      "Read(**/.env*)", "Edit(**/.env*)", "Write(**/.env*)",
+      "Bash(cat **/.env*)",
       "Read(~/.ssh/*)", "Bash(cat ~/.ssh/*)",
       "Read(~/.aws/*)", "Bash(cat ~/.aws/*)",
       "Read(~/.gcloud/*)", "Bash(cat ~/.gcloud/*)",
@@ -391,7 +394,8 @@ allow
 
 deny
 
-- `Read/Edit/Write(.env*)` — `.env`には秘密情報が含まれる。ReadもdenyしてPRコメント経由の漏洩を防ぐ（[§7 データ持ち出し](#7-データ持ち出しexfiltration)参照）
+- `Glob(**/.env*)` / `Read(**/.env*)` / `Edit(**/.env*)` / `Write(**/.env*)` — `.env`には秘密情報が含まれる。ReadもdenyしてPRコメント経由の漏洩を防ぐ（[§7 データ持ち出し](#7-データ持ち出しexfiltration)参照）。`**/`パターンでサブディレクトリもカバー。`Glob`禁止でファイルの存在自体の漏洩も防ぐ
+- `Bash(cat **/.env*)` — BashサブプロセスはRead denyの対象外のため個別にブロック
 - `Read(~/.ssh/*)` / `Bash(cat ~/.ssh/*)` — SSHキー。読む正当な理由がない。hooksが破られても守られるべきためpermissions denyに置く
 - `Read(~/.aws/*)` — AWSクレデンシャル。同上
 - `Read(~/.gcloud/*)` / `Read(~/.config/gcloud/*)` — Google Cloud認証情報・サービスアカウントキー。同上
