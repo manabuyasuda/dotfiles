@@ -40,9 +40,9 @@ if [[ "$file" =~ \.(js|jsx|ts|tsx)$ ]]; then
     node_modules/.bin/biome check --write "$file" 2>&1
   elif [ "$fmt" = "oxfmt" ]; then
     if [ -x "node_modules/.bin/oxfmt" ]; then
-      node_modules/.bin/oxfmt "$file" 2>&1
+      node_modules/.bin/oxfmt --write "$file" 2>&1
     else
-      oxfmt "$file" 2>&1
+      oxfmt --write "$file" 2>&1
     fi
   else
     npx prettier --write "$file" 2>&1
