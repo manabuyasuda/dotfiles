@@ -77,6 +77,9 @@ fi
 if [ -n "$(_find_tool biome)" ]; then
   echo "Formatter: biome ($(_find_tool biome))"
   _env "export FORMATTER=biome"
+elif [ -n "$(_find_tool oxfmt)" ]; then
+  echo "Formatter: oxfmt ($(_find_tool oxfmt))"
+  _env "export FORMATTER=oxfmt"
 elif [ -n "$(_find_tool prettier)" ]; then
   echo "Formatter: prettier ($(_find_tool prettier))"
   _env "export FORMATTER=prettier"
@@ -89,6 +92,9 @@ fi
 if [ -n "$(_find_tool biome)" ]; then
   echo "Linter: biome ($(_find_tool biome))"
   _env "export LINTER=biome"
+elif [ -n "$(_find_tool oxlint)" ]; then
+  echo "Linter: oxlint ($(_find_tool oxlint))"
+  _env "export LINTER=oxlint"
 elif [ -n "$(_find_tool eslint)" ]; then
   echo "Linter: eslint ($(_find_tool eslint))"
   _env "export LINTER=eslint"

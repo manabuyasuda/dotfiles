@@ -7,14 +7,15 @@
 #          エージェントがフォーマット漏れのまま次の作業へ進むことを防ぐ。
 #
 # 対象ファイル:
-#   *.js / *.jsx / *.ts / *.tsx → biome または prettier でフォーマット
+#   *.js / *.jsx / *.ts / *.tsx → biome / oxfmt / prettier でフォーマット
 #   *.md                        → textlint で自動修正（textlint がある場合のみ）
 #   それ以外                    → 何もしない（exit 0 で通過）
 #
 # フォーマッター解決の優先順位:
 #   1. $FORMATTER（session-start.sh が $CLAUDE_ENV_FILE に保存した値）
 #   2. node_modules/.bin/biome（ローカルインストールを確認）
-#   3. prettier（グローバルフォールバック）
+#   3. node_modules/.bin/oxfmt / oxfmt（ローカル → グローバル）
+#   4. prettier（グローバルフォールバック）
 #
 # 出力（Claude Code の feedback 機能）:
 #   成功: {"feedback": "Formatting applied.", "suppressOutput": true}
@@ -30,10 +31,19 @@ file="$CLAUDE_TOOL_INPUT_FILE_PATH"
 if [[ "$file" =~ \.(js|jsx|ts|tsx)$ ]]; then
   fmt="${FORMATTER:-}"
   if [ -z "$fmt" ]; then
-    [ -x "node_modules/.bin/biome" ] && fmt="biome" || fmt="prettier"
+    if [ -x "node_modules/.bin/biome" ]; then fmt="biome"
+    elif [ -x "node_modules/.bin/oxfmt" ] || command -v oxfmt &>/dev/null; then fmt="oxfmt"
+    else fmt="prettier"
+    fi
   fi
   if [ "$fmt" = "biome" ]; then
     node_modules/.bin/biome check --write "$file" 2>&1
+  elif [ "$fmt" = "oxfmt" ]; then
+    if [ -x "node_modules/.bin/oxfmt" ]; then
+      node_modules/.bin/oxfmt "$file" 2>&1
+    else
+      oxfmt "$file" 2>&1
+    fi
   else
     npx prettier --write "$file" 2>&1
   fi
