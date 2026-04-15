@@ -8,7 +8,11 @@
 #
 # 対象ファイル:
 #   *.js / *.jsx / *.ts / *.tsx → biome / oxfmt / prettier でフォーマット
-#   *.md                        → textlint で自動修正（textlint がある場合のみ）
+#   *.md                        → writing-review スキル + textlint で文章品質改善
+#                                  1. textlint --fix で自動修正
+#                                  2. writing-review スキル実行を feedback で指示
+#                                     （textlint 残存エラーも合わせて渡す）
+#                                  3. スキルが変更なしと判断したら自然終了
 #   それ以外                    → 何もしない（exit 0 で通過）
 #
 # フォーマッター解決の優先順位:
@@ -55,6 +59,7 @@ if [[ "$file" =~ \.(js|jsx|ts|tsx)$ ]]; then
 elif [[ "$file" =~ \.md$ ]]; then
   # ファイルのディレクトリから上に向かって node_modules/.bin/textlint を探す
   textlint_cmd=""
+  textlint_cwd=""
   search_dir="$(dirname "$file")"
   while [ "$search_dir" != "/" ]; do
     if [ -x "$search_dir/node_modules/.bin/textlint" ]; then
@@ -64,16 +69,22 @@ elif [[ "$file" =~ \.md$ ]]; then
     fi
     search_dir="$(dirname "$search_dir")"
   done
+
+  # textlint --fix を適用後、残存エラーを収集
+  textlint_remaining=""
   if [ -n "$textlint_cmd" ]; then
-    # --fix を適用後、再チェックで残存エラーを検出（--fix は残存エラーがあっても exit 0 するため）
     cd "$textlint_cwd" && $textlint_cmd --fix "$file" > /dev/null 2>&1
-    remaining=$(cd "$textlint_cwd" && $textlint_cmd "$file" 2>&1)
-    if [ $? -ne 0 ]; then
-      feedback=$(printf '%s' "$remaining" | python3 -c "import json,sys; print(json.dumps({'feedback': 'textlint: 自動修正できないエラーがあります。修正してください。\n' + sys.stdin.read()}))")
-      echo "$feedback"
-      exit 1
-    else
-      echo '{"feedback": "textlint: auto-fix applied.", "suppressOutput": true}'
-    fi
+    remaining_output=$(cd "$textlint_cwd" && $textlint_cmd "$file" 2>&1)
+    [ $? -ne 0 ] && textlint_remaining="$remaining_output"
   fi
+
+  # writing-review スキル実行を指示
+  if [ -n "$textlint_remaining" ]; then
+    msg="ERROR: textlint エラーが残っています。\nWHY:   textlint --fix で自動修正できない違反が残っています。\nFIX:   /writing-review スキルをこのファイルに適用してください。\n       ファイル: ${file}\n\n       textlint 残存エラー:\n${textlint_remaining}"
+  else
+    msg="ERROR: 文章品質の確認が必要です。\nWHY:   writing-review スキルのルールへの適合を確認します。\nFIX:   /writing-review スキルをこのファイルに適用してください。\n       ファイル: ${file}"
+  fi
+  feedback=$(printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'feedback': sys.stdin.read()}))")
+  echo "$feedback"
+  exit 1
 fi
