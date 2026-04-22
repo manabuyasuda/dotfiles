@@ -78,11 +78,23 @@ elif [[ "$file" =~ \.md$ ]]; then
     [ $? -ne 0 ] && textlint_remaining="$remaining_output"
   fi
 
+  # git diff で変更箇所を取得（レビュー範囲を変更行に絞るため）
+  git_diff_section=""
+  if git -C "$(dirname "$file")" rev-parse --git-dir &>/dev/null 2>&1; then
+    diff_output=$(git diff "$file" 2>/dev/null)
+    if [ -n "$diff_output" ]; then
+      git_diff_section="
+
+       変更差分:
+${diff_output}"
+    fi
+  fi
+
   # writing-review スキル実行を指示
   if [ -n "$textlint_remaining" ]; then
-    msg="ERROR: textlint エラーが残っています。\nWHY:   textlint --fix で自動修正できない違反が残っています。\nFIX:   /writing-review スキルをこのファイルに適用してください。\n       ファイル: ${file}\n\n       textlint 残存エラー:\n${textlint_remaining}"
+    msg="ERROR: textlint エラーが残っています。\nWHY:   textlint --fix で自動修正できない違反が残っています。\nFIX:   /writing-review スキルをこのファイルに適用してください。\n       ファイル: ${file}\n\n       textlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
   else
-    msg="ERROR: 文章品質の確認が必要です。\nWHY:   writing-review スキルのルールへの適合を確認します。\nFIX:   /writing-review スキルをこのファイルに適用してください。\n       ファイル: ${file}"
+    msg="ERROR: 文章品質の確認が必要です。\nWHY:   writing-review スキルのルールへの適合を確認します。\nFIX:   /writing-review スキルをこのファイルに適用してください。\n       ファイル: ${file}${git_diff_section}"
   fi
   feedback=$(printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'feedback': sys.stdin.read()}))")
   echo "$feedback"
