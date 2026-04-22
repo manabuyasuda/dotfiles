@@ -12,3 +12,5 @@
 	email = 19850318m.yasuda@gmail.com
 [commit]
 	template = ~/.stCommitMsg
+[merge]
+	conflictstyle = diff3
