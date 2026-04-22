@@ -1,6 +1,7 @@
 # グローバル指示
 
 - YOU MUST: 日本語で応答する
+- YOU MUST: PostToolUse hookが `exit 1` を返した場合、ユーザーへの返答前に必ずfeedbackの指示に従う
 - YOU MUST: 思い込みをせず事実を根拠に、明確な根拠を示して説明する
 - IMPORTANT: コミットはプロジェクトの規約（commitlintや.gitmessage、AIエージェントのコミットSkills）に従う
   - 規約がない場合はConventional Commitsを使う
