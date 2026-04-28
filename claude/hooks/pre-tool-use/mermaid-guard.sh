@@ -1,6 +1,7 @@
 #!/bin/bash
 # mermaid-guard/pre.sh - Write/Edit PreToolUse hook
-# .md ファイルへの書き込み前に \n リテラルを検出してブロックする
+# .md ファイルへの書き込み前に Mermaid ブロック内の \n リテラルを検出してブロックする
+# ```mermaid ... ``` の範囲のみを検査し、bash 等の他コードブロックは対象外とする
 
 INPUT=$(cat)
 TOOL_NAME=$(jq -r '.tool_name // ""' <<< "$INPUT")
@@ -16,7 +17,10 @@ else
   exit 0
 fi
 
-if echo "$CONTENT" | grep -qF '\n'; then
+# ```mermaid ... ``` ブロック内の行のみを抽出して検査する
+MERMAID_CONTENT=$(echo "$CONTENT" | awk '/^```mermaid/{found=1; next} /^```/{found=0} found{print}')
+
+if echo "$MERMAID_CONTENT" | grep -qF '\n'; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
