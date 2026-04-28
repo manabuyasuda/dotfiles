@@ -1,7 +1,4 @@
 {
-  "env": {
-    "CLAUDE_CODE_NO_FLICKER": "1"
-  },
   "permissions": {
     "allow": [
       "Bash(gh pr list*)",
@@ -194,6 +191,11 @@
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/pre-tool-use/dangerous-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-use/push-to-main-guard.sh",
             "timeout": 5
           }
         ]

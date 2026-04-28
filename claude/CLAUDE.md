@@ -18,7 +18,7 @@
 
 ## 使用可能なCLIツール
 
-各ツールの詳細は `~/Documents/MY/dotfiles/docs/tools/` を参照する。
+各ツールの詳細は `~/MY/dotfiles/docs/tools/` を参照する。
 
 ### GitHub / Git
 - `gh`: PR作成・issue操作・通知確認などのGitHub操作全般

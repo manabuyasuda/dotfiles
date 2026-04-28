@@ -106,9 +106,9 @@ dotfiles/
    mkdir -p ~/Documents/MY ~/Documents/PROJECT ~/Documents/Screenshot
 
    # dotfilesをクローンしてパッケージをインストールする（SSH設定前のためHTTPSを使用）
-   git clone https://github.com/manabuyasuda/dotfiles ~/Documents/MY/dotfiles
-   brew bundle install --file=~/Documents/MY/dotfiles/Brewfile --verbose
-   cd ~/Documents/MY/dotfiles && ./setup.sh && npm ci
+   git clone https://github.com/manabuyasuda/dotfiles ~/MY/dotfiles
+   brew bundle install --file=~/MY/dotfiles/Brewfile --verbose
+   cd ~/MY/dotfiles && ./setup.sh && npm ci
    ```
 
    `brew bundle install` が完了すると以下のように表示される:
@@ -123,7 +123,7 @@ dotfiles/
 
    ```bash
    rm -f ~/Library/Caches/Homebrew/downloads/*AnkerWork*.incomplete
-   brew bundle install --file=~/Documents/MY/dotfiles/Brewfile --verbose
+   brew bundle install --file=~/MY/dotfiles/Brewfile --verbose
    ```
 
    `setup.sh` は以下を実行する。何度実行しても安全（冪等）。
@@ -194,14 +194,14 @@ dotfiles/
    **SSHが使えるようになったので、dotfilesのリモートURLをSSHに変更し、個人リポジトリをクローンする:**
 
    ```bash
-   git -C ~/Documents/MY/dotfiles remote set-url origin git@my.github.com:manabuyasuda/dotfiles.git
-   git clone git@my.github.com:manabuyasuda/manabuyasuda ~/Documents/MY/manabuyasuda
+   git -C ~/MY/dotfiles remote set-url origin git@my.github.com:manabuyasuda/dotfiles.git
+   git clone git@my.github.com:manabuyasuda/manabuyasuda ~/MY/manabuyasuda
    ```
 
    **案件リポジトリをクローンする場合:**
 
    ```bash
-   git clone git@<prefix>.github.com:<org-or-user>/<repo>.git ~/Documents/PROJECT/<repo>
+   git clone git@<prefix>.github.com:<org-or-user>/<repo>.git ~/PROJECT/<repo>
    ```
 
 9. anyenvとnodenvをインストールする
@@ -231,7 +231,7 @@ dotfiles/
    iTerm2（インストール済み）を開いて以下を実行する:
 
    ```bash
-   code ~/Documents/MY/dotfiles
+   code ~/MY/dotfiles
    claude
    ```
 
@@ -261,7 +261,7 @@ dotfiles/
 12. `macos.sh` を実行してシステム設定を一括適用する
 
     ```bash
-    ~/Documents/MY/dotfiles/macos.sh
+    ~/MY/dotfiles/macos.sh
     ```
 
     以下は手動で設定する:
@@ -305,7 +305,7 @@ dotfiles/
 シンボリックリンク経由なので、`~/.zshrc` などを直接編集すればリポジトリ内のファイルが更新される。
 
 ```bash
-cd ~/Documents/MY/dotfiles
+cd ~/MY/dotfiles
 git diff
 git add -A && git commit -m "chore: 変更内容"
 ```
@@ -313,7 +313,7 @@ git add -A && git commit -m "chore: 変更内容"
 ### Brewfile を更新する場合
 
 ```bash
-brew bundle dump --file=~/Documents/MY/dotfiles/Brewfile --force
+brew bundle dump --file=~/MY/dotfiles/Brewfile --force
 ```
 
 ### Claude Code の設定を追加する場合
