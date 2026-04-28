@@ -35,6 +35,10 @@ INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 DESCRIPTION=$(echo "$INPUT" | jq -r '.tool_input.description // ""')
 
+# 引用符内の文字列を除去してパターンマッチングの誤検知を防ぐ
+# （例: grep "git push" が git push コマンドとして誤検知されることを防ぐ）
+COMMAND_UNQUOTED=$(echo "$COMMAND" | sed 's/"[^"]*"//g; s/'"'"'[^'"'"']*'"'"'//g')
+
 # --- 1. description が空（空白のみを含む）ならブロック ---
 DESCRIPTION_TRIMMED="${DESCRIPTION//[[:space:]]/}"
 if [ -z "$DESCRIPTION_TRIMMED" ]; then
@@ -61,7 +65,7 @@ if printf '%s' "$COMMAND" | grep -qP '\\\n'; then
 fi
 
 # --- 3. 単体ファイル削除 → ユーザー承認（rm -r/-rf / shred / xargs / find 系は dangerous-guard.sh で deny）---
-if echo "$COMMAND" | grep -qE '(^|[|;&])[[:space:]]*(sudo[[:space:]]+)?(rm|unlink|truncate)([[:space:]]|$)'; then
+if echo "$COMMAND_UNQUOTED" | grep -qE '(^|[|;&])[[:space:]]*(sudo[[:space:]]+)?(rm|unlink|truncate)([[:space:]]|$)'; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -73,8 +77,8 @@ if echo "$COMMAND" | grep -qE '(^|[|;&])[[:space:]]*(sudo[[:space:]]+)?(rm|unlin
 fi
 
 # --- 4. git push: --force-with-lease を先に検出（--force への誤マッチを防ぐ）---
-if echo "$COMMAND" | grep -qE 'git[[:space:]]+push'; then
-  if echo "$COMMAND" | grep -qE -- '--force-with-lease'; then
+if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+push'; then
+  if echo "$COMMAND_UNQUOTED" | grep -qE -- '--force-with-lease'; then
     jq -n '{
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
@@ -84,7 +88,7 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+push'; then
     }'
     exit 0
   fi
-  if echo "$COMMAND" | grep -qE -- '--force|-f[[:space:]]|[[:space:]]-f$'; then
+  if echo "$COMMAND_UNQUOTED" | grep -qE -- '--force|-f[[:space:]]|[[:space:]]-f$'; then
     jq -n '{
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
@@ -105,8 +109,8 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+push'; then
 fi
 
 # --- 5. git commit: --amend → ask / 禁止ファイル → deny / 通常 → ask ---
-if echo "$COMMAND" | grep -qE 'git[[:space:]]+commit'; then
-  if echo "$COMMAND" | grep -qE -- '--amend'; then
+if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+commit'; then
+  if echo "$COMMAND_UNQUOTED" | grep -qE -- '--amend'; then
     jq -n '{
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
@@ -143,7 +147,7 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+commit'; then
 fi
 
 # --- 6. git merge on 保護ブランチ → deny ---
-if echo "$COMMAND" | grep -qE 'git[[:space:]]+merge'; then
+if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+merge'; then
   CURRENT_BRANCH=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" branch --show-current 2>/dev/null || echo "")
   for pattern in "${PROTECTED_BRANCHES[@]}"; do
     # shellcheck disable=SC2053
@@ -161,7 +165,7 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+merge'; then
 fi
 
 # --- 7. git reset --hard → ask ---
-if echo "$COMMAND" | grep -qE 'git[[:space:]]+reset[[:space:]]+--hard'; then
+if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+reset[[:space:]]+--hard'; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -173,7 +177,7 @@ if echo "$COMMAND" | grep -qE 'git[[:space:]]+reset[[:space:]]+--hard'; then
 fi
 
 # --- 8. gh pr merge → ask ---
-if echo "$COMMAND" | grep -qE 'gh[[:space:]]+pr[[:space:]]+merge'; then
+if echo "$COMMAND_UNQUOTED" | grep -qE 'gh[[:space:]]+pr[[:space:]]+merge'; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -185,7 +189,7 @@ if echo "$COMMAND" | grep -qE 'gh[[:space:]]+pr[[:space:]]+merge'; then
 fi
 
 # --- 9. gh issue close → ask ---
-if echo "$COMMAND" | grep -qE 'gh[[:space:]]+issue[[:space:]]+close'; then
+if echo "$COMMAND_UNQUOTED" | grep -qE 'gh[[:space:]]+issue[[:space:]]+close'; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -197,8 +201,8 @@ if echo "$COMMAND" | grep -qE 'gh[[:space:]]+issue[[:space:]]+close'; then
 fi
 
 # --- 10. gh api 書き込みメソッド → ask ---
-if echo "$COMMAND" | grep -qE 'gh[[:space:]]+api' && \
-   echo "$COMMAND" | grep -qE -- '--method[[:space:]]+(POST|PUT|PATCH|DELETE)|-X[[:space:]]+(POST|PUT|PATCH|DELETE)|--field[[:space:]]|-f[[:space:]]'; then
+if echo "$COMMAND_UNQUOTED" | grep -qE 'gh[[:space:]]+api' && \
+   echo "$COMMAND_UNQUOTED" | grep -qE -- '--method[[:space:]]+(POST|PUT|PATCH|DELETE)|-X[[:space:]]+(POST|PUT|PATCH|DELETE)|--field[[:space:]]|-f[[:space:]]'; then
   jq -n '{
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
