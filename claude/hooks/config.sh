@@ -2,12 +2,13 @@
 # =============================================================================
 # config.sh — 保護ブランチ定義（共有設定）
 # =============================================================================
-# 用途   : pre-tool-use/branch-guard.sh と pre-tool-use/bash-guard.sh が
+# 用途   : pre-tool-use/branch-guard.sh・bash-guard.sh・push-to-main-guard.sh が
 #          `source` して使う共有設定。
-#          PROTECTED_BRANCHES 配列を一元管理し、2ファイルで定義を重複させない。
+#          PROTECTED_BRANCHES 配列を一元管理し、各ファイルで定義を重複させない。
 # 実行権限: 不要（source されるだけで直接実行しない）
 # 参照元 : pre-tool-use/branch-guard.sh（Edit/Write の保護ブランチチェック）
 #          pre-tool-use/bash-guard.sh（git merge の保護ブランチチェック）
+#          pre-tool-use/push-to-main-guard.sh（git push の保護ブランチチェック）
 #
 # パターン仕様:
 #   bash の [[ == ]] 演算子による glob マッチを使用する。
