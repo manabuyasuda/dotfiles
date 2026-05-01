@@ -25,7 +25,7 @@ if echo "$MERMAID_CONTENT" | grep -qF '\n'; then
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "deny",
-      permissionDecisionReason: "Mermaid ラベル内に \\n が含まれています。\\n は使用禁止です。ラベルを短くするか、ノードを分割してください。"
+      permissionDecisionReason: "ERROR: Mermaid ラベル内に \\n が含まれています。WHY: \\n はレンダリングエラーの原因になります。FIX: ラベルを短くするか、ノードを分割してください。"
     }
   }'
   exit 2

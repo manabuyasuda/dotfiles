@@ -24,7 +24,7 @@ echo "$cmd" | grep -qE 'git[[:space:]]+push' || exit 0
 
 _deny() {
   jq -n \
-    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"ERROR: 保護ブランチへの直接 push は禁止されています。WHY: レビュープロセスを迂回するためです。FIX: フィーチャーブランチから Pull Request を作成してください。"}}'
+    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"ERROR: 保護ブランチへの直接 push は禁止されています。WHY: レビューなしに変更が保護ブランチへ反映されるリスクがあります。FIX: フィーチャーブランチから Pull Request を作成してください。"}}'
   exit 0
 }
 

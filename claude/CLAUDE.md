@@ -5,6 +5,18 @@
 - IMPORTANT: コミットはプロジェクトの規約（commitlintや.gitmessage、AIエージェントのコミットSkills）に従う
   - 規約がない場合はConventional Commitsを使う
 
+## Bash description 規則
+
+Bash ツールの description には、コマンドのリスク階層に応じた必須項目を含める。
+
+| 階層 | 対象コマンド例 | 必須項目 |
+|------|--------------|---------|
+| READ | ls / cat / grep / git status | なし |
+| WRITE | mkdir / mv / sed -i | `目的:` + `影響:` |
+| INSTALL | npm install / pip install / brew install | `目的:` + `影響:` + `許可:` + `拒否:` |
+| NETWORK_WRITE | git push / gh pr merge / git commit | `目的:` + `影響:` + `許可:` + `拒否:` |
+| DESTRUCTIVE | rm / git reset --hard / git push --force | `目的:` + `影響:` + `許可:` + `拒否:` |
+
 ## 作業記録ディレクトリ
 
 プロジェクトルートに作成する（bash-guard.shによりコミットを禁止されている）。

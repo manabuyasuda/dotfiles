@@ -197,6 +197,11 @@
             "type": "command",
             "command": "$HOME/.claude/hooks/pre-tool-use/push-to-main-guard.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-use/check-gh-account.sh",
+            "timeout": 5
           }
         ]
       }

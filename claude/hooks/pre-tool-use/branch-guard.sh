@@ -31,7 +31,7 @@ fi
 for pattern in "${PROTECTED_BRANCHES[@]}"; do
   # shellcheck disable=SC2053
   if [[ "$current_branch" == $pattern ]]; then
-    echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"ERROR: ブランチ '$current_branch' は保護ブランチです。直接編集できません。WHY: 保護ブランチへの直接コミットを防ぎ、レビューを必須化するためです。FIX: git checkout -b feature/your-branch-name でフィーチャーブランチを作成してから作業してください。\"}}"
+    echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"ERROR: ブランチ '$current_branch' は保護ブランチです。直接編集できません。WHY: 保護ブランチへの直接コミットを防ぎ、レビューを必須化するためです。FIX: git pull で最新にしてから git checkout -b feature/your-branch-name でフィーチャーブランチを作成してから作業してください。\"}}"
     exit 2
   fi
 done

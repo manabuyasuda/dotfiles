@@ -45,6 +45,6 @@ cmd="$pkg install"
 echo "{\"feedback\": \"Running $cmd to sync lock file...\"}" >&2
 $cmd >/dev/null 2>&1 && \
   echo "{\"feedback\": \"$cmd completed.\", \"suppressOutput\": true}" || {
-  echo "{\"feedback\": \"$cmd failed.\"}" >&2
+  echo "{\"feedback\": \"ERROR: $cmd の実行に失敗しました。WHY: lock file との整合性がとれていないか、パッケージに問題がある可能性があります。FIX: エラーの出力を確認してパッケージの問題を解決してください。\"}" >&2
   exit 1
 }
