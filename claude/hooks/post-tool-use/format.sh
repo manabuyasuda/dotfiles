@@ -52,7 +52,7 @@ if [[ "$file" =~ \.(js|jsx|ts|tsx)$ ]]; then
     npx prettier --write "$file" 2>&1
   fi
   if [ $? -ne 0 ]; then
-    echo '{"feedback": "Formatting failed. Check file for syntax errors."}'
+    echo '{"feedback": "ERROR: フォーマットに失敗しました。WHY: ファイルに構文エラーが含まれている可能性があります。FIX: 構文エラーを修正してください。"}'
     exit 1
   fi
   echo '{"feedback": "Formatting applied.", "suppressOutput": true}'
@@ -92,9 +92,9 @@ ${diff_output}"
 
   # writing-review スキル実行を指示
   if [ -n "$textlint_remaining" ]; then
-    msg="ERROR: textlint エラーが残っています。\nWHY:   textlint --fix で自動修正できない違反が残っています。\nFIX:   /writing-review スキルをこのファイルに適用してください。\n       ファイル: ${file}\n\n       textlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
+    msg="ERROR: textlint エラーが残っています。\nWHY: textlint --fix で自動修正できない違反が残っています。\nFIX: /writing-review スキルをこのファイルに適用してください。\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
   else
-    msg="ERROR: 文章品質の確認が必要です。\nWHY:   writing-review スキルのルールへの適合を確認します。\nFIX:   /writing-review スキルをこのファイルに適用してください。\n       ファイル: ${file}${git_diff_section}"
+    msg="ERROR: 文章の品質確認が必要です。\nWHY: textlint を通過しても writing-review ルールへの違反が残っている可能性があります。\nFIX: /writing-review スキルをこのファイルに適用してください。\nファイル: ${file}${git_diff_section}"
   fi
   feedback=$(printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'feedback': sys.stdin.read()}))")
   echo "$feedback"

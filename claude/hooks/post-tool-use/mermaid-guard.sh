@@ -49,7 +49,7 @@ ${err_msg}
 done < "$FILE_PATH"
 
 if [[ -n "$ERRORS" ]]; then
-  jq -n --arg reason "Mermaid 検証エラーが見つかりました。修正してください:
+  jq -n --arg reason "ERROR: Mermaid の構文エラーが見つかりました。WHY: 構文エラーはレンダリング失敗の原因になります。FIX: 以下のエラーを修正してください:
 
 ${ERRORS}" '{
     hookSpecificOutput: {

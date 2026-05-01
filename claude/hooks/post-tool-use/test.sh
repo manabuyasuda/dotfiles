@@ -44,5 +44,5 @@ fi
 if [ $exit_code -eq 0 ]; then
   echo '{"feedback": "Tests passed."}'
 else
-  echo '{"feedback": "Tests failed. See output above."}' >&2
+  echo '{"feedback": "ERROR: テストが失敗しました。WHY: 変更がテストを壊している可能性があります。FIX: 上記のテスト出力を確認してコードを修正してください。"}' >&2
 fi

@@ -30,6 +30,6 @@ if [ $? -eq 0 ]; then
 else
   errors=$(echo "$output" | grep -A 2 "error TS" | head -30)
   [ -n "$errors" ] && echo "$errors" >&2
-  echo '{"feedback": "TypeScript found type errors. See output above."}' >&2
+  echo '{"feedback": "ERROR: TypeScript の型エラーが見つかりました。WHY: 型エラーはビルドが失敗する原因になります。FIX: 上記エラーの出力を確認して型を修正してください。"}' >&2
 fi
 exit 0

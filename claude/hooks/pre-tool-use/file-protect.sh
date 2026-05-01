@@ -43,42 +43,42 @@ _ask() {
 
 # 環境変数・設定（秘密情報含む）
 if echo "$file" | grep -qE '(^|/)\.env$|(^|/)\.env\.|(^|/)\.npmrc$|(^|/)\.netrc$'; then
-  _deny "ERROR: $file は環境変数・認証情報を含む機密ファイルです。直接編集すると秘密情報が漏洩または破損する可能性があります。エディタで手動編集してください。"
+  _deny "ERROR: $file は環境変数・認証情報を含む機密ファイルです。WHY: 直接編集すると秘密情報が漏洩または破損するリスクがあります。FIX: ユーザーにエディタで手動編集するよう案内してください。"
 fi
 
 # 鍵・証明書
 if echo "$file" | grep -qE '\.(pem|key|p12|pfx|cert|crt)$'; then
-  _deny "ERROR: $file は秘密鍵または証明書ファイルです。直接編集すると認証が破損します。手動で管理してください。"
+  _deny "ERROR: $file は秘密鍵または証明書ファイルです。WHY: 直接編集すると認証が破損します。FIX: ユーザーに手動で管理するよう案内してください。"
 fi
 
 # Git 内部
 if echo "$file" | grep -qE '(^|/)\.git/'; then
-  _deny "ERROR: $file は Git の内部ファイルです。直接編集すると git リポジトリが破損します。git コマンドを使用してください。"
+  _deny "ERROR: $file は Git の内部ファイルです。WHY: 直接編集すると git リポジトリが破損します。FIX: git コマンドを使用してください。"
 fi
 
 # lock files（JS/TS）
 if echo "$file" | grep -qE 'package-lock\.json$|yarn\.lock$|pnpm-lock\.yaml$|bun\.lock'; then
-  _deny "ERROR: $file は lock file です。直接編集すると依存関係の整合性が壊れます。パッケージマネージャー（npm/yarn/pnpm/bun）経由で更新してください。"
+  _deny "ERROR: $file は lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: パッケージマネージャー（npm/yarn/pnpm/bun）経由で更新してください。"
 fi
 
 # lock files（Python）
 if echo "$file" | grep -qE 'Pipfile\.lock$|poetry\.lock$'; then
-  _deny "ERROR: $file は Python の lock file です。直接編集すると依存関係の整合性が壊れます。pip/poetry 経由で更新してください。"
+  _deny "ERROR: $file は Python の lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: pip/poetry 経由で更新してください。"
 fi
 
 # lock files（Ruby / PHP / Go / Rust）
 if echo "$file" | grep -qE 'Gemfile\.lock$|composer\.lock$|go\.sum$|Cargo\.lock$'; then
-  _deny "ERROR: $file は lock file です。直接編集すると依存関係の整合性が壊れます。各パッケージマネージャー経由で更新してください。"
+  _deny "ERROR: $file は lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: 各パッケージマネージャー経由で更新してください。"
 fi
 
 # Claude Code の hooks・settings（カナリア: 書き換えによるガード無効化を検知する）
 if echo "$file" | grep -qE '(^|/)\.?claude/hooks/|(^|/)\.?claude/settings\.json$'; then
-  _ask "CAUTION: $file を変更しようとしています。意図した変更であれば承認してください。※この確認が表示されずに変更が行われた場合はガードが無効化されている可能性があります。"
+  _ask "CAUTION: $file を変更しようとしています。WHY: hooks・settings の誤変更はガードが無効化される可能性があります。FIX: 変更内容を確認してください。"
 fi
 
 # Terraform 状態・変数
 if echo "$file" | grep -qE '\.tfstate$|\.tfstate\.|\.tfvars$'; then
-  _deny "ERROR: $file は Terraform の状態ファイルまたは変数ファイルです。直接編集するとインフラ状態が破損します。terraform コマンドを使用してください。"
+  _deny "ERROR: $file は Terraform の状態ファイルまたは変数ファイルです。WHY: 直接編集するとインフラ状態が破損します。FIX: terraform コマンドを使用してください。"
 fi
 
 exit 0

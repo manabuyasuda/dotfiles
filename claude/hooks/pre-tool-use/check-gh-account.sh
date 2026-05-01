@@ -40,7 +40,10 @@ except Exception:
     print('')
 " 2>/dev/null)
 
-if ! echo "$COMMAND" | grep -qE '(^|\s|\|)gh(\s|$)'; then
+# 引用符内の文字列を除去してパターンマッチングの誤検知を防ぐ
+COMMAND_UNQUOTED=$(echo "$COMMAND" | sed 's/"[^"]*"//g; s/'"'"'[^'"'"']*'"'"'//g')
+
+if ! echo "$COMMAND_UNQUOTED" | grep -qE '(^|\s|\|)gh(\s|$)'; then
   exit 0
 fi
 
@@ -51,8 +54,7 @@ if [ -z "$ACTIVE_ACCOUNT" ]; then
 fi
 
 if [ "$ACTIVE_ACCOUNT" != "$EXPECTED_GH_ACCOUNT" ]; then
-  echo "⚠️  ghアカウントが違います: 現在=$ACTIVE_ACCOUNT, 期待=$EXPECTED_GH_ACCOUNT" >&2
-  echo "切り替えるには: gh auth switch --user $EXPECTED_GH_ACCOUNT" >&2
+  echo "WARNING: ghアカウントが違います。WHY: 現在のアクティブアカウント($ACTIVE_ACCOUNT)が期待するアカウント($EXPECTED_GH_ACCOUNT)と異なります。FIX: ユーザーに gh auth switch --user $EXPECTED_GH_ACCOUNT の実行を依頼してください。" >&2
   exit 2
 fi
 
