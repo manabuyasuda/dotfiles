@@ -166,8 +166,7 @@ fi
 
 # --- INSTALL / NETWORK_WRITE / DESTRUCTIVE → ユーザー確認 ---
 if [ "$LEVEL" = "INSTALL" ] || [ "$LEVEL" = "NETWORK_WRITE" ] || [ "$LEVEL" = "DESTRUCTIVE" ]; then
-  _ask "[$LEVEL] $DESCRIPTION
-コマンド: $COMMAND"
+  _ask "[$LEVEL] コマンド: $COMMAND"
 fi
 
 # WRITE は通過
