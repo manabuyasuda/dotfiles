@@ -143,6 +143,12 @@ AskUserQuestionで確認する。
 
 ## Step 6: retrospective ファイルに T/A と結果を追記する
 
+ディレクトリが存在しない場合は先に作成する。
+
+```bash
+mkdir -p retrospective
+```
+
 `retrospective/YYYY-MM-DD.md` にTry/Actionと実施結果を追記する（ファイルがなければ作成）。
 
 ```markdown
