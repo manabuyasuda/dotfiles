@@ -18,7 +18,7 @@
 #
 # 個別ルール（階層判定の後に適用）:
 #   - バックスラッシュ改行（継続行）を含むコマンドは deny
-#   - 保護ブランチ上での git merge は deny（PR 経由を強制）
+#   - 保護ブランチ上での git commit / git merge は deny（PR 経由を強制）
 #   - WORK_RECORD_FILES がステージ済みで git commit しようとした場合は deny
 #
 # 注: rm -rf / shred / xargs rm / find -delete 等は pre-tool-use/dangerous-guard.sh で拒否済み。
@@ -141,6 +141,17 @@ if [ "$LEVEL" = "INSTALL" ] || [ "$LEVEL" = "NETWORK_WRITE" ] || [ "$LEVEL" = "D
   fi
 fi
 
+# --- 個別ルール: 保護ブランチ上での git commit → deny ---
+if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+commit'; then
+  CURRENT_BRANCH=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" branch --show-current 2>/dev/null || echo "")
+  for pattern in "${PROTECTED_BRANCHES[@]}"; do
+    # shellcheck disable=SC2053
+    if [[ "$CURRENT_BRANCH" == $pattern ]]; then
+      _deny "ERROR: 保護ブランチ '$CURRENT_BRANCH' への直接コミットは禁止されています。WHY: レビューなしに変更が保護ブランチへ反映されるリスクがあります。FIX: フィーチャーブランチを作成してから Pull Request を作成してください。"
+    fi
+  done
+fi
+
 # --- 個別ルール: 保護ブランチ上での git merge → deny ---
 if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+merge'; then
   CURRENT_BRANCH=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" branch --show-current 2>/dev/null || echo "")
@@ -157,7 +168,7 @@ if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+commit'; then
   STAGED=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" diff --cached --name-only 2>/dev/null || echo "")
   file_pattern=$(IFS='|'; echo "${WORK_RECORD_FILES[*]}" | sed 's/\./\\./g')
   dir_pattern=$(IFS='|'; echo "${WORK_RECORD_DIRS[*]}")
-  matched=$(echo "$STAGED" | grep -E "(^|/)($file_pattern)$|^($dir_pattern)/")
+  matched=$(echo "$STAGED" | grep -E "^($file_pattern)$|^($dir_pattern)/")
   if [ -n "$matched" ]; then
     restore_args=$(echo "$matched" | tr '\n' ' ')
     _deny "ERROR: 作業記録ファイルがステージされています。WHY: これらはセッション中の作業記録であり、コミット履歴に含めてはいけません。FIX: git restore --staged ${restore_args}を実行してから再度コミットしてください。"
