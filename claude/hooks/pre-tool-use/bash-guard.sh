@@ -18,7 +18,7 @@
 #
 # 個別ルール（階層判定の後に適用）:
 #   - バックスラッシュ改行（継続行）を含むコマンドは deny
-#   - 保護ブランチ上での git merge は deny（PR 経由を強制）
+#   - 保護ブランチ上での git commit / git merge は deny（PR 経由を強制）
 #   - WORK_RECORD_FILES がステージ済みで git commit しようとした場合は deny
 #
 # 注: rm -rf / shred / xargs rm / find -delete 等は pre-tool-use/dangerous-guard.sh で拒否済み。
@@ -139,6 +139,17 @@ if [ "$LEVEL" = "INSTALL" ] || [ "$LEVEL" = "NETWORK_WRITE" ] || [ "$LEVEL" = "D
   if ! echo "$DESCRIPTION" | grep -qE '拒否[[:space:]]*[:：]'; then
     _deny "ERROR: [$LEVEL] description に拒否条件が記載されていません。WHY: ユーザーが Yes/No を判断するための基準が必要です。FIX: 「拒否:〜の場合」を追加してください。"
   fi
+fi
+
+# --- 個別ルール: 保護ブランチ上での git commit → deny ---
+if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+commit'; then
+  CURRENT_BRANCH=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" branch --show-current 2>/dev/null || echo "")
+  for pattern in "${PROTECTED_BRANCHES[@]}"; do
+    # shellcheck disable=SC2053
+    if [[ "$CURRENT_BRANCH" == $pattern ]]; then
+      _deny "ERROR: 保護ブランチ '$CURRENT_BRANCH' への直接コミットは禁止されています。WHY: レビューなしに変更が保護ブランチへ反映されるリスクがあります。FIX: フィーチャーブランチを作成してから Pull Request を作成してください。"
+    fi
+  done
 fi
 
 # --- 個別ルール: 保護ブランチ上での git merge → deny ---
