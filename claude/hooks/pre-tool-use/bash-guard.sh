@@ -157,7 +157,7 @@ if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+commit'; then
   STAGED=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" diff --cached --name-only 2>/dev/null || echo "")
   file_pattern=$(IFS='|'; echo "${WORK_RECORD_FILES[*]}" | sed 's/\./\\./g')
   dir_pattern=$(IFS='|'; echo "${WORK_RECORD_DIRS[*]}")
-  matched=$(echo "$STAGED" | grep -E "(^|/)($file_pattern)$|^($dir_pattern)/")
+  matched=$(echo "$STAGED" | grep -E "^($file_pattern)$|^($dir_pattern)/")
   if [ -n "$matched" ]; then
     restore_args=$(echo "$matched" | tr '\n' ' ')
     _deny "ERROR: 作業記録ファイルがステージされています。WHY: これらはセッション中の作業記録であり、コミット履歴に含めてはいけません。FIX: git restore --staged ${restore_args}を実行してから再度コミットしてください。"
