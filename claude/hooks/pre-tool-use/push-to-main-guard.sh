@@ -3,13 +3,17 @@
 # pre-tool-use/push-to-main-guard.sh — 保護ブランチへの git push を deny でブロック
 # =============================================================================
 # フック  : PreToolUse（Bash）
-#
-# bash-guard.sh はすべての git push を ask で確認するが、
-# 保護ブランチへの push は deny で強制ブロックしたいため、このスクリプトで補完する。
+# 役割   : bash-guard.sh はすべての git push を ask で確認するが、
+#          保護ブランチへの push は deny で強制ブロックしたいため、このスクリプトで補完する。
 #
 # bash-guard.sh との役割分担:
 #   - 保護ブランチへの push → このスクリプトが deny（deny が優先）
 #   - フィーチャーブランチへの push → bash-guard.sh が ask
+#
+# 終了コード:
+#   0 → 通過（保護ブランチへの push でない）または deny JSON を出力して終了
+#
+# 入力 : stdin の JSON（tool_input.command）
 # =============================================================================
 
 HOOKS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -22,6 +26,7 @@ cmd=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 # git push コマンドでなければスキップ
 echo "$cmd" | grep -qE 'git[[:space:]]+push' || exit 0
 
+# メッセージを関数内に固定することで、2つの呼び出しポイントで同じ文言を保証する
 _deny() {
   jq -n \
     '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"ERROR: 保護ブランチへの直接 push は禁止されています。WHY: レビューなしに変更が保護ブランチへ反映されるリスクがあります。FIX: フィーチャーブランチから Pull Request を作成してください。"}}'
@@ -36,7 +41,8 @@ for pattern in "${PROTECTED_BRANCHES[@]}"; do
   fi
 done
 
-# 引数なし、またはリモート名のみの push → 現在ブランチを確認
+# 引数なし、またはリモート名のみの push（例: git push / git push origin）→ 現在ブランチを確認
+# SC2053: [[ == ]] の右辺をクォートしないことで glob 展開を有効にする（意図的）
 if echo "$cmd" | grep -qE '^[[:space:]]*git[[:space:]]+push[[:space:]]*$' || \
    echo "$cmd" | grep -qE '^[[:space:]]*git[[:space:]]+push[[:space:]]+[a-zA-Z0-9_.-]+[[:space:]]*$'; then
   CURRENT=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" branch --show-current 2>/dev/null)
