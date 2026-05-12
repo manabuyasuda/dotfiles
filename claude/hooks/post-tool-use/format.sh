@@ -32,71 +32,84 @@
 # =============================================================================
 file="$CLAUDE_TOOL_INPUT_FILE_PATH"
 
+# JS/TS でも .md でもないファイルは対象外
+[[ "$file" =~ \.(js|jsx|ts|tsx|md)$ ]] || exit 0
+
+# --- フォーマッター解決（$FORMATTER 優先 → ローカル → グローバルの順）---
+# oxfmt はローカル・グローバルどちらも同じ "oxfmt" を返し、実行時に判断する
+_resolve_fmt() {
+  if [ -n "${FORMATTER:-}" ]; then echo "$FORMATTER"; return; fi
+  if [ -x "node_modules/.bin/biome" ]; then echo "biome"; return; fi
+  if [ -x "node_modules/.bin/oxfmt" ] || command -v oxfmt &>/dev/null; then echo "oxfmt"; return; fi
+  echo "prettier"
+}
+
+# --- JS/TS: フォーマッターを実行 ---
 if [[ "$file" =~ \.(js|jsx|ts|tsx)$ ]]; then
-  fmt="${FORMATTER:-}"
-  if [ -z "$fmt" ]; then
-    if [ -x "node_modules/.bin/biome" ]; then fmt="biome"
-    elif [ -x "node_modules/.bin/oxfmt" ] || command -v oxfmt &>/dev/null; then fmt="oxfmt"
-    else fmt="prettier"
-    fi
-  fi
-  if [ "$fmt" = "biome" ]; then
-    node_modules/.bin/biome check --write "$file" 2>&1
-  elif [ "$fmt" = "oxfmt" ]; then
-    if [ -x "node_modules/.bin/oxfmt" ]; then
-      node_modules/.bin/oxfmt --write "$file" 2>&1
-    else
-      oxfmt --write "$file" 2>&1
-    fi
-  else
-    npx prettier --write "$file" 2>&1
-  fi
-  if [ $? -ne 0 ]; then
+  case "$(_resolve_fmt)" in
+    biome)
+      node_modules/.bin/biome check --write "$file" 2>&1 ;;
+    oxfmt)
+      # ローカルインストールを優先し、なければグローバルの oxfmt を使う
+      if [ -x "node_modules/.bin/oxfmt" ]; then
+        node_modules/.bin/oxfmt --write "$file" 2>&1
+      else
+        oxfmt --write "$file" 2>&1
+      fi ;;
+    *)
+      npx prettier --write "$file" 2>&1 ;;
+  esac
+  exit_code=$?
+  if [ $exit_code -ne 0 ]; then
     echo '{"feedback": "ERROR: フォーマットに失敗しました。WHY: ファイルに構文エラーが含まれている可能性があります。FIX: 構文エラーを修正してください。"}'
     exit 1
   fi
   echo '{"feedback": "Formatting applied.", "suppressOutput": true}'
-elif [[ "$file" =~ \.md$ ]]; then
-  # ファイルのディレクトリから上に向かって node_modules/.bin/textlint を探す
-  textlint_cmd=""
-  textlint_cwd=""
-  search_dir="$(dirname "$file")"
-  while [ "$search_dir" != "/" ]; do
-    if [ -x "$search_dir/node_modules/.bin/textlint" ]; then
-      textlint_cmd="$search_dir/node_modules/.bin/textlint"
-      textlint_cwd="$search_dir"
-      break
-    fi
-    search_dir="$(dirname "$search_dir")"
-  done
-
-  # textlint --fix を適用後、残存エラーを収集
-  textlint_remaining=""
-  if [ -n "$textlint_cmd" ]; then
-    cd "$textlint_cwd" && $textlint_cmd --fix "$file" > /dev/null 2>&1
-    remaining_output=$(cd "$textlint_cwd" && $textlint_cmd "$file" 2>&1)
-    [ $? -ne 0 ] && textlint_remaining="$remaining_output"
-  fi
-
-  # git diff で変更箇所を取得（レビュー範囲を変更行に絞るため）
-  git_diff_section=""
-  if git -C "$(dirname "$file")" rev-parse --git-dir &>/dev/null 2>&1; then
-    diff_output=$(git diff "$file" 2>/dev/null)
-    if [ -n "$diff_output" ]; then
-      git_diff_section="
-
-       変更差分:
-${diff_output}"
-    fi
-  fi
-
-  # writing-review スキル実行を指示
-  if [ -n "$textlint_remaining" ]; then
-    msg="ERROR: textlint エラーが残っています。\nWHY: textlint --fix で自動修正できない違反が残っています。\nFIX: /writing-review スキルをこのファイルに適用してください。\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
-  else
-    msg="ERROR: 文章の品質確認が必要です。\nWHY: textlint を通過しても writing-review ルールへの違反が残っている可能性があります。\nFIX: /writing-review スキルをこのファイルに適用してください。\nファイル: ${file}${git_diff_section}"
-  fi
-  feedback=$(printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'feedback': sys.stdin.read()}))")
-  echo "$feedback"
-  exit 1
+  exit 0
 fi
+
+# --- .md: textlint + writing-review スキルで文章品質を確認 ---
+
+# ファイルのディレクトリから上に向かって node_modules/.bin/textlint を探す
+textlint_cmd=""
+textlint_cwd=""
+search_dir="$(dirname "$file")"
+while [ "$search_dir" != "/" ]; do
+  if [ -x "$search_dir/node_modules/.bin/textlint" ]; then
+    textlint_cmd="$search_dir/node_modules/.bin/textlint"
+    textlint_cwd="$search_dir"
+    break
+  fi
+  search_dir="$(dirname "$search_dir")"
+done
+
+# textlint --fix を適用後、残存エラーを収集
+textlint_remaining=""
+if [ -n "$textlint_cmd" ]; then
+  cd "$textlint_cwd" && $textlint_cmd --fix "$file" > /dev/null 2>&1
+  remaining_output=$(cd "$textlint_cwd" && $textlint_cmd "$file" 2>&1)
+  [ $? -ne 0 ] && textlint_remaining="$remaining_output"
+fi
+
+# git diff で変更箇所を取得（レビュー範囲を変更行に絞るため）
+git_diff_section=""
+if git -C "$(dirname "$file")" rev-parse --git-dir &>/dev/null 2>&1; then
+  diff_output=$(git diff "$file" 2>/dev/null)
+  if [ -n "$diff_output" ]; then
+    git_diff_section="
+
+     変更差分:
+${diff_output}"
+  fi
+fi
+
+# writing-review スキル実行を指示
+# textlint 残存エラーがある場合はそれも添付してエージェントに渡す
+if [ -n "$textlint_remaining" ]; then
+  msg="ERROR: textlint エラーが残っています。\nWHY: textlint --fix で自動修正できない違反が残っています。\nFIX: /writing-review スキルをこのファイルに適用してください。\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
+else
+  msg="ERROR: 文章の品質確認が必要です。\nWHY: textlint を通過しても writing-review ルールへの違反が残っている可能性があります。\nFIX: /writing-review スキルをこのファイルに適用してください。\nファイル: ${file}${git_diff_section}"
+fi
+feedback=$(printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'feedback': sys.stdin.read()}))")
+echo "$feedback"
+exit 1
