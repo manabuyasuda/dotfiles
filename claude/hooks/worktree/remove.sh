@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
+# =============================================================================
+# worktree/remove.sh — worktree の削除
+# =============================================================================
+# フック  : WorktreeRemove（`claude --worktree` セッション終了時に "remove" を選択した場合）
+# 役割   : wtp で worktree を削除し、ブランチクリーンアップコマンド（gh poi）を
+#          クリップボードにコピーする。ブランチ自体の安全な削除は gh poi に委任する。
 #
-# worktree/remove.sh - WorktreeRemove hook
-#
-# `claude --worktree` セッション終了時に "remove" を選択すると自動で呼ばれる。
-# wtp で worktree を削除し、ブランチクリーンアップコマンドをクリップボードにコピーする。
-# ブランチの安全な削除は gh poi に委任する。
-#
-# 入力: {"worktree_path": "<path>"} (stdin経由)
+# 入力 : stdin の JSON（worktree_path: worktree のパス）
+# =============================================================================
 
 set -euo pipefail
 
