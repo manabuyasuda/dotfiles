@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
+# =============================================================================
+# worktree/create.sh — worktree の作成と初期化
+# =============================================================================
+# フック  : WorktreeCreate（`claude --worktree <branch>` 実行時）
+# 役割   : wtp で worktree を作成し、以下を自動実行する:
+#            1. gitignored ファイル（.envrc 等）をコピー
+#            2. 初期化コマンド（direnv allow / npm install など）をクリップボードにコピー
+#            3. VS Code・SourceTree で worktree を開く
 #
-# worktree/create.sh - WorktreeCreate hook
-#
-# `claude --worktree <branch>` 実行時に自動で呼ばれる。
-# wtp でworktreeを作成し、gitignored ファイルのコピー、
-# クリップボードへの初期化コマンド生成、VS Code・SourceTree での起動を行う。
-#
-# 入力: {"name": "<branch-name>"} (stdin経由)
-# 出力: worktreeのパス (stdout) → Claude Code がこのパスに切り替える
+# 入力 : stdin の JSON（name: ブランチ名）
+# 出力 : stdout に worktree のパス → Claude Code がこのパスに切り替える
+# =============================================================================
 
 set -euo pipefail
 
