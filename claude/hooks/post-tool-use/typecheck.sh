@@ -15,6 +15,9 @@
 #
 # 実行コマンド: npx tsc --noEmit（コンパイルせず型チェックのみ）
 #
+# 終了コード:
+#   0 → 常に 0（型エラーがあってもブロックしない設計）
+#
 # 出力（feedback）:
 #   エラーなし: {"feedback": "No TypeScript errors.", "suppressOutput": true}
 #   エラーあり: エラー内容（先頭30行）を stderr に出力 + feedback でエージェントに通知
@@ -25,7 +28,8 @@
 
 echo '{"feedback": "Checking TypeScript types..."}' >&2
 output=$(npx tsc --noEmit 2>&1)
-if [ $? -eq 0 ]; then
+exit_code=$?
+if [ $exit_code -eq 0 ]; then
   echo '{"feedback": "No TypeScript errors.", "suppressOutput": true}'
 else
   errors=$(echo "$output" | grep -A 2 "error TS" | head -30)

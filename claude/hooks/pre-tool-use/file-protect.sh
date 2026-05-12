@@ -21,6 +21,9 @@
 #     5. Terraform 状態ファイル (.tfstate, .tfvars)
 #        → インフラ状態が破損するリスク
 #
+# 終了コード:
+#   0 → 通過または ask / deny JSON を出力して終了
+#
 # 入力 : stdin の JSON（tool_input.file_path または tool_input.path）
 # 出力 : stdout の JSON（permissionDecision: "deny"）
 # =============================================================================

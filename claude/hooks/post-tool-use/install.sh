@@ -22,26 +22,35 @@
 #   このスクリプトは Bash 経由で install を実行するため、
 #   pre-tool-use/file-protect.sh の lock file ガードとは干渉しない。
 #
+# 終了コード:
+#   0 → インストール成功
+#   1 → インストール失敗（エージェントに修正させる）
+#
+# 出力（feedback）:
+#   成功: {"feedback": "<pkg> install completed.", "suppressOutput": true}
+#   失敗: {"feedback": "ERROR: ..."} → exit 1 でエージェントに修正させる
+#
 # 入力 : $CLAUDE_TOOL_INPUT_FILE_PATH
 #        $PKG_MANAGER（session-start.sh が設定した環境変数、未設定時は自動検出）
 # =============================================================================
 [[ "$CLAUDE_TOOL_INPUT_FILE_PATH" =~ package\.json$ ]] || exit 0
 
-pkg="${PKG_MANAGER:-}"
-if [ -z "$pkg" ]; then
+# $PKG_MANAGER → packageManager フィールド → lock file → npm の順で解決する
+_resolve_pkg() {
+  if [ -n "${PKG_MANAGER:-}" ]; then echo "$PKG_MANAGER"; return; fi
   if command -v node &>/dev/null && [ -f "package.json" ]; then
-    pkg=$(node -e "try{const p=require('./package.json');console.log((p.packageManager||'').split('@')[0])}catch(e){}" 2>/dev/null)
+    local detected
+    detected=$(node -e "try{const p=require('./package.json');console.log((p.packageManager||'').split('@')[0])}catch(e){}" 2>/dev/null)
+    [ -n "$detected" ] && echo "$detected" && return
   fi
-fi
-if [ -z "$pkg" ]; then
-  if   [ -f "pnpm-lock.yaml" ];                   then pkg="pnpm"
-  elif [ -f "yarn.lock" ];                         then pkg="yarn"
-  elif [ -f "bun.lockb" ] || [ -f "bun.lock" ];   then pkg="bun"
-  else pkg="npm"
+  if   [ -f "pnpm-lock.yaml" ];                 then echo "pnpm"; return
+  elif [ -f "yarn.lock" ];                       then echo "yarn"; return
+  elif [ -f "bun.lockb" ] || [ -f "bun.lock" ]; then echo "bun";  return
   fi
-fi
+  echo "npm"
+}
 
-cmd="$pkg install"
+cmd="$(_resolve_pkg) install"
 echo "{\"feedback\": \"Running $cmd to sync lock file...\"}" >&2
 $cmd >/dev/null 2>&1 && \
   echo "{\"feedback\": \"$cmd completed.\", \"suppressOutput\": true}" || {

@@ -3,6 +3,9 @@
 # pre-tool-use/bash-guard.sh — Bash ツール実行前の安全確認
 # =============================================================================
 # フック  : PreToolUse（Bash）
+# 役割   : description の記載必須項目をリスクレベル別に検証し、
+#          通過・ユーザー確認（ask）・拒否（deny）を判定する。
+#          リスクレベルは classify() が機械的に判定する。
 #
 # リスク階層による判定:
 #   READ         : 状態を変えない（ls/cat/grep/git status/git diff/git log 等）
@@ -23,6 +26,12 @@
 #
 # 注: rm -rf / shred / xargs rm / find -delete 等は pre-tool-use/dangerous-guard.sh で拒否済み。
 #     単一ファイルの rm は dangerous-guard.sh の対象外のため、このスクリプトで DESTRUCTIVE に分類する。
+#
+# 終了コード:
+#   0 → 通過（READ / WRITE）または ask / deny JSON を出力して終了
+#
+# 入力 : stdin の JSON（tool_input.command / tool_input.description）
+# 出力 : stdout の JSON（permissionDecision: "ask" または "deny"）
 # =============================================================================
 
 HOOKS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
