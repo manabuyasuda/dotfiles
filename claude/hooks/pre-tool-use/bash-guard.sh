@@ -23,6 +23,10 @@
 #   - バックスラッシュ改行（継続行）を含むコマンドは deny
 #   - 保護ブランチ上での git commit / git merge は deny（PR 経由を強制）
 #   - WORK_RECORD_FILES がステージ済みで git commit しようとした場合は deny
+#   - npm install（パッケージ名なし）と pip install -r は deny
+#     WHY: semver範囲でバージョンが解決されるため、意図しないバージョンが入り、
+#          挙動のズレ・脆弱性・サプライチェーン攻撃を含むバージョンを意図せず引き込む可能性がある
+#     ※ npm install <pkg> / npm ci / pnpm install / yarn install / bun install は通過する
 #
 # 注: rm -rf / shred / xargs rm / find -delete 等は pre-tool-use/dangerous-guard.sh で拒否済み。
 #     単一ファイルの rm は dangerous-guard.sh の対象外のため、このスクリプトで DESTRUCTIVE に分類する。
@@ -181,6 +185,26 @@ if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+commit'; then
   if [ -n "$matched" ]; then
     restore_args=$(echo "$matched" | tr '\n' ' ')
     _deny "ERROR: 作業記録ファイルがステージされています。WHY: これらはセッション中の作業記録であり、コミット履歴に含めてはいけません。FIX: git restore --staged ${restore_args}を実行してから再度コミットしてください。"
+  fi
+fi
+
+# --- 個別ルール: npm install（パッケージ名なし）/ pip install -r → deny ---
+# pip/pip3 install -r / uv pip install -r: requirementsファイルからの一括インストール
+if echo "$COMMAND_UNQUOTED" | grep -qE '(^|[|;&][[:space:]]*)pip3?[[:space:]]+install[[:space:]].*(-r|--requirement)[[:space:]]'; then
+  _deny "ERROR: pip install -r をパッケージ名なしで実行しようとしています。WHY: semver範囲でバージョンが解決されるため、挙動のズレ・脆弱性・サプライチェーン攻撃を含むバージョンを意図せず引き込む可能性があります。FIX: 特定のパッケージを追加したい場合はpip install <package-name>を使ってください。"
+fi
+if echo "$COMMAND_UNQUOTED" | grep -qE '(^|[|;&][[:space:]]*)uv[[:space:]]+pip[[:space:]]+install[[:space:]].*(-r|--requirement)[[:space:]]'; then
+  _deny "ERROR: uv pip install -r をパッケージ名なしで実行しようとしています。WHY: semver範囲でバージョンが解決されるため、挙動のズレ・脆弱性・サプライチェーン攻撃を含むバージョンを意図せず引き込む可能性があります。FIX: 特定のパッケージを追加したい場合はuv pip install <package-name>を使ってください。"
+fi
+# npm install / npm i: フラグ以外のトークン（パッケージ名）がなければパッケージ追加・削除なし
+if echo "$COMMAND_UNQUOTED" | grep -qE '(^|[|;&][[:space:]]*)npm[[:space:]]+(install|i)([[:space:]]|$)'; then
+  rest=$(echo "$COMMAND_UNQUOTED" \
+    | grep -oE 'npm[[:space:]]+(install|i)[[:space:]]*[^|;&]*' \
+    | head -1 \
+    | sed 's/npm[[:space:]]\+i\(nstall\)\?[[:space:]]*//')
+  pkg_count=$(echo "$rest" | tr ' ' '\n' | grep -v '^$' | grep -cvE '^-' || true)
+  if [ "$pkg_count" -eq 0 ]; then
+    _deny "ERROR: npm install をパッケージ名なしで実行しようとしています。WHY: semver範囲でバージョンが解決されるため、挙動のズレ・脆弱性・サプライチェーン攻撃を含むバージョンを意図せず引き込む可能性があります。FIX: 特定のパッケージを追加したい場合はnpm install <package-name>を、lockfileを再現したい場合はnpm ciを使ってください。"
   fi
 fi
 
