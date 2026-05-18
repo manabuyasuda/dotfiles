@@ -14,7 +14,7 @@ allowed-tools:
 対象スキルが不明な場合は、以下のコマンドでスキル一覧を取得し、以下の形式でユーザーに提示してください。
 
 ```bash
-{ ls ~/.claude/skills/ 2>/dev/null; ls ./.claude/skills/ 2>/dev/null; } | sort -u
+{ find -L ~/.claude/skills -name SKILL.md 2>/dev/null; find -L ./.claude/skills -name SKILL.md 2>/dev/null; } | xargs -I{} dirname {} | xargs -I{} basename {} | sort -u
 ```
 
 ```
