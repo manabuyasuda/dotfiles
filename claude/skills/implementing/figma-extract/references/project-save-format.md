@@ -6,17 +6,17 @@
 explore/
 └── {page-slug}/
     └── figma/
-        ├── raw/               ← get_design_context の返り値
+        ├── raw/               ← get_design_contextの返り値
         │   ├── _index.json    ← 取得状況を管理するインデックス
         │   ├── {nodeId}.txt   ← 完全レスポンスのキャッシュ
         │   └── {nodeId}.xml   ← sparseレスポンスのキャッシュ
-        ├── screenshots/       ← get_image のスクリーンショット
+        ├── screenshots/       ← get_screenshotのスクリーンショット
         └── {root-node-id}.md  ← マッピングファイル
 ```
 
 ## Step 1: ページスラグを決める
 
-Figmaのページ名全体をケバブケースに変換してスラグにします。`_lightMode`/`_darkMode`などのサフィックスも含めて変換することで、モードが異なるページが同じスラグになるのを防ぎます。決めたスラグが`explore/{page-slug}/`の`{page-slug}`になります。
+Figmaのページ名全体をケバブケースに変換してスラグにします。`_lightMode`/`_darkMode`などのサフィックスも含めて変換することで、モードの異なるページが同じスラグになるのを防ぎます。決めたスラグが`explore/{page-slug}/`の`{page-slug}`に対応します。
 
 | Figmaページ名 | `{page-slug}` |
 |---|---|
@@ -24,13 +24,13 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
 | `Top-sp_darkMode` | `top-sp-dark-mode` |
 | `ProductDetail-shop_lightMode` | `product-detail-shop-light-mode` |
 
-## Step 2: 返り値を raw/ に保存する
+## Step 2: 返り値をraw/に保存する
 
 ### Step 2-1: ディレクトリと`_index.json`を準備する
 
-`explore/{page-slug}/figma/raw/`と`explore/{page-slug}/figma/screenshots/`が存在しなければ作成します。
+`explore/{page-slug}/figma/raw/`と`explore/{page-slug}/figma/screenshots/`がなければ作成します。
 
-`_index.json`が存在しなければ以下のテンプレートで新規作成します。
+`_index.json`がなければ以下のテンプレートで新規作成します。
 
 ```json
 {
@@ -41,7 +41,10 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
   },
   "tree": {},
   "fetchedNodes": [],
-  "pendingNodes": []
+  "pendingNodes": [],
+  "skippedNodes": [],
+  "jsxNodes": {},
+  "componentNodes": []
 }
 ```
 
@@ -53,8 +56,11 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
 | `tree` | 取得済みノードの情報（初期は空） |
 | `fetchedNodes` | 取得済みノードIDの一覧（初期は空） |
 | `pendingNodes` | 取得できていない子ノードのID（初期は空） |
+| `skippedNodes` | ユーザーが取得しないと判断したノードID（初期は空） |
+| `jsxNodes` | Pass 1: `.txt`を取得したときにgrepしたすべての`data-node-id`（初期は空オブジェクト） |
+| `componentNodes` | Pass 2: コンポーネント境界と判断したノード一覧（初期は空配列） |
 
-`_index.json`が存在する場合は`fetchedNodes`を確認します。記録済みのノードは再取得する必要はありません。`pendingNodes`が残っていればそこから再開します。
+`_index.json`がある場合は`fetchedNodes`を確認します。記録済みのノードは再取得する必要がありません。`pendingNodes`が残っていればそこから再開します。
 
 ### Step 2-2: `get_design_context`を呼び出し、返り値を加工せず保存する
 
@@ -72,6 +78,54 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
 - `tree`にノードを追加します（`rawFile`には保存したファイル名を設定します）
 - `fetchedNodes`にノードIDを追加します
 - `.xml`の場合のみ、`children`の値を`pendingNodes`に追加します
+- `.txt`の場合のみ、Pass 1としてJSX内のすべての`data-node-id`をgrepして`jsxNodes[nodeId]`に記録します
+
+### Pass 1（機械的・判断なし）
+
+`.txt`を受け取ったら、以下のコマンドで`data-node-id`をすべて抽出し`jsxNodes`に記録します。
+
+```bash
+grep -oP 'data-node-id="[^"]+"' {nodeId}.txt | grep -oP '[\d]+:[\d]+' | sort -u
+```
+
+判断は行いません。JSXに含まれるすべてのIDをそのまま`jsxNodes[nodeId]`に追加します。
+
+```json
+"jsxNodes": {
+  "9856:14163": [
+    { "nodeId": "9856:14164", "name": null },
+    { "nodeId": "9856:14165", "name": "heading" },
+    { "nodeId": "9856:16944", "name": null },
+    { "nodeId": "9856:16914", "name": null },
+    { "nodeId": "9856:16915", "name": "heading" }
+  ]
+}
+```
+
+`name`はJSX内の`data-name`属性の値です。`data-name`がなければ`null`を設定します。
+
+### Pass 2（コンポーネント境界の判断）
+
+全ノードの取得が完了した後（`pendingNodes`が空になった後）に1回だけ実行します。
+
+`jsxNodes`のすべてのエントリを参照し、以下のシグナルを持つノードを`componentNodes`に追加します。
+
+| シグナル | 具体例 |
+|---|---|
+| `data-name`がコンポーネントらしい名前（PascalCase・英単語の複合語） | `"ButtonTextSecondary"` |
+| 同一構造の兄弟ノードが繰り返される（リストアイテム） | TimelineRow-1〜5の各行 |
+| 子孫に`data-name="heading"`を持つ独立ブロック | 「開催場一覧」「お知らせ」を内包するラッパー |
+
+判断した根拠（どのシグナルに該当するか）を`componentNodes`のエントリに`reason`として記録します。
+
+```json
+"componentNodes": [
+  { "nodeId": "9856:14164", "name": "VenueList", "reason": "子孫にheadingを持つ独立ブロック" },
+  { "nodeId": "9856:16914", "name": "NoticeList", "reason": "子孫にheadingを持つ独立ブロック" }
+]
+```
+
+`name`はFigmaの`data-name`がある場合はその値を使い、なければエージェントがJSXから推測して命名します。
 
 完全レスポンス（`.txt`）を取得した直後のサンプルです。
 
@@ -116,7 +170,7 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
 
 ## Step 3: マッピングファイルを作成する
 
-保存先は`explore/{page-slug}/figma/{root-node-id}.md`です。トークン列は空欄のまま保存します。
+保存先は`explore/{page-slug}/figma/{root-node-id}.md`です。トークン列を空欄のまま保存します。
 
 ```markdown
 # {root-node-id}
@@ -158,18 +212,23 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
 
 | ファイルパス | 取得単位 |
 |---|---|
-| explore/{page-slug}/figma/screenshots/{node-id}.png | ノード単位 |
+| explore/{page-slug}/figma/screenshots/{root-node-id}.png | ページ全体 |
+| explore/{page-slug}/figma/screenshots/{fetched-node-id}.png | fetchedNodes単位（親コンテキスト） |
+| explore/{page-slug}/figma/screenshots/{component-node-id}.png | componentNodes単位（コンポーネント単体） |
 ```
 
 ## 完成条件
 
-以下がすべて満たされていれば完了です。満たされていなければトークンの引き当てに戻ります。
+以下をすべて満たしていれば完了です。満たしていなければトークンの引き当てに戻ります。
 
-- Figma出力に含まれるすべてのノードが`## NodeName（node-id）`の見出しとして存在する
-- すべての行のトークン列が埋まっている（空欄がない）
-- すべてのテキスト行が記録されている
-- アイコンノードが`### アイコン`に記録されている
-- 画像ノードが`### 画像`に記録されている
+- Figma出力に含まれるすべてのノードが`## NodeName（node-id）`の見出しとして存在しています
+- すべての行のトークン列が埋まっています（空欄がありません）
+- すべてのテキスト行が記録されています
+- アイコンノードが`### アイコン`に記録されています
+- 画像ノードが`### 画像`に記録されています
+- `_index.json`の`jsxNodes`に`.txt`で取得したすべてのノードのPassが記録されています
+- `_index.json`の`componentNodes`にPass 2の判断結果が記録されています
+- スクリーンショットがルートノード・`componentNodes`の2種類揃っています
 
 ## 完成形サンプル
 
