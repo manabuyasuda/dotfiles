@@ -22,7 +22,7 @@ allowed-tools:
 
 具体的な観点（テスト名の表現、AAA構造、1テスト1Act、期待値のハードコード、観測可能な出力のみのアサート、テストダブルの役割分離、モック対象の選定、非決定性の制御、テスト間の独立性、診断性、フロントエンド固有のルールなど）は`.claude/docs/test-implementation.md`に書かれています。これを一次情報として扱い、レビューのたびに読み直します。
 
-日本語表現は`.claude/skills/writing-review/rule-japanese-expressions.md`と`.claude/skills/writing-review/rule-structure.md`も併せて参照します（テスト名やテスト内の文字列の言い回しに適用）。
+日本語表現は`.claude/skills/reviewing/writing-review/rule-japanese-expressions.md`と`.claude/skills/reviewing/writing-review/rule-structure.md`も併せて参照します（テスト名やテスト内の文字列の言い回しに適用）。
 
 ### ユースケースカバレッジ（補助）
 
@@ -58,7 +58,7 @@ allowed-tools:
 
 同じ周回を3回繰り返します。1周目で網羅したつもりでも、2周目・3周目で見え方が変わることがあるためです。
 
-まず、ルールファイル（`.claude/docs/test-implementation.md`・`.claude/skills/writing-review/rule-japanese-expressions.md`・`.claude/skills/writing-review/rule-structure.md`）をReadします。ルールは周回のあいだに変わらないので、ここで読んだ内容を3周通して参照し続けて構いません。
+まず、ルールファイル（`.claude/docs/test-implementation.md`・`.claude/skills/reviewing/writing-review/rule-japanese-expressions.md`・`.claude/skills/reviewing/writing-review/rule-structure.md`）をReadします。ルールは周回のあいだに変わらないので、ここで読んだ内容を3周通して参照し続けて構いません。
 
 そのうえで、各周回で次を実施します。
 

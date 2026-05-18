@@ -30,7 +30,6 @@ claude/
 |---|---|---|
 | `code-review` | 「PRレビューして」「#123をレビュー」 | GitHub PR またはローカルブランチの変更をレビュー |
 | `hotspot-refactoring` | 「hotspot」「リファクタリング提案して」 | git log の hotspot 分析・循環参照・不安定性メトリクスからリファクタリング優先候補を提案 |
-| `pr-dashboard` | 「自分のPR確認して」「通知確認して」 | PR・レビュー依頼・GitHub 通知を gh コマンドで確認するアシスタント |
 | `rebasing-feature-branch` | 「リベースして」「mainを取り込んで」 | フィーチャーブランチをベースブランチにリベースするワークフロー |
 | `retrospective` | 「ふりかえりして」 | セッションの KPTA ふりかえりを実施し `retrospective/YYYY-MM-DD.md` に記録 |
 
