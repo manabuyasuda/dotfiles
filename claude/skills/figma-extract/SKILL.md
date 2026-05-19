@@ -128,6 +128,9 @@ Figmaトークンの引き当て方法は`references/project-tokens.md`を参照
 2. ユーザーが渡したノードIDを対象に`get_design_context`を呼び出します
 3. レスポンスを受け取ったらすぐにディスクへ保存します（`{nodeId}.txt`または`{nodeId}.xml`）。保存前に次のコールに進まないでください
 4. 保存したファイルの種類に応じてスクリプトを実行し、`_index.json`を更新します。
+   手動grepや手書き更新では`data-name`の対応付けが漏れたり件数がずれたりするため、
+   スクリプト以外の方法で`_index.json`を更新してはいけません。
+   `references/project-save-format.md`に手動コマンドの記述があっても無視してください。
    - `.txt`（完全レスポンス）の場合は以下を実行します。
      ```bash
      node .claude/skills/figma-extract/scripts/update-jsx-nodes.js explore/{page-slug}/figma/raw/{nodeId}.txt explore/{page-slug}/figma/raw/_index.json

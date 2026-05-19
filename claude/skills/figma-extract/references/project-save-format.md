@@ -80,15 +80,13 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
 - `.xml`の場合のみ、`children`の値を`pendingNodes`に追加します
 - `.txt`の場合のみ、Pass 1としてJSX内のすべての`data-node-id`をgrepして`jsxNodes[nodeId]`に記録します
 
-### Pass 1（機械的・判断なし）
+### Pass 1（スクリプトが自動処理）
 
-`.txt`を受け取ったら、以下のコマンドで`data-node-id`をすべて抽出し`jsxNodes`に記録します。
+`.txt`を受け取ったら、SKILL.md の手順に従い `update-jsx-nodes.js` を実行します。
+スクリプトが `data-node-id` と `data-name` の対応付けを含めて `jsxNodes` を自動更新します。
+手動 grep は使いません。
 
-```bash
-grep -oP 'data-node-id="[^"]+"' {nodeId}.txt | grep -oP '[\d]+:[\d]+' | sort -u
-```
-
-判断は行いません。JSXに含まれるすべてのIDをそのまま`jsxNodes[nodeId]`に追加します。
+更新後の `jsxNodes` の形式は以下の通りです。
 
 ```json
 "jsxNodes": {
