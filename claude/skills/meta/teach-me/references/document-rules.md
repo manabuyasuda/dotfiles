@@ -1,5 +1,3 @@
-<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
-
 # ドキュメントルール
 
 `teach-me`スキルが生成するMarkdownドキュメントのルールです。
@@ -60,12 +58,16 @@ Playwright MCPのスクリーンショットは`![説明](./<topic>.assets/xx.pn
 - コードブロック(` ``` `)は、ソースコード・コマンド・設定ファイル・実行結果など機械が解釈する内容や、そのまま端末に貼り付ける内容にのみ使います。手順や説明文を装飾する目的では使いません。ユーザーがそのままコピーする出力テンプレートは例外として使ってかまいません
 - 引用記法(`>`)は他者の発言や外部資料からの引用にのみ使います。前提条件や注意書きを目立たせたい場合はGitHub Flavored Markdownのalert記法(`> [!NOTE]`など)を使います
 - コロン(`:`)で説明やブロック要素を導きません。短い項目と説明の対は表を使い、各項目に段落が必要な場合は見出しと本文で構造化します
-- h1からh6まで適切な階層で使用します
+- h1からh6まで意味的な階層関係に沿って使用します
 
 ## 日本語表現のルール
 
 - 英数字・記号と日本語の間に半角スペースを入れません。バッククォートで囲んだインラインコードの前後も同様です(正:「Claude Codeを使う」「`true`の場合」、誤:「Claude Codeを使う」「`true` の場合」)
+<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
+
 - 冗長な表現を短くします(「できます」→「できます」、「する必要があります」→「してください」、「最初に」→「まず」)
+
+<!-- textlint-enable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
 - 文は述語で終え、名詞止めにしません
 - 漢語の複合名詞は動詞句に置き換えます(「未取得」→「取得できていない」、「定義外」→「対応していない」)
 - 名詞を直接つなげる複合名詞を避け、助詞(の・による・に関するなど)または活用形を補って修飾関係を明示します
@@ -83,7 +85,11 @@ Playwright MCPのスクリーンショットは`![説明](./<topic>.assets/xx.pn
 - 調査や執筆の経緯は書きません。現時点で正しい結論だけを書きます
 - これから何をするかを宣言するだけの前置き文は削除し、内容に直接入ります
 - 出典のない権威付けは著者・機関・文書・日付を明記するか削除します
+<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
+
 - 主語が不明な受動態を避け、動作の主体を明示します(「処理が行われます」→「システムが処理します」)
+
+<!-- textlint-enable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
 - 抽象的な形容より定量的・具体的に書きます(「高速な」→「50ms未満の」)
 - 1段落では1つの論点を扱い、論点が切り替わったら段落を分けます
 <!-- textlint-disable ja-technical-writing/max-ten -->

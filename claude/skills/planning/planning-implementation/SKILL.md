@@ -13,8 +13,6 @@ description: >
   品質ゲートを通過するまでイテレーションする。
 ---
 
-<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
-
 # planning-implementation
 
 実装計画を作るためのスキルです。口頭説明・要件定義書・断片的な依頼を入力として受け取り、別のAIコーディングエージェントがそのまま実行できる粒度の計画ファイルを出力します。

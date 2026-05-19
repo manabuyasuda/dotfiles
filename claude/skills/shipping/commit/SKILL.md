@@ -8,8 +8,6 @@ allowed-tools:
   - Grep
 ---
 
-<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
-
 # Commit Skill
 
 Gitコミットを論理単位の粒度で「人とAIに有用なメッセージ」を付けて作成するスキルです。履歴を読む人（自分・他人・AI）にとって価値のある情報だけを残します。

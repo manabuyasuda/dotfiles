@@ -16,7 +16,9 @@
       "rulePaths": ["./dict/prh.yml"]
     },
     "@textlint-ja/preset-ai-writing": {
-      "ai-tech-writing-guideline": false
+      "ai-tech-writing-guideline": {
+        "enableDocumentAnalysis": false
+      }
     },
     "no-hankaku-kana": true,
     "ja-no-abusage": true,

@@ -9,8 +9,6 @@ allowed-tools:
   - Grep
 ---
 
-<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
-
 計画・設計・アイデアのあらゆる側面について、私たちが共通の認識に至るまで、徹底的に質問攻めにしてください。設計ツリーの枝を1つずつたどり、決定事項間の依存関係を順番に解消していきましょう。
 
 ## 質問のルール
