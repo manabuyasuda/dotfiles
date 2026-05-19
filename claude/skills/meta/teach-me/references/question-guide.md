@@ -42,8 +42,10 @@
 
 | 場面 | 対応 |
 |---|---|
+<!-- textlint-disable ja-technical-writing/ja-no-successive-word -->
 | 前提知識の確認 | 「〇〇は既知ですか」と確認してから説明粒度を調整します |
 | 危険操作の承認 | リポジトリ外への書き込み・外部API呼び出し・破壊的コマンドの実行前に「〇〇を実行してよいですか」と確認します |
+<!-- textlint-enable ja-technical-writing/ja-no-successive-word -->
 
 ## 選択肢の書き方
 

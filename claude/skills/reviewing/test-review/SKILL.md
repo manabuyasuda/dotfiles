@@ -20,9 +20,12 @@ allowed-tools:
 
 ### テスト実装ルールへの準拠（中心）
 
-具体的な観点（テスト名の表現、AAA構造、1テスト1Act、期待値のハードコード、観測可能な出力のみのアサート、テストダブルの役割分離、モック対象の選定、非決定性の制御、テスト間の独立性、診断性、フロントエンド固有のルールなど）は`.claude/docs/test-implementation.md`に書かれています。これを一次情報として扱い、レビューのたびに読み直します。
+具体的な観点は`.claude/docs/test-implementation.md`に書かれています。観点には、テスト名の表現・AAA構造・1テスト1Act・期待値のハードコード・観測可能な出力のみのアサート・テストダブルの役割分離・モック対象の選定・非決定性の制御・テスト間の独立性・診断性・フロントエンド固有のルールなどが含まれます。これを一次情報として扱い、レビューのたびに読み直します。
 
-日本語表現は`.claude/skills/reviewing/writing-review/rule-japanese-expressions.md`と`.claude/skills/reviewing/writing-review/rule-structure.md`も併せて参照します（テスト名やテスト内の文字列の言い回しに適用）。
+日本語表現は次の2つのファイルも併せて参照します（テスト名やテスト内の文字列の言い回しに適用）。
+
+- `.claude/skills/reviewing/writing-review/rule-japanese-expressions.md`
+- `.claude/skills/reviewing/writing-review/rule-structure.md`
 
 ### ユースケースカバレッジ（補助）
 
@@ -56,9 +59,15 @@ allowed-tools:
 
 ### 3. レビューを3周実施する
 
-同じ周回を3回繰り返します。1周目で網羅したつもりでも、2周目・3周目で見え方が変わることがあるためです。
+同じ周回を3回繰り返します。1周目で網羅したつもりでも、2周目・3周目で見え方の変わるときがあるためです。
 
-まず、ルールファイル（`.claude/docs/test-implementation.md`・`.claude/skills/reviewing/writing-review/rule-japanese-expressions.md`・`.claude/skills/reviewing/writing-review/rule-structure.md`）をReadします。ルールは周回のあいだに変わらないので、ここで読んだ内容を3周通して参照し続けて構いません。
+まず、以下の3つのルールファイルをReadします。
+
+- `.claude/docs/test-implementation.md`
+- `.claude/skills/reviewing/writing-review/rule-japanese-expressions.md`
+- `.claude/skills/reviewing/writing-review/rule-structure.md`
+
+ルールは周回のあいだに変わらないので、ここで読んだ内容を3周通して参照し続けて構いません。
 
 そのうえで、各周回で次を実施します。
 
@@ -68,7 +77,14 @@ allowed-tools:
 
 2周目以降の重要事項: 前の周回で「直さなくてよい」「こう直した」と判断した内容を引きずらないようにします。前周の差分や自分のメモを参照せず、毎回テストファイルとソースコードを白紙から読み、各観点を満たしているかをゼロベースで評価します。
 
-設計の匂いを検出した場合: テスト側を曲げないとルールに沿わせられないケース（モックが大量に必要、Arrangeが極端に長い、`as any`やprivate暴露が必要、観測可能な出力がなく内部状態を見るしかない、など）に遭遇したら、テストを無理に修正せず、プロダクトコード側の設計問題として記録します。判断基準は`.claude/docs/test-implementation.md`の「テストが書きにくいと感じたら設計の匂いを疑う」節にあります。
+設計の匂いを検出した場合: ルールへ合わせるためテスト側を曲げざるを得ないケースが該当します。次のようなケースでは、テストを直すのではなくプロダクトコード側の設計問題として記録します。
+
+- 大量のモックが必要
+- Arrangeが極端な長さ
+- `as any`やprivate暴露が必要
+- 観測可能な出力がなく内部状態への依存が必要
+
+判断基準は`.claude/docs/test-implementation.md`の「テストが書きにくいと感じたら設計の匂いを疑う」節にあります。
 
 3周すべてを完了するまでこのフェーズを終えません。
 

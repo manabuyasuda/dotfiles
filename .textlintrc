@@ -1,4 +1,7 @@
 {
+  "filters": {
+    "comments": true
+  },
   "rules": {
     "preset-ja-technical-writing": {
       "sentence-length": { "max": 150 },
@@ -12,7 +15,11 @@
     "prh": {
       "rulePaths": ["./dict/prh.yml"]
     },
-    "@textlint-ja/preset-ai-writing": true,
+    "@textlint-ja/preset-ai-writing": {
+      "ai-tech-writing-guideline": {
+        "enableDocumentAnalysis": false
+      }
+    },
     "no-hankaku-kana": true,
     "ja-no-abusage": true,
     "no-mixed-zenkaku-and-hankaku-alphabet": true,

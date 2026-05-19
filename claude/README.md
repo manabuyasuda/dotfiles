@@ -47,7 +47,7 @@ claude/
 
 **2. [skills.sh/audits](https://skills.sh/audits) で自動スキャン結果を確認する**
 
-スキルの詳細ページにある Security Audits セクションを確認する。いずれも自動スキャンであり人手によるレビューではない。3ツールはそれぞれ異なる観点を持ち、1つでパスしても他の観点はカバーされない。
+スキルの詳細ページにあるSecurity Auditsセクションを確認する。いずれも自動スキャンであり人手によるレビューではない。3ツールはそれぞれ異なる観点を持ち、1つでパスしても他の観点はカバーされない。
 
 | ツール | 何を検出するか | 何を検出できないか | 確認すること |
 |---|---|---|---|
@@ -90,7 +90,7 @@ cp -r .agents/skills/* .claude/skills/
 
 > **既知の問題（v1.4.9 時点）**: `npx skills check` / `npx skills update` がロックファイルを検知できず「No skills tracked in lock file」と表示される場合がある。詳細は [skills-sh.md](skills-sh.md) の「既知の問題」を参照。
 
-利用可能なスキル一覧: [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)（react-best-practices / web-design-guidelines / composition-patterns 等）
+利用可能なスキル一覧: [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)（react-best-practices / web-design-guidelines / composition-patterns等）
 
 詳細は [skills-sh.md](skills-sh.md) を参照。
 
@@ -447,7 +447,7 @@ Q2: ユーザーが明示的に呼び出すか、自律的に動かすか？
 `CLAUDE.md` は最小限に保つ（目安100行以内）。詳細は `skills/` / `agents/` に分離し、呼び出されたときだけ読み込まれる設計を維持する。
 
 #### 新しいツール・サービスを導入した
-`settings.json` のallow/denyにコマンドを追加し、`hooks/session-start/session-start.sh` に検出ロジックを追加する。新たな認証情報ストア（パスワードマネージャー・クラウドサービス等）を追加した場合は `settings.json` の deny にも追記する。プロジェクトで外部への通信先を制限したい場合は sandbox の `allowedDomains` 設定を検討する（[SECURITY.md](SECURITY.md#sandbox-によるネットワーク制御プロジェクト設定で検討) 参照）。
+`settings.json` のallow/denyにコマンドを追加し、`hooks/session-start/session-start.sh` に検出ロジックを追加する。新たな認証情報ストア（パスワードマネージャー・クラウドサービス等）を追加した場合は `settings.json` のdenyにも追記する。プロジェクトで外部への通信先を制限したい場合はsandboxの `allowedDomains` 設定を検討する（[SECURITY.md](SECURITY.md#sandbox-によるネットワーク制御プロジェクト設定で検討) 参照）。
 
 #### フィードバックが遅い・チェックが CI のみになっている
 `hooks/post-tool-use/` に移す。編集後すぐに走るほど速いフィードバックが得られる。
