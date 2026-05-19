@@ -38,7 +38,7 @@ FigmaのCSS変数のパスを、Tailwindのクラス名に変換します。
 | Figmaのvar | vanilla-extractの変数 |
 |---|---|
 | `var(--fg/default, #212529)` | `vars.fg.default` |
-| `var(--typography/body/sm/bold/font-size, 14px)` | `typography["body-sm-bold"]` など（キー名はプロジェクト依存） |
+| `var(--typography/body/sm/bold/font-size, 14px)` | `typography["body-sm-bold"]`など（キー名はプロジェクト依存） |
 
 ## CSS Modulesプロジェクトの場合
 
