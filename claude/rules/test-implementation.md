@@ -9,6 +9,6 @@ paths:
 
 @docs/test-implementation.md
 
-@.claude/skills/reviewing/writing-review/rule-japanese-expressions.md
+@.claude/skills/writing-review/rule-japanese-expressions.md
 
-@.claude/skills/reviewing/writing-review/rule-structure.md
+@.claude/skills/writing-review/rule-structure.md

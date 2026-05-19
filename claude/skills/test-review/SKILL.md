@@ -24,8 +24,8 @@ allowed-tools:
 
 日本語表現は次の2つのファイルも併せて参照します（テスト名やテスト内の文字列の言い回しに適用）。
 
-- `.claude/skills/reviewing/writing-review/rule-japanese-expressions.md`
-- `.claude/skills/reviewing/writing-review/rule-structure.md`
+- `.claude/skills/writing-review/rule-japanese-expressions.md`
+- `.claude/skills/writing-review/rule-structure.md`
 
 ### ユースケースカバレッジ（補助）
 
@@ -64,8 +64,8 @@ allowed-tools:
 まず、以下の3つのルールファイルをReadします。
 
 - `.claude/docs/test-implementation.md`
-- `.claude/skills/reviewing/writing-review/rule-japanese-expressions.md`
-- `.claude/skills/reviewing/writing-review/rule-structure.md`
+- `.claude/skills/writing-review/rule-japanese-expressions.md`
+- `.claude/skills/writing-review/rule-structure.md`
 
 ルールは周回のあいだに変わらないので、ここで読んだ内容を3周通して参照し続けて構いません。
 
