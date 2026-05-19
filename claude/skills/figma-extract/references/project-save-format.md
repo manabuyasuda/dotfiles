@@ -42,7 +42,7 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
   "tree": {},
   "fetchedNodes": [],
   "pendingNodes": [],
-  "skippedNodes": [],
+  "userSkippedNodes": [],
   "jsxNodes": {},
   "componentNodes": []
 }
@@ -56,7 +56,7 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
 | `tree` | 取得済みノードの情報（初期は空） |
 | `fetchedNodes` | 取得済みノードIDの一覧（初期は空） |
 | `pendingNodes` | 取得できていない子ノードのID（初期は空） |
-| `skippedNodes` | ユーザーが取得しないと判断したノードID（初期は空） |
+| `userSkippedNodes` | ユーザーが取得しないと判断したノードID（初期は空）。エージェントは処理中に書き込まない |
 | `jsxNodes` | Pass 1: `.txt`を取得したときにgrepしたすべての`data-node-id`（初期は空オブジェクト） |
 | `componentNodes` | Pass 2: コンポーネント境界と判断したノード一覧（初期は空配列） |
 

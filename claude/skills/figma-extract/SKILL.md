@@ -120,7 +120,7 @@ Figmaトークンの引き当て方法は`references/project-tokens.md`を参照
 - Figmaノード名から`Header` `Footer` `Nav` `Browser` `ad` `Calendar`等の語を含む場合は「実装済みの可能性あり」として選択肢に挙げます
 - コードベースを確認して同名のコンポーネントがすでに存在する場合は「実装済み」と明示します
 
-ユーザーが「スキップする」と答えたノードは`_index.json`の`skippedNodes`に記録し、フェッチしません。
+ユーザーが「スキップする」と答えたノードは`_index.json`の`userSkippedNodes`に記録し、フェッチしません。
 
 ### 取得手順
 
@@ -144,7 +144,17 @@ Figmaトークンの引き当て方法は`references/project-tokens.md`を参照
    ```bash
    node .claude/skills/figma-extract/scripts/check-pending.js explore/{page-slug}/figma/raw/_index.json
    ```
-6. Pass 2: 全ノードの取得完了後、`jsxNodes`の完全なリストを見てコンポーネント境界を判断し`componentNodes`に記録します（詳細は`references/project-save-format.md`参照）
+6. Pass 2として、全ノードの取得完了後、`jsxNodes`の完全なリストを見てコンポーネント境界を判断し`componentNodes`に記録します（詳細は`references/project-save-format.md`参照）。この判断を3回繰り返します。
+
+   事前確認でユーザーが指定したノードは必ず含めます。ユーザーが`scope`・`implemented`を教えてくれた場合はそれも記録します。
+
+   | 回 | 観点 |
+   |---|---|
+   | 1回目 | ノード名（PascalCase・既知のコンポーネント名）から境界を判断します |
+   | 2回目 | 1回目の結果を見ずにゼロベースで、レイアウト構造（親子関係・サイズ・役割）から境界を判断します |
+   | 3回目 | `jsxNodes`をゼロベースで再度読み、1・2回目で候補に挙がらなかったノードに絞って検討します |
+
+   3回の検討で候補に挙がったノードをすべて`componentNodes`に含めます。ユーザー指定ノードと重複する場合はユーザーの情報（`scope`・`implemented`）で上書きします。
 
 ## Step 3: トークンを引き当ててマッピングファイルを更新する
 

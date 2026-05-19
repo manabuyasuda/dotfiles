@@ -3,7 +3,7 @@
  * Usage: node update-pending-nodes.js <rawFile.xml> <_index.json path>
  *
  * sparse XML からノードIDを抽出して pendingNodes に追加する。
- * skippedNodes・fetchedNodes・既存 pendingNodes に含まれる ID はスキップする。
+ * userSkippedNodes・fetchedNodes・既存 pendingNodes に含まれる ID はスキップする。
  * 同時に fetchedNodes への追加と pendingNodes からの削除も行う。
  *
  * exit 0: 成功
@@ -34,7 +34,7 @@ while ((match = idRegex.exec(content)) !== null) {
 
 const index = JSON.parse(readFileSync(indexPath, "utf-8"));
 
-const skipped = new Set(index.skippedNodes ?? []);
+const skipped = new Set(index.userSkippedNodes ?? []);
 const fetched = new Set(index.fetchedNodes ?? []);
 const pending = new Set(index.pendingNodes ?? []);
 
