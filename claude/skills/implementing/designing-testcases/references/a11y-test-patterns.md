@@ -20,7 +20,7 @@
 - フォーカス管理: モーダル開閉時のフォーカス移動、フォーカストラップ、unmount時の戻し先が正しいこと
 - 動的aria属性: 状態変化に伴う`aria-expanded` / `aria-selected` / `aria-pressed`が更新されること
 - 動的なライブリージョン: `role="alert"` / `role="status"` / `aria-live`が正しく発火すること
-- フォームエラーの通知: バリデーションエラー時に`aria-invalid` / `aria-describedby`が設定されエラーメッセージが読み上げられること
+- フォームエラーの通知: バリデーションエラー時に`aria-invalid` / `aria-describedby`が設定され、エラーメッセージは読み上げられること
 
 ## パターン判別
 

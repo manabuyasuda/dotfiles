@@ -1,6 +1,8 @@
+<!-- textlint-disable @textlint-ja/ai-writing/no-ai-hype-expressions, @textlint-ja/ai-writing/ai-tech-writing-guideline, ja-technical-writing/max-ten, ja-technical-writing/ja-no-successive-word -->
+
 # 文書構造ルール
 
-文書の構造・論点の組み立てに関するルールです。
+文書の構造・論点の組み立てに関するルールです。このファイル内の例示はルール定義のための禁止表現サンプルなので、該当するtextlintルールはファイル先頭で無効化しています。
 
 ## 差分で検出できるルール
 

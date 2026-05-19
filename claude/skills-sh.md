@@ -111,7 +111,7 @@ v1.4.9で生成されるフォーマット（2026-04-09確認）。
 
 ### 既知の問題（v1.4.9 時点）
 
-`npx skills check` を実行してもロックファイルが検知されず、以下のメッセージが表示される場合がある（2026-04-09 確認）。
+`npx skills check` を実行してもロックファイルは検知されず、以下のメッセージが表示されるケースもあります（2026-04-09確認）。
 
 ```
 Checking for skill updates...
@@ -120,7 +120,7 @@ No skills tracked in lock file.
 Install skills with npx skills add <package>
 ```
 
-この場合は `npx skills check` / `npx skills update` による更新確認はできないため、`npx skills add` で再インストールするか、v1.4.9 より新しいバージョンで修正されているかを確認する。
+この場合は `npx skills check` / `npx skills update` による更新確認はできないため、`npx skills add` で再インストールするか、v1.4.9より新しいバージョンで修正されているかを確認する。
 
 ## 注目スキル
 

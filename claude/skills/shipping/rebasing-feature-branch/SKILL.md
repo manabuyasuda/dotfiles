@@ -117,12 +117,12 @@ git push --force-with-lease origin <FEATURE_BRANCH>
 git fetch origin <FEATURE_BRANCH> && git status -sb
 ```
 
-期待される出力は`## <FEATURE_BRANCH>...origin/<FEATURE_BRANCH>`のみ（aheadもbehindもない状態）です。aheadが残っている場合はpushが失敗または不完全なので原因を調査して再pushします。behindが残っている場合は他の誰かが先にpushしているので、ユーザーに状況を報告して指示を仰ぎます。
+期待される出力は`## <FEATURE_BRANCH>...origin/<FEATURE_BRANCH>`のみ（ahead/behindがゼロの状態）です。aheadが残っている場合はpushが失敗または不完全なので原因を調査して再pushします。behindが残っている場合は他の誰かが先にpushしているので、ユーザーに状況を報告して指示を仰ぎます。
 
 完了確認に成功したら、ユーザーに以下を簡潔に報告して終了します。
 
 - ベースブランチ名と取り込んだコミット数
-- コンフリクトが発生したファイルがあれば、その解消方針
+- コンフリクトの発生したファイルがあれば、その解消方針
 
 ## コンフリクト発生時
 
@@ -176,7 +176,7 @@ mergiraf solve <ファイルパス>
 
 #### mergirafの変更内容を報告する
 
-終了コードが0または2のファイルは、`git add`または手順Cの手動解消に進む前に、`mergiraf review <マージID>`を実行してユーザーに変更内容を報告します。
+終了コードが0または2のファイルは、`git add`または手順Cの手動解消へ進む前に、`mergiraf review <マージID>`を実行してユーザーへ変更内容を報告します。
 
 ```bash
 mergiraf review <マージID>
