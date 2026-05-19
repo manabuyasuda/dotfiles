@@ -82,9 +82,9 @@ Figmaのページ名全体をケバブケースに変換してスラグにしま
 
 ### Pass 1（スクリプトが自動処理）
 
-`.txt`を受け取ったら、SKILL.md の手順に従い `update-jsx-nodes.js` を実行します。
+`.txt`を受け取ったら、SKILL.mdの手順に従い `update-jsx-nodes.js` を実行します。
 スクリプトが `data-node-id` と `data-name` の対応付けを含めて `jsxNodes` を自動更新します。
-手動 grep は使いません。
+手動grepは使いません。
 
 更新後の `jsxNodes` の形式は以下の通りです。
 
