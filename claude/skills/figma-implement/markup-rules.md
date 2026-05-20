@@ -1,6 +1,6 @@
 # markup-rules
 
-要素を「見た目」ではなく「役割」から判断するためのマークアップルール集の索引です。詳細は `rules/markup/` 配下の各ファイルを参照してください。
+要素を「見た目」ではなく「役割」から判断するためのマークアップルール集の索引です。詳細は`rules/markup/`配下の各ファイルを参照してください。
 
 ## 共通原則
 
@@ -27,13 +27,14 @@ Figmaデータに以下の特徴があれば、対応するルールを適用し
 |---|---|
 | `semantic-no-section` | 実装で`<section>`を使わない |
 | `a11y-focus-indicator` | フォーカス可能要素に可視フォーカスを保つ |
+| `a11y-aria-label` | 可視テキストがある要素にaria-labelを付けない |
 
 ## 適用順序
 
 次の順番でチェックします。
 
 1. ページ全体（`semantic-main-landmark`・`semantic-heading-order`・`semantic-nav-landmark`）
-2. 要素ごと（`semantic-link-href`・`semantic-button-action`・`a11y-focus-indicator`・`a11y-aria-patterns`）
+2. 要素ごと（`semantic-link-href`・`semantic-button-action`・`a11y-focus-indicator`・`a11y-aria-patterns`・`a11y-aria-label`）
 3. 構造（`semantic-list-items`）
 4. 画像（`a11y-image-alt`・`perf-image-srcset`）
 5. 実装全般（`semantic-no-section`）
@@ -57,7 +58,8 @@ rules/markup/
 ├── a11y-focus-indicator.md
 ├── a11y-aria-patterns.md
 ├── a11y-image-alt.md
+├── a11y-aria-label.md
 └── perf-image-srcset.md
 ```
 
-各ルールファイルはfrontmatter（`title`・`impact`・`tags`）・if-then表・Incorrect/Correctコード例・不明時の確認項目で構成されます。新規ルールを追加する場合は `_template.md` を雛形とし、`_sections.md` のセクション分類にしたがってprefixを付けてください。
+各ルールファイルはfrontmatter（`title`・`impact`・`tags`）・if-then表・Incorrect/Correctコード例・不明時の確認項目で構成されます。新規ルールを追加する場合は`_template.md`を雛形とし、`_sections.md`のセクション分類にしたがってprefixを付けてください。
