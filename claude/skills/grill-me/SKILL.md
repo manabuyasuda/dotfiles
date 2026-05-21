@@ -37,14 +37,14 @@ allowed-tools:
 
 質問文がわかりにくいと正しく答えられないため、以下のルールで書きます。
 
-<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
+<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline, ja-technical-writing/ja-no-redundant-expression, ja-technical-writing/max-ten, prh -->
 - 複合名詞（名詞を助詞なしで直接つなげる形）を避け、「の・による・に関する」等の助詞を補って修飾関係を明示します
 - 指示語（「この」「その」など）が指す対象を明示し、必要に応じて名詞を補います（「この入力」→「画面から受け取ったデータ」）
 - 冗長な表現を短くします（「することができますか」→「できますか」、「する必要がありますか」→「しますか」）
 - 主語が不明な受動態を避け、動作の主体を明示します（「処理が行われますか」→「システムが処理しますか」）
 - 一文に動作主体が複数現れて読みにくいときは、文脈から明らかな主体（多くは設計対象のシステム）を省き、それ以外の主体だけを明示します（「システムは、ユーザーがブラウザを閉じた後もデータを保持しますか」→「ユーザーがブラウザを閉じた後も、データを保持しますか」）
 - 抽象的な表現を避け、具体的な事象や条件で書きます（「大きな変更ですか」→「既存の動作が変わりますか」、「セッションが終了した後」→「ユーザーがブラウザを閉じた後」）
-<!-- textlint-enable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
+<!-- textlint-enable @textlint-ja/ai-writing/ai-tech-writing-guideline, ja-technical-writing/ja-no-redundant-expression, ja-technical-writing/max-ten, prh -->
 
 ## 流れ
 
