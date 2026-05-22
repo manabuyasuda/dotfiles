@@ -131,6 +131,8 @@ dotfiles/
    - nodenv-default-packagesプラグインのインストールとdefault-packagesのリンク
    - `gh/extensions` に記載されたgh拡張機能のインストール
 
+   `npm ci` の実行時に `prepare` スクリプトが走り、lefthookが `.git/hooks/pre-commit` を配置する。これによりステージ済みの`.md`ファイルへtextlintが自動で走り、違反があるとコミットが止まる。詳細は「[textlintとpre-commitフック](#textlintとpre-commitフック)」を参照する。
+
 8. SSH鍵を設定してGitHubに登録する
 
    GitHubアカウントごとに鍵とホストエイリアスを分けて管理する。個人アカウントは `my`、案件・会社アカウントは案件名など任意のプレフィックスをホスト名に付ける。
@@ -321,6 +323,42 @@ brew bundle dump --file=~/MY/dotfiles/Brewfile --force
 `claude/` ディレクトリ（`skills/`, `hooks/`）はディレクトリごとシンボリックリンクされているため、中にファイルを追加すると自動的にリポジトリに反映される。
 
 `keybindings.json` など新しい個別ファイルを追加する場合は、`claude/` に作成してから `./setup.sh` を再実行する。
+
+### textlintとpre-commitフック
+
+`.md`ファイルの文章品質はtextlintで検証する。検知は3層で行う。
+
+1. ローカルの`git commit`時（lefthookによるpre-commit）
+2. CI（`.github/workflows/textlint.yml`、PR時）
+3. Claude Codeの編集時（PostToolUseフックで実行される`format.sh`）
+
+#### 初回セットアップ
+
+`npm ci` または `npm install` を実行すると、`package.json` の `prepare` スクリプトが `lefthook install` を呼び、`.git/hooks/pre-commit` が自動で配置される。手動操作は不要。
+
+#### コミット時の挙動
+
+- ステージ済みの`.md`ファイルに違反があると、コミットがexit code 1で止まる
+- 違反がない場合、通常どおりコミットが完了する
+- `lefthook.yml` の `glob: "*.md"`（basename match）で対象を絞っているため、`.md`以外のファイルだけをコミットするときtextlintは走らない
+
+#### 緊急回避
+
+CIや別レビューで品質を担保できる、あるいは違反検知に明らかな誤りがある場合に限り、`--no-verify` でフックをスキップできる。
+
+```bash
+git commit --no-verify -m "..."
+```
+
+CIの`textlint`ジョブは依然として走るため、`--no-verify`でローカルをすり抜けてもPRで再検知される。常用しないこと。
+
+#### 違反を自動修正したい場合
+
+```bash
+npm run lint:fix
+```
+
+修正できない違反（半角カナの混入など）は手動で直す。
 
 ## 管理対象外のツール
 
