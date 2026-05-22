@@ -15,6 +15,7 @@ Claude Codeから呼び出せるカスタムスキルの一覧です。
 - [designing-testcases](./designing-testcases/SKILL.md) — UC表を入力にテスト計画とテストコードを生成します。3層検証（自動テスト/Agentic Verification/手動検証）を割り当てます。
 - [figma-extract](./figma-extract/SKILL.md) — Figma MCPから実装に必要なデータを取得し、プロジェクトのCSSフレームワークに合わせてトークンを引き当て、マッピングファイルに記録します。
 - [figma-implement](./figma-implement/SKILL.md) — `figma-extract`のマッピングファイルとスクリーンショットをもとに、Figmaのデザインに合わせてコンポーネントやページを実装します。
+- [verifying-npm-package-security](./verifying-npm-package-security/SKILL.md) — npmパッケージのインストール・アップデート前にCVE・サプライチェーン・メンテナンス・ライセンス・peerDepsを検証し、GO/HOLD/NO-GOを判定します。
 
 ## Reviewing（成果物の点検）
 
