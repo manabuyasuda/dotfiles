@@ -1,0 +1,6 @@
+pre-commit:
+  parallel: true
+  commands:
+    textlint:
+      glob: "*.md"
+      run: npx textlint {staged_files}
