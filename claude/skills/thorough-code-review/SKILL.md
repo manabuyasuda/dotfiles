@@ -1,5 +1,5 @@
 ---
-name: code-review
+name: thorough-code-review
 description: コードレビューを実施する。GitHubのPRをレビューするか、ローカルブランチの変更をレビューするかを選択できる。「PRレビューして」「#123をレビュー」「このブランチをレビューして」「変更内容を見て」のように使う。PR番号が引数にない場合も起動してよい。
 context: fork
 allowed-tools:
