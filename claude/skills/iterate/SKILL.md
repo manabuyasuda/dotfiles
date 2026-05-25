@@ -19,7 +19,7 @@ allowed-tools:
 
 ```
 利用可能なスキル:
-code-review
+thorough-code-review
 writing-review
 （以下、取得した一覧を一行ずつ）
 ```
