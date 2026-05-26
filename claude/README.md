@@ -132,9 +132,8 @@ cp -r .agents/skills/* .claude/skills/
 | GitHub CLI 拡張 | `gh dash`, `gh f`, `gh s`, `gh notify`, `gh search` |
 | Git 読み取り | `git log`, `git status`, `git diff`, `git show`, `git remote`, `git stash list`, `git branch --show-current` |
 | 依存関係・コード解析 | `madge`, `knip`, `depcruise`, `semgrep`, `type-coverage` |
-| ファイル検索 | `fd`, `tree` |
-| HTML・アクセシビリティ | `html-validate`, `axe` |
-| CSS 解析 | `wallace`, `colorguard` |
+| ファイル検索 | `tree` |
+| アクセシビリティ | `axe` |
 | バンドル・パッケージ | `bundle-phobia`, `ncu`（npm-check-updates） |
 | デプロイ・CI | `firebase list/functions:list/hosting:channel:list`, `vercel ls/list/inspect/logs/whoami/projects`, `lhci collect/assert/open/healthcheck` |
 | API ドキュメント | `redocly lint/stats/bundle/split/check-config/build-docs` |

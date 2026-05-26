@@ -262,7 +262,7 @@ dotfiles/
     以下は手動で設定する:
 
     **一般 → ログイン項目**（ログイン時に開く）
-    - AutoRaise、BetterTouchTool、CotEditor、Cursor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
+    - BetterTouchTool、CotEditor、Cursor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
 
     **通知**（通知を許可する）
     - MeetingBar、ターミナル、Slack

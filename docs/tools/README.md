@@ -9,7 +9,6 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 | [Knip](knip.md) | 未使用ファイル・エクスポート・依存関係を検出。不要コードの削減やプロジェクトの整理に使う | npm |
 | [textlint](textlint.md) | Markdown・テキストファイルの文章校正ツール。日本語向けプリセットと prh による表記ゆれ統一を組み合わせて使う | npm |
 | [type-coverage](type-coverage.md) | TypeScriptの型カバレッジを計測。`any`型や型推論が不十分な箇所を検出し、型安全性の向上を支援する | npm |
-| [html-validate](html-validate.md) | HTMLのオフラインバリデーション。W3C仕様に基づく構文チェックに加え、アクセシビリティやベストプラクティスのルールも提供する | npm |
 
 ## 依存関係・モジュール分析
 
@@ -24,13 +23,6 @@ dotfilesで管理しているCLIツールのカテゴリ別インデックス。
 |---|---|---|
 | [bundle-phobia](bundle-phobia.md) | npmパッケージのバンドルサイズをCLIから確認。パッケージ選定時のサイズ比較や依存関係の一括監査に使う | npm |
 | [Lighthouse CI](lighthouse-ci.md) | LighthouseをCI/CDで自動実行。パフォーマンス・アクセシビリティ・SEOのスコアを継続的に監視し、退行を防止する | npm |
-
-## CSS分析
-
-| ツール | 説明 | インストール |
-|---|---|---|
-| [wallace-cli](wallace-cli.md) | CSSの統計情報を分析。ルール数、セレクター数、詳細度の分布、ユニークな色数などの指標を一覧表示する | npm |
-| [colorguard](colorguard.md) | CSS内の類似色をCIEDE2000色差アルゴリズムで検出。カラーパレットの意図しない重複を整理する | npm |
 
 ## アクセシビリティ
 
