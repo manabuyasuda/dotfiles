@@ -293,8 +293,8 @@ allowを追加するときは、そのパターンが想定外のサブコマン
 | gh 拡張 | `gh dash*`, `gh f`（完全一致）, `gh s`（完全一致） | 読み取り専用。`gh f*`・`gh s*`はワイルドカードを使わず完全一致で書く（§ワイルドカードの注意参照） |
 | Git 読み取り | `git log/status/diff/show/remote/stash list` | 読み取り専用 |
 | 静的解析 | `madge`, `knip`, `depcruise`, `semgrep`, `type-coverage` | ファイルを変更しない |
-| ファイル検索 | `fd`, `tree` | 検索のみ |
-| 検証ツール | `html-validate`, `axe`, `wallace`, `colorguard` | 検証のみ |
+| ファイル検索 | `tree` | 検索のみ |
+| 検証ツール | `axe` | 検証のみ |
 
 ### deny（常にブロック）の判断基準
 

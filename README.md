@@ -119,13 +119,6 @@ dotfiles/
 
    アプリによってはパスワードを求められる場合がある。
 
-   **AnkerWorkでエラーになる場合:** ロックファイルが残っていると競合で失敗することがある。ロックファイルを削除して再実行する:
-
-   ```bash
-   rm -f ~/Library/Caches/Homebrew/downloads/*AnkerWork*.incomplete
-   brew bundle install --file=~/MY/dotfiles/Brewfile --verbose
-   ```
-
    `setup.sh` は以下を実行する。何度実行しても安全（冪等）。
    - 既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成
    - nodenv-default-packagesプラグインのインストールとdefault-packagesのリンク
@@ -269,7 +262,7 @@ dotfiles/
     以下は手動で設定する:
 
     **一般 → ログイン項目**（ログイン時に開く）
-    - AutoRaise、BetterTouchTool、CotEditor、Cursor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
+    - BetterTouchTool、CotEditor、Cursor、DeepL、Dropbox、Google Chrome、iTerm、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree
 
     **通知**（通知を許可する）
     - MeetingBar、ターミナル、Slack
