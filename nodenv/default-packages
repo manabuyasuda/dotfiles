@@ -5,14 +5,11 @@
 @redocly/cli
 @socketsecurity/cli
 bundle-phobia-cli
-colorguard
 create-next-app
 dependency-cruiser
 firebase-tools
-html-validate
 knip
 madge
 npm-check-updates
 type-coverage
 vercel
-wallace-cli
