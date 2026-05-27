@@ -317,6 +317,28 @@ brew bundle dump --file=~/MY/dotfiles/Brewfile --force
 
 `keybindings.json` など新しい個別ファイルを追加する場合は、`claude/` に作成してから `./setup.sh` を再実行する。
 
+### Claude Code Update Watch
+
+Claude Codeの新バージョンを日次で検知し、このリポジトリの設定への取り込み提案をIssueに投稿するワークフロー（`.github/workflows/claude-code-update-watch.yml`）。
+
+- **実行タイミング:** 毎日JST 14:00（UTC 05:00）
+- **仕組み:** `anthropics/claude-code`のCHANGELOG.mdを取得し、前回処理済みバージョンとの差分をAIが要約して`claude-code-update`ラベル付きIssueを作成する
+- **認証:** リポジトリSecretの`CLAUDE_CODE_OAUTH_TOKEN`（`claude setup-token`で発行したOAuthトークン）を使用する
+
+#### トークンの有効期限と再発行
+
+`claude setup-token` で発行されるトークンの有効期限は **1年間**。Maxサブスクリプションが有効である限り使える。
+
+トークンが失効するとワークフローの「Generate proposal」ステップが認証エラーで失敗する。以下の手順で再発行する。
+
+```bash
+# トークンを発行する（出力された文字列をコピーする）
+claude setup-token
+
+# リポジトリSecretを更新する（「? Paste your secret:」と表示されたらトークンを貼り付ける）
+gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo manabuyasuda/dotfiles
+```
+
 ### textlintとpre-commitフック
 
 `.md`ファイルの文章品質はtextlintで検証する。検知は3層で行う。
