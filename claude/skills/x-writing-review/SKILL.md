@@ -9,6 +9,9 @@ allowed-tools:
   - Read
   - Edit
   - Bash
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # writing-review
@@ -20,6 +23,19 @@ allowed-tools:
 @rule-formatting.md
 @rule-structure.md
 @rule-japanese-expressions.md
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | 対象の決定 | — |
+| 2 | ルール読み込み | 1 |
+| 3 | 周回1: レビューと修正 | 2 |
+| 4 | 周回2: レビューと修正 | 3 |
+| 5 | 周回3: レビューと修正 | 4 |
+| 6 | 修正内容の報告 | 5 |
 
 ## 対象の決定
 

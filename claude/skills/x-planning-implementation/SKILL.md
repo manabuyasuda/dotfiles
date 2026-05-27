@@ -11,6 +11,17 @@ description: >
   明示的に「計画を」と言われなくても、依頼が大きすぎる・曖昧すぎてそのまま実装できない場合は
   積極的にこのスキルを起動する。`x-grill-me` でユーザーへの確認を行い、
   品質ゲートを通過するまでイテレーションする。
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - Glob
+  - Grep
+  - Skill
+  - AskUserQuestion
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # planning-implementation
@@ -54,6 +65,23 @@ Acceptance Criteriaはテスト・型・Lint・コマンド実行・MCP経由の
 ## プロセス（9フェーズ）
 
 各フェーズの完了条件を満たさない限り次に進みません。
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | Phase 1: Intake（入力の正規化） | — |
+| 2 | Phase 2: Investigation（コードベース調査） | 1 |
+| 3 | Phase 3: Gap analysis & Self-fill（自己充填） | 2 |
+| 4 | Phase 3.5: Use Case Mapping（ユースケース洗い出し） | 3 |
+| 5 | Phase 4: Clarification（x-grill-me連携） | 4 |
+| 6 | Phase 5: Drafting（初稿） | 5 |
+| 7 | Phase 6: Self-review（自己レビュー） | 6 |
+| 8 | Phase 7: External Review（review-criteria.mdによるレビュー） | 7 |
+| 9 | Phase 8: User Confirmation（ユーザー確認） | 8 |
+| 10 | Phase 9: Handoff（引き渡し） | 9 |
 
 ### Phase 1: Intake（入力の正規化）
 

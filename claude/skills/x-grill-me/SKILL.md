@@ -7,6 +7,9 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 計画・設計・アイデアのあらゆる側面について、私たちが共通の認識に至るまで、徹底的に質問攻めにしてください。設計ツリーの枝を1つずつたどり、決定事項間の依存関係を順番に解消していきましょう。
@@ -45,6 +48,16 @@ allowed-tools:
 - 一文に動作主体が複数現れて読みにくいときは、文脈から明らかな主体（多くは設計対象のシステム）を省き、それ以外の主体だけを明示します（「システムは、ユーザーがブラウザを閉じた後もデータを保持しますか」→「ユーザーがブラウザを閉じた後も、データを保持しますか」）
 - 抽象的な表現を避け、具体的な事象や条件で書きます（「大きな変更ですか」→「既存の動作が変わりますか」、「セッションが終了した後」→「ユーザーがブラウザを閉じた後」）
 <!-- textlint-enable @textlint-ja/ai-writing/ai-tech-writing-guideline, ja-technical-writing/ja-no-redundant-expression, ja-technical-writing/max-ten, prh -->
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | コードベース調査 | — |
+| 2 | 質問の実施（全分岐の解消まで反復） | 1 |
+| 3 | 合意内容のまとめ | 2 |
 
 ## 流れ
 

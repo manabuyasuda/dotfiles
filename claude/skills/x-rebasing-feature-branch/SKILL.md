@@ -7,6 +7,9 @@ allowed-tools:
   - Glob
   - Grep
   - AskUserQuestion
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # フィーチャーブランチのリベース
@@ -18,6 +21,18 @@ allowed-tools:
 ## 実行フローの概要
 
 ブランチ確定→状態確認→ベースブランチ最新化→ローカルrebase→[コンフリクト解消ループ→]リモートpush→完了確認
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | Step 1: ブランチを確定する | — |
+| 2 | Step 2: ベースブランチを最新化する | 1 |
+| 3 | Step 3: フィーチャーブランチに戻ってリベースする | 2 |
+| 4 | Step 4: リモートにプッシュする | 3 |
+| 5 | Step 5: 完了確認 | 4 |
 
 ## 実行手順
 

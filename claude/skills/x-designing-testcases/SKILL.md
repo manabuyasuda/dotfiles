@@ -9,6 +9,16 @@ description: >
   テスト種別ごとに章分けしたテスト計画を作成、テスト対象の特性に応じた reference で
   テストコードを生成します。テストファイルには VERIFY コメントで3層の検証情報を埋め込みます。
   ユースケース設計は別スキル`x-designing-usecases`で扱います。
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - Edit
+  - Glob
+  - Grep
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # designing-testcases
@@ -53,6 +63,16 @@ VERIFYコメントの仕様は`references/verify-comment-spec.md`を読んでく
 ### テスト計画はテスト種別ごとに章分けする
 
 UC側は系統（E/D/O）で整理されていますが、テスト計画では系統を解体し、テスト種別ごとに章を分けます。1機能のテストは複数の系統UCから観点を統合する必要があるためです。
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | タスク判定 | — |
+| 2 | タスクB: テスト計画の生成 | 1 |
+| 3 | タスクC: テストコードの実装 | 2 |
 
 ## タスク判定
 
