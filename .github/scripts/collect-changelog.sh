@@ -7,6 +7,10 @@ SRC="https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md"
 curl -fsSL "$SRC" -o CHANGELOG.md
 
 latest=$(grep -m1 -E '^## ' CHANGELOG.md | sed 's/^## //')
+if [[ -n "$latest" && ! "$latest" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "::error::Unexpected version format: ${latest}"
+  exit 1
+fi
 if [[ -z "$latest" || "$latest" == "$LAST_VERSION" ]]; then
   echo "has_update=false" >>"$GITHUB_OUTPUT"
   exit 0

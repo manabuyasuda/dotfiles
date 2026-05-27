@@ -39,8 +39,10 @@ jobs:
 
       - name: Fetch CHANGELOG and collect version diff
         id: diff
+        env:
+          LAST_VERSION: ${{ steps.state.outputs.last }}
         run: |
-          ./.github/scripts/collect-changelog.sh "${{ steps.state.outputs.last }}" > changelog-diff.md
+          ./.github/scripts/collect-changelog.sh "$LAST_VERSION" > changelog-diff.md
 
       - name: Generate proposal (sandboxed AI, read-only tools)
         if: steps.diff.outputs.has_update == 'true'
@@ -98,8 +100,9 @@ jobs:
         if: steps.diff.outputs.has_update == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST_VERSION: ${{ steps.diff.outputs.latest }}
         run: |
           gh issue create --repo "$GITHUB_REPOSITORY" \
-            --title "Claude Code ${{ steps.diff.outputs.latest }} 取り込み提案" \
+            --title "Claude Code ${LATEST_VERSION} 取り込み提案" \
             --label claude-code-update \
             --body-file proposal.md
