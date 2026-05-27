@@ -13,6 +13,7 @@ SYMLINKS=(
   "git/.gitconfig:.gitconfig"
   "claude/CLAUDE.md:.claude/CLAUDE.md"
   "claude/settings.json:.claude/settings.json"
+  "claude/settings.local.json:.claude/settings.local.json"
   "claude/keybindings.json:.claude/keybindings.json"
   "claude/skills:.claude/skills"
   "claude/hooks:.claude/hooks"
@@ -87,6 +88,25 @@ else
 
   # default-packages のシンボリックリンク
   backup_and_link "nodenv/default-packages" "" "$NODENV_ROOT/default-packages"
+fi
+
+# === dotfiles プロジェクトの .claude/settings.local.json ===
+echo ""
+echo "--- dotfiles project settings.local.json ---"
+
+DOTFILES_PROJECT_SETTINGS="$DOTFILES_DIR/.claude/settings.local.json"
+if [[ -f "$DOTFILES_PROJECT_SETTINGS" ]]; then
+  echo "[OK] 作成済み: $DOTFILES_PROJECT_SETTINGS"
+else
+  mkdir -p "$DOTFILES_DIR/.claude"
+  cat > "$DOTFILES_PROJECT_SETTINGS" << 'SETTINGS_EOF'
+{
+  "env": {
+    "EXPECTED_GH_ACCOUNT": "manabuyasuda"
+  }
+}
+SETTINGS_EOF
+  echo "[CREATE] $DOTFILES_PROJECT_SETTINGS"
 fi
 
 # === gh 拡張機能 ===
