@@ -86,7 +86,8 @@
       "mcp__playwright__browser_console_messages",
       "mcp__playwright__browser_network_requests",
       "mcp__playwright__browser_tabs",
-      "mcp__playwright__browser_close"
+      "mcp__playwright__browser_close",
+      "Skill(x-*)"
     ],
     "deny": [
       "Glob(**/.env*)",
