@@ -14,6 +14,9 @@ allowed-tools:
   - Grep
   - AskUserQuestion
   - Agent
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # x-retrospective
@@ -29,6 +32,19 @@ allowed-tools:
 6. retrospectiveファイルにT/Aと結果を追記する
 
 ---
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | Step 1: retrospectiveファイルを読み込む | — |
+| 2 | Step 2: セッション内容を整理する | 1 |
+| 3 | Step 3: KPTA分析 | 2 |
+| 4 | Step 4: 改善提案を生成する | 3 |
+| 5 | Step 5: 改善を実施する | 4 |
+| 6 | Step 6: retrospectiveファイルにT/Aと結果を追記する | 5 |
 
 ## Step 1: retrospective ファイルを読み込む
 

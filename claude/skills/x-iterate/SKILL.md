@@ -5,6 +5,9 @@ allowed-tools:
   - Skill
   - Bash
   - AskUserQuestion
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 ## 開始前の確認
@@ -27,6 +30,18 @@ x-writing-review
 「どのスキルを適用しますか？」と問いかけてください。
 
 対象ファイル/ディレクトリが不明な場合も同様にテキストで問いかけてください。
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | 開始前の確認 | — |
+| 2 | ラウンド1 | 1 |
+| 3 | ラウンド2 | 2 |
+| 4 | ラウンド3 | 3 |
+| 5 | 最終報告 | 4 |
 
 ## 実行フロー
 

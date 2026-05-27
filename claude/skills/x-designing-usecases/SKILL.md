@@ -8,6 +8,14 @@ description: >
   各UCに観点と適用される状況軸を紐づけて、テスト計画への入力となるUC表を作ります。
   明示的に「ユースケース」と言われなくても、テスト観点・抜け漏れに関する相談が来たら積極的に起動します。
   テスト計画とテストコードの生成は別スキル`x-designing-testcases`で扱います。
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - AskUserQuestion
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # designing-usecases
@@ -46,6 +54,15 @@ description: >
 | `cond.network` | ネットワーク（オフライン、低速、中断） |
 
 各状況軸の観点チェックリストと系統別の現れ方は`references/conditions.md`を読んでください。
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | タスク判定 | — |
+| 2 | UC表のレビューまたは新規作成 | 1 |
 
 ## タスク判定
 

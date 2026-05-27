@@ -13,6 +13,9 @@ allowed-tools:
   - mcp__figma__get_design_context
   - mcp__figma__get_screenshot
   - mcp__figma__get_metadata
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # figma-extract
@@ -30,6 +33,18 @@ allowed-tools:
 | `references/project-tokens.md` | フレームワーク別のFigmaトークン引き当て方法 | Step 1・Step 3 |
 | `references/project-save-format.md` | 保存先・ファイルテンプレート・完成形サンプル | Step 2・Step 3 |
 | `references/figma-output.md` | Figma出力の読み方（sparse処理・テキスト改行・レイアウト算出） | 毎Step |
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | 事前確認: コンポーネント粒度の把握 | — |
+| 2 | Step 1: CSSフレームワークを特定してトークンを把握する | 1 |
+| 3 | Step 2: Figma MCPからデータを取得して記録する | 2 |
+| 4 | Step 3: トークンを引き当ててマッピングファイルを更新する | 3 |
+| 5 | Step 4: 差分確認用のスクリーンショットを保存する | 4 |
 
 ## 事前確認：コンポーネント粒度の把握
 

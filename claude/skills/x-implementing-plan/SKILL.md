@@ -16,6 +16,9 @@ allowed-tools:
   - Glob
   - Grep
   - Skill
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # implementing-plan
@@ -27,6 +30,20 @@ allowed-tools:
 ## フロー（7フェーズ）
 
 各フェーズは順番どおりに実行します。前のフェーズが完了しない限り次に進みません。
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | Phase 1: 計画の読み込みと把握 | — |
+| 2 | Phase 2: 実装 | 1 |
+| 3 | Phase 3: Acceptance Criteriaの検証 | 2 |
+| 4 | Phase 4: コードレビュー | 3 |
+| 5 | Phase 5: 計画ファイルの更新 | 4 |
+| 6 | Phase 6: ふりかえり | 5 |
+| 7 | Phase 7: 完了報告 | 6 |
 
 ### Phase 1: 計画の読み込みと把握
 

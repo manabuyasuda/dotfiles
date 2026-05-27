@@ -10,6 +10,9 @@ allowed-tools:
   - AskUserQuestion
   - Skill
   - WebFetch
+  - TaskCreate
+  - TaskUpdate
+  - TaskList
 ---
 
 # コードレビュー
@@ -26,6 +29,21 @@ allowed-tools:
 6. Step 5: コードレビューを実施する
 7. Step 6: 結果を統合して出力する
 8. Step 7: レビュー後のアクション
+
+## タスク登録（実行開始時に必ず実施）
+
+フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
+
+| # | subject | blockedBy |
+|---|---------|-----------|
+| 1 | Step 1: レビューモードを決定する | — |
+| 2 | Step 2: 情報を取得する | 1 |
+| 3 | Step 2C: 設計書を確認する | 2 |
+| 4 | Step 3: レビュースコープを定義する | 3 |
+| 5 | Step 4: 自動解析を実行する | 4 |
+| 6 | Step 5: コードレビューを実施する | 5 |
+| 7 | Step 6: 結果を統合して出力する | 6 |
+| 8 | Step 7: レビュー後のアクション | 7 |
 
 ## 変数
 
