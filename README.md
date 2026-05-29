@@ -109,8 +109,10 @@ dotfiles/
    git clone https://github.com/manabuyasuda/dotfiles ~/MY/dotfiles
    brew bundle install --file=~/MY/dotfiles/Brewfile --verbose
    cd ~/MY/dotfiles && ./setup.sh
-   mise install              # node/pnpm/yarn + npmツールを導入（npm ci の前に node を用意）
-   mise exec -- npm ci       # mise の node で devDependencies（lefthook/textlint）を導入
+   mise trust ~/.config/mise/config.toml   # リポジトリ内configがローカル設定として検出されるため信頼する
+   mise install node                        # 先にnodeを導入（npm:バックエンドがnpmを必要とするため）
+   mise install                             # 残り（pnpm/yarn + npm:ツール）を導入
+   mise exec -- npm ci                      # miseのnodeでdevDependencies（lefthook/textlint）を導入
    ```
 
    `brew bundle install` が完了すると以下のように表示される:
@@ -124,6 +126,12 @@ dotfiles/
    `setup.sh` は以下を実行する。何度実行しても安全（冪等）。
    - 既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成
    - `gh/extensions` に記載されたgh拡張機能のインストール
+
+   `mise install` の各行は次の理由による。
+
+   - `mise trust` は、カレントディレクトリのリポジトリ内にある `mise/config.toml` がローカル設定として検出され、未信頼のままでは読み込めないために実行する。
+   - `node` を先に単体で導入するのは、`npm:` バックエンドのツール（`mermaid-cli` など）がバージョン解決に `npm` を必要とするためである。`node` がない状態で `mise install` を実行すると `npm:*` の解決が `No such file or directory` で失敗する。
+   - `pnpm` はmiseのバックエンドがGitHubのリリースから取得するため、回線によっては取得に数分かかる。無反応に見えても中断せず完走させる。
 
    `npm ci` の実行時に `prepare` スクリプトが走り、lefthookが `.git/hooks/pre-commit` を配置する。これによりステージ済みの`.md`ファイルへtextlintが自動で走り、違反があるとコミットが止まる。詳細は「[textlintとpre-commitフック](#textlintとpre-commitフック)」を参照する。
 
