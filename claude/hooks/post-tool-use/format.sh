@@ -8,9 +8,9 @@
 #
 # 対象ファイル:
 #   *.js / *.jsx / *.ts / *.tsx → biome / oxfmt / prettier でフォーマット
-#   *.md                        → writing-review スキル + textlint で文章品質改善
+#   *.md                        → x-writing-review スキル + textlint で文章品質改善
 #                                  1. textlint --fix で自動修正
-#                                  2. writing-review スキル実行を feedback で指示
+#                                  2. x-writing-review スキル実行を feedback で指示
 #                                     （textlint 残存エラーも合わせて渡す）
 #                                  3. スキルが変更なしと判断したら自然終了
 #   それ以外                    → 何もしない（exit 0 で通過）
@@ -68,7 +68,7 @@ if [[ "$file" =~ \.(js|jsx|ts|tsx)$ ]]; then
   exit 0
 fi
 
-# --- .md: textlint + writing-review スキルで文章品質を確認 ---
+# --- .md: textlint + x-writing-review スキルで文章品質を確認 ---
 
 # ファイルのディレクトリから上に向かって node_modules/.bin/textlint を探す
 textlint_cmd=""
@@ -103,12 +103,12 @@ ${diff_output}"
   fi
 fi
 
-# writing-review スキル実行を指示
+# x-writing-review スキル実行を指示
 # textlint 残存エラーがある場合はそれも添付してエージェントに渡す
 if [ -n "$textlint_remaining" ]; then
-  msg="ERROR: textlint エラーが残っています。\nWHY: textlint --fix で自動修正できない違反が残っています。\nFIX: /writing-review スキルをこのファイルに適用してください。\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
+  msg="ERROR: textlint エラーが残っています。\nWHY: textlint --fix で自動修正できない違反が残っています。\nFIX: /x-writing-review スキルをこのファイルに適用してください。\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
 else
-  msg="ERROR: 文章の品質確認が必要です。\nWHY: textlint を通過しても writing-review ルールへの違反が残っている可能性があります。\nFIX: /writing-review スキルをこのファイルに適用してください。\nファイル: ${file}${git_diff_section}"
+  msg="ERROR: 文章の品質確認が必要です。\nWHY: textlint を通過しても x-writing-review ルールへの違反が残っている可能性があります。\nFIX: /x-writing-review スキルをこのファイルに適用してください。\nファイル: ${file}${git_diff_section}"
 fi
 feedback=$(printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'feedback': sys.stdin.read()}))")
 echo "$feedback"
