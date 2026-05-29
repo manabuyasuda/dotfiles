@@ -10,13 +10,13 @@ dotfiles/
 ├── macos.sh              # macOS設定の自動適用スクリプト
 ├── Brewfile              # Homebrewパッケージ一覧
 ├── zsh/
-│   ├── .zshrc            # シェル設定（anyenv, direnv, PATH）
+│   ├── .zshrc            # シェル設定（mise, direnv, PATH）
 │   ├── .zprofile         # ログインシェル設定（Homebrew）
 │   └── .zshenv           # 全シェル共通の環境変数
 ├── git/
 │   └── .gitconfig        # Gitのグローバル設定
-├── nodenv/
-│   └── default-packages  # Node.jsインストール時に自動導入するnpmパッケージ
+├── mise/
+│   └── config.toml       # miseで管理する言語ランタイム・ツール定義
 ├── gh/
 │   └── extensions        # gh拡張機能一覧
 ├── claude/
@@ -108,7 +108,9 @@ dotfiles/
    # dotfilesをクローンしてパッケージをインストールする（SSH設定前のためHTTPSを使用）
    git clone https://github.com/manabuyasuda/dotfiles ~/MY/dotfiles
    brew bundle install --file=~/MY/dotfiles/Brewfile --verbose
-   cd ~/MY/dotfiles && ./setup.sh && npm ci
+   cd ~/MY/dotfiles && ./setup.sh
+   mise install              # node/pnpm/yarn + npmツールを導入（npm ci の前に node を用意）
+   mise exec -- npm ci       # mise の node で devDependencies（lefthook/textlint）を導入
    ```
 
    `brew bundle install` が完了すると以下のように表示される:
@@ -121,7 +123,6 @@ dotfiles/
 
    `setup.sh` は以下を実行する。何度実行しても安全（冪等）。
    - 既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成
-   - nodenv-default-packagesプラグインのインストールとdefault-packagesのリンク
    - `gh/extensions` に記載されたgh拡張機能のインストール
 
    `npm ci` の実行時に `prepare` スクリプトが走り、lefthookが `.git/hooks/pre-commit` を配置する。これによりステージ済みの`.md`ファイルへtextlintが自動で走り、違反があるとコミットが止まる。詳細は「[textlintとpre-commitフック](#textlintとpre-commitフック)」を参照する。
@@ -199,29 +200,17 @@ dotfiles/
    git clone git@<prefix>.github.com:<org-or-user>/<repo>.git ~/PROJECT/<repo>
    ```
 
-9. anyenvとnodenvをインストールする
+9. Claude Codeを導入し、セットアップを引き継ぐ
+
+   言語ランタイムとグローバルツールはステップ7の `mise install` で導入済み。Claude Codeは別セクション「[Claude Code のインストール](#claude-code-のインストール)」にしたがってネイティブインストーラーで導入する。
+
+   導入後、`~/.local/bin` がmiseのshimsより前に来るよう設定済みのため、ネイティブ版が優先される。確認する:
 
    ```bash
-   anyenv install --init
-   anyenv install nodenv
    exec $SHELL -l
+   which claude    # → ~/.local/bin/claude であること
+   claude doctor
    ```
-
-   最新LTSのバージョン番号を変数に格納して確認する（メジャーバージョンが偶数のものがLTS）:
-
-   ```bash
-   NODE_LTS=$(nodenv install --list | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | awk -F. 'int($1)%2==0' | tail -1)
-   echo $NODE_LTS
-   ```
-
-   表示されたバージョンをインストールしてデフォルトに設定する:
-
-   ```bash
-   nodenv install $NODE_LTS
-   nodenv global $NODE_LTS
-   ```
-
-   Node.jsのインストールにより `default-packages` に記載されたグローバルnpmパッケージが自動導入される（`@anthropic-ai/claude-code` を含む）。以降の手順はClaude Codeに委ねることができる。
 
    iTerm2（インストール済み）を開いて以下を実行する:
 
@@ -375,11 +364,41 @@ npm run lint:fix
 
 修正できない違反（半角カナの混入など）は手動で直す。
 
+## Claude Code のインストール
+
+mise管理下には置かず、公式ネイティブインストーラーで導入する（npm版は非推奨で、自動更新がmiseのshimsと競合するため）。
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+インストーラーは本体バイナリ（約200MB）を進捗表示なしでダウンロードする。実行後しばらく無反応に見えるが、これは正常な挙動なので `Ctrl+C` で中断しないこと。回線次第で数分かかる。進捗を確認したい場合は、別タブで次のコマンドを繰り返す。
+
+```bash
+ls -l ~/.claude/downloads/   # サイズが増えていればDL進行中
+```
+
+完了したら `~/.local/bin/claude` に配置される。`.zshrc`/`.zshenv` で `~/.local/bin` をmiseのshimsより前にprependしてあるため、ネイティブ版が優先される。旧版が残っている場合のシャドウを避けるため、初回は必ずフルパスで動作確認する。
+
+```bash
+~/.local/bin/claude --version
+~/.local/bin/claude doctor
+```
+
+ネイティブ版が自動更新を担うため、`DISABLE_AUTOUPDATER` 等は設定しない。
+
+> **旧npm版からの一度きりの移行（既存マシンのみ）**
+> 過去に `npm install -g @anthropic-ai/claude-code` で入れていた場合、ネイティブ版が動作確認できてから旧版を撤去する。
+> ```bash
+> npm uninstall -g @anthropic-ai/claude-code
+> nodenv rehash && hash -r   # nodenv環境の場合。mise移行後は不要
+> which claude               # → ~/.local/bin/claude
+> ```
+
 ## 管理対象外のツール
 
 以下はdotfilesでは管理していない。新しいマシンでは手動インストールが必要。
 
-- **anyenv / nodenv** — anyenvはBrewfileからインストール済み。初期化はステップ9を参照
 - **HHKB** — [キーマップ変更ツール](https://happyhackingkb.com/jp/download/#keymap)を手動インストール。設定はステップ3を参照
 - **OpenVPN Connect** — [公式サイト](https://openvpn.net/client/)からインストール。設定はNotionを参照
 - **Automator（FFmpeg/ImageMagick連携）** — [設定手順](https://zenn.dev/chot/articles/8d2b0e6e0f7741)を参照。FFmpegとImageMagickはBrewfileからインストール済み

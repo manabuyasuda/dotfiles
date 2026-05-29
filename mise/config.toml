@@ -1,0 +1,21 @@
+[tools]
+node = "lts"
+pnpm = "latest"
+yarn = "latest"
+
+# 旧 nodenv/default-packages からの移行
+# 注: @anthropic-ai/claude-code はネイティブインストーラで管理するため除外
+"npm:@mermaid-js/mermaid-cli" = "latest"
+"npm:@axe-core/cli" = "latest"
+"npm:@lhci/cli" = "latest"
+"npm:@redocly/cli" = "latest"
+"npm:@socketsecurity/cli" = "latest"
+"npm:bundle-phobia-cli" = "latest"
+"npm:create-next-app" = "latest"
+"npm:dependency-cruiser" = "latest"
+"npm:firebase-tools" = "latest"
+"npm:knip" = "latest"
+"npm:madge" = "latest"
+"npm:npm-check-updates" = "latest"
+"npm:type-coverage" = "latest"
+"npm:vercel" = "latest"
