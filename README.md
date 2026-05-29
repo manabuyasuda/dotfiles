@@ -28,15 +28,13 @@ dotfiles/
     └── tools/            # 開発ツールのドキュメント
 ```
 
-## セットアップ
-
-### Macの初期化
+## Macの初期化
 
 調子が悪い場合や、新しいMacへ移行する前の既存Macの整理時に実施する。初期化後は「新しいマシンでのセットアップ」に従う。
 
 参考: [Macを消去して出荷時の設定にリセットする - Apple公式](https://support.apple.com/ja-jp/102664)
 
-#### 事前準備
+### 事前準備
 
 1. 重要なデータをバックアップする（Time Machineまたはクラウド・外付けディスクへ手動コピー）
    - **Raycast** — Advanced → ExportでDropboxに設定ファイルをエクスポートする
@@ -48,7 +46,7 @@ dotfiles/
    - 自分で再使用する場合は不要。Mac側のペアリング情報は初期化で消えるため、初期化後にデバイス側から再ペアリングすればよい
    - **売却・譲渡・貸与PCの返却時は推奨**（デバイス側に情報が残り、相手が同じデバイスを使っている場合に誤接続のリスクがある）
 
-#### 初期化
+### 初期化
 
 **macOS 12 Monterey以降（Apple SiliconまたはT2チップ搭載Mac）:**
 
@@ -64,257 +62,260 @@ dotfiles/
 1. Disk Utility → Macintosh HDを選択 → 消去（APFS形式）
 2. macOSを再インストール
 
-### 新しいマシンでのセットアップ
+## 新しいマシンでのセットアップ
 
-#### 初期設定
+### macOSのセットアップウィザード
 
-1. macOSのセットアップウィザードでWi-Fiの接続とApple IDのサインインを行う
-2. SafariでNotionにログインする（各種情報を参照するため）
-3. HHKBを新しいMacにBluetoothでペアリングする
+macOSのセットアップウィザードにしたがって、Wi-Fiへ接続し、Apple IDでサインインする。
 
-   キーマップやペアリング情報はキーボード本体に保存されるため、新しいMacで必要な作業はペアリングだけ。キー操作の詳細は[取扱説明書（PDF）](https://origin.pfultd.com/downloads/hhkb/manual/P3PC-6651-01.pdf)を参照する。
+### 初期設定
 
-   1. キーボードの電源スイッチを長押し（1秒以上）して電源を入れる
-   2. `Fn + Q` を押してペアリング待機モードにする
-   3. `Fn + Control + 数字キー（1〜4）` を押して登録先のスロットを指定する。スロット1を自宅用のMac、スロット2以降を案件用のマシンに割り当てる
-   4. Mac側のBluetooth設定で「HHKB-Hybrid_n」（nはスロット番号）を選び、表示されたペアリング用の数字を入力する
-   5. 「キーボードの種類を選択」が出たら「JIS（日本語）」を選ぶ
+#### 1. SafariでNotionにログインする（各種情報を参照するため）
+#### 2. HHKBを新しいMacにBluetoothでペアリングする
 
-   以下はセットアップ手順では不要だが、定期的に必要になる操作（設定はキーボード本体に保存される）。
+キーマップやペアリング情報はキーボード本体に保存されるため、新しいMacで必要な作業はペアリングだけ。キー操作の詳細は[取扱説明書（PDF）](https://origin.pfultd.com/downloads/hhkb/manual/P3PC-6651-01.pdf)を参照する。
 
-   - **接続先の切り替え:** `Fn + Control + 数字キー（1〜4）` で登録済みのスロットを切り替える
-   - **USB Type-C接続への切り替え:** `Fn + Control + 0` で切り替える。ファームウェア更新時はBluetoothではなくUSB接続が必要なため、先にこの操作をする
-   - **ファームウェアの更新:** [HHKBキーマップ変更ツール](https://happyhackingkb.com/jp/download/#keymap)のメニュー「ヘルプ → 更新プログラムの確認 → HHKBファームウェア」で最新版が出たら `.hfb` ファイルをダウンロードし、「キーボードファームウェア更新」から適用する
-4. 外部ディスプレイとマウスを設定する（Macの詳細設定は後の手順で行うため、作業しやすくするための最小限の設定）
-   - システム設定 → ディスプレイ → 配置で外部モニターを主ディスプレイに設定する
-   - 解像度を変更する（27インチ4Kの場合は3008×1692）
-   - マウスを接続し、システム設定 → マウスで速度を最大に設定する
+1. キーボードの電源スイッチを長押し（1秒以上）して電源を入れる
+2. `Fn + Q` を押してペアリング待機モードにする
+3. `Fn + Control + 数字キー（1〜4）` を押して登録先のスロットを指定する。スロット1を自宅用のMac、スロット2以降を案件用のマシンに割り当てる
+4. Mac側のBluetooth設定で「HHKB-Hybrid_n」（nはスロット番号）を選び、表示されたペアリング用の数字を入力する
+5. 「キーボードの種類を選択」が出たら「JIS（日本語）」を選ぶ
 
-#### 開発環境の構築
+以下はセットアップ手順では不要だが、定期的に必要になる操作（設定はキーボード本体に保存される）。
 
-5. Command Line Toolsをインストールする
+- **接続先の切り替え:** `Fn + Control + 数字キー（1〜4）` で登録済みのスロットを切り替える
+- **USB Type-C接続への切り替え:** `Fn + Control + 0` で切り替える。ファームウェア更新時はBluetoothではなくUSB接続が必要なため、先にこの操作をする
+- **ファームウェアの更新:** [HHKBキーマップ変更ツール](https://happyhackingkb.com/jp/download/#keymap)のメニュー「ヘルプ → 更新プログラムの確認 → HHKBファームウェア」で最新版が出たら `.hfb` ファイルをダウンロードし、「キーボードファームウェア更新」から適用する
+#### 3. 外部ディスプレイとマウスを設定する（Macの詳細設定は後の手順で行うため、作業しやすくするための最小限の設定）
+- システム設定 → ディスプレイ → 配置で外部モニターを主ディスプレイに設定する
+- 解像度を変更する（27インチ4Kの場合は3008×1692）
+- マウスを接続し、システム設定 → マウスで速度を最大に設定する
 
-   ```bash
-   xcode-select --install
-   ```
+### 開発環境の構築
 
-6. Claude Codeをインストールする
+#### 4. Command Line Toolsをインストールする
 
-   ネイティブ版は `curl` だけで入り、Homebrewやmiseに依存しない。先に入れておくと、以降の手順でClaudeに相談しながら進められる。
+```bash
+xcode-select --install
+```
 
-   ```bash
-   curl -fsSL https://claude.ai/install.sh | bash
-   ```
+#### 5. Claude Codeをインストールする
 
-   本体バイナリ（約200MB）を進捗表示なしでダウンロードするため、無反応に見えても中断しない（詳細は「[Claude Code のインストール](#claude-code-のインストール)」を参照）。数分かかるので、完了を待つ間は別のターミナルタブでステップ7（Homebrew）以降を進めてよい。完了すると `~/.local/bin/claude` に配置される。この時点ではPATH優先設定がまだ効かないため、フルパスで確認する。
+ネイティブ版は `curl` だけで入り、Homebrewやmiseに依存しない。先に入れておくと、以降の手順でClaudeに相談しながら進められる。
 
-   ```bash
-   ~/.local/bin/claude --version
-   ```
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
 
-7. [Homebrew](https://brew.sh/ja/)をインストールする
+本体バイナリ（約200MB）を進捗表示なしでダウンロードするため、無反応に見えても中断しない（詳細は「[Claude Code のインストール](#claude-code-のインストール)」を参照）。数分かかるので、完了を待つ間は別のターミナルタブでステップ6（Homebrew）以降を進めてよい。完了すると `~/.local/bin/claude` に配置される。この時点ではPATH優先設定がまだ効かないため、フルパスで確認する。
 
-   ```bash
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-   ```
+```bash
+~/.local/bin/claude --version
+```
 
-   Apple Siliconの場合、インストール完了時にPATHを通すコマンドの案内が表示される。案内にしたがって次を実行する（`.zprofile` への追記はステップ8でdotfilesのsymlinkに置き換わるが、現在のシェルへ反映するためここで実行する）。
+#### 6. [Homebrew](https://brew.sh/ja/)をインストールする
 
-   ```bash
-   echo >> ~/.zprofile
-   echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-   eval "$(/opt/homebrew/bin/brew shellenv)"
-   ```
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
-8. ディレクトリを作成してdotfilesをセットアップする
+Apple Siliconの場合、インストール完了時にPATHを通すコマンドの案内が表示される。案内にしたがって次を実行する（`.zprofile` への追記はステップ7でdotfilesのsymlinkに置き換わるが、現在のシェルへ反映するためここで実行する）。
 
-   作業ディレクトリはホーム直下に作る。`MY` は個人リポジトリ、`PROJECT` は案件リポジトリ、`Screenshot` はスクリーンショットの保存先。`~/Documents` 配下は避ける（iCloud同期の対象だとコピーが遅くなったり、rebase実行時に不要なファイルが生成されるため）。クローンはSSH設定前のためHTTPSを使う。
+```bash
+echo >> ~/.zprofile
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
 
-   ```bash
-   mkdir -p ~/MY ~/PROJECT ~/Screenshot
-   git clone https://github.com/manabuyasuda/dotfiles ~/MY/dotfiles
-   brew bundle install --file=~/MY/dotfiles/Brewfile --verbose
-   ```
+#### 7. ディレクトリを作成してdotfilesをセットアップする
 
-   インストールの途中で、アプリ（cask）によってはパスワードを求められる場合がある。`brew bundle install` が完了すると以下のように表示される:
+作業ディレクトリはホーム直下に作る。`MY` は個人リポジトリ、`PROJECT` は案件リポジトリ、`Screenshot` はスクリーンショットの保存先。`~/Documents` 配下は避ける（iCloud同期の対象だとコピーが遅くなったり、rebase実行時に不要なファイルが生成されるため）。クローンはSSH設定前のためHTTPSを使う。
 
-   ```
-   Homebrew Bundle complete! XX Brewfile dependencies now installed.
-   ```
+```bash
+mkdir -p ~/MY ~/PROJECT ~/Screenshot
+git clone https://github.com/manabuyasuda/dotfiles ~/MY/dotfiles
+brew bundle install --file=~/MY/dotfiles/Brewfile --verbose
+```
 
-   `brew bundle install` の完了後、続けて次を実行する（`setup.sh` はインストール完了直後に実行できる）。
+インストールの途中で、アプリ（cask）によってはパスワードを求められる場合がある。`brew bundle install` が完了すると、次のように表示される。
 
-   ```bash
-   cd ~/MY/dotfiles && ./setup.sh
-   mise trust ~/.config/mise/config.toml
-   mise install node
-   mise install
-   mise exec -- npm ci
-   ```
+```
+Homebrew Bundle complete! XX Brewfile dependencies now installed.
+```
 
-   `brew bundle install` と `mise install` はどちらも時間がかかる。完了を待つ間、依存関係のないステップ9（SSH鍵）・10（フォント）・12（macOS設定）を並行して進められる。
+`brew bundle install` の完了後、続けて次を実行する（`setup.sh` はインストール完了直後に実行できる）。
 
-   `setup.sh` は以下を実行する。何度実行しても安全（冪等）。
-   - 既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成
-   - `gh/extensions` に記載されたgh拡張機能のインストール
+```bash
+cd ~/MY/dotfiles && ./setup.sh
+mise trust ~/.config/mise/config.toml
+mise install node
+mise install
+mise exec -- npm ci
+```
 
-   `mise install` の各行は次の理由による。
+`brew bundle install` と `mise install` はどちらも時間がかかる。完了を待つ間、依存関係のないステップ8（SSH鍵）・9（フォント）・11（macOS設定）を並行して進められる。
 
-   - `mise trust` は、カレントディレクトリのリポジトリ内にある `mise/config.toml` がローカル設定として検出され、未信頼のままでは読み込めないために実行する。
-   - `node` を先に単体で導入するのは、`npm:` バックエンドのツール（`mermaid-cli` など）がバージョン解決に `npm` を必要とするためである。`node` がない状態で `mise install` を実行すると `npm:*` の解決が `No such file or directory` で失敗する。
-   - `pnpm` はmiseのバックエンドがGitHubのリリースから取得するため、回線によっては取得に数分かかる。無反応に見えても中断せず完走させる。
+`setup.sh` は以下を実行する。何度実行しても安全（冪等）。
+- 既存ファイルを `~/.dotfiles_backup/` にバックアップしてからシンボリックリンクを作成
+- `gh/extensions` に記載されたgh拡張機能のインストール
 
-   `npm ci` の実行時に `prepare` スクリプトが走り、lefthookが `.git/hooks/pre-commit` を配置する。これによりステージ済みの`.md`ファイルへtextlintが自動で走り、違反があるとコミットが止まる。詳細は「[textlintとpre-commitフック](#textlintとpre-commitフック)」を参照する。
+`mise install` の各行は次の理由による。
 
-9. SSH鍵を設定してGitHubに登録する
+- `mise trust` は、カレントディレクトリのリポジトリ内にある `mise/config.toml` がローカル設定として検出され、未信頼のままでは読み込めないために実行する。
+- `node` を先に単体で導入するのは、`npm:` バックエンドのツール（`mermaid-cli` など）がバージョン解決に `npm` を必要とするためである。`node` がない状態で `mise install` を実行すると `npm:*` の解決が `No such file or directory` で失敗する。
+- `pnpm` はmiseのバックエンドがGitHubのリリースから取得するため、回線によっては取得に数分かかる。無反応に見えても中断せず完走させる。
 
-   GitHubアカウントごとに鍵とホストエイリアスを分けて管理する。個人アカウントは `my`、案件・会社アカウントは案件名など任意のプレフィックスをホスト名に付ける。
+`npm ci` の実行時に `prepare` スクリプトが走り、lefthookが `.git/hooks/pre-commit` を配置する。これによりステージ済みの`.md`ファイルへtextlintが自動で走り、違反があるとコミットが止まる。詳細は「[textlintとpre-commitフック](#textlintとpre-commitフック)」を参照する。
 
-   **個人アカウント用の鍵を作成する:**
+#### 8. SSH鍵を設定してGitHubに登録する
 
-   鍵を生成し、macOSキーチェーンに登録する（再起動後もパスフレーズ入力が不要になる）。続けて公開鍵をクリップボードにコピーし、開いたページで個人GitHubアカウントに登録する。
+GitHubアカウントごとに鍵とホストエイリアスを分けて管理する。個人アカウントは `my`、案件・会社アカウントは案件名など任意のプレフィックスをホスト名に付ける。
 
-   ```bash
-   ssh-keygen -t ed25519 -f ~/.ssh/my_id_ed25519
-   ssh-add --apple-use-keychain ~/.ssh/my_id_ed25519
-   pbcopy < ~/.ssh/my_id_ed25519.pub
-   open https://github.com/settings/ssh/new
-   ```
+**個人アカウント用の鍵を作成する:**
 
-   **案件・会社アカウント用の鍵を作成する（アカウントごとに繰り返す）:**
+鍵を生成し、macOSキーチェーンに登録する（再起動後もパスフレーズ入力が不要になる）。続けて公開鍵をクリップボードにコピーし、開いたページで個人GitHubアカウントに登録する。
 
-   次はテンプレート。`<prefix>` を案件名や会社名（`acme` など。ホスト名は `acme.github.com` になる）に置き換えてから実行する。
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/my_id_ed25519
+ssh-add --apple-use-keychain ~/.ssh/my_id_ed25519
+pbcopy < ~/.ssh/my_id_ed25519.pub
+open https://github.com/settings/ssh/new
+```
 
-   ```bash
-   ssh-keygen -t ed25519 -f ~/.ssh/<prefix>_id_ed25519
-   ssh-add --apple-use-keychain ~/.ssh/<prefix>_id_ed25519
-   pbcopy < ~/.ssh/<prefix>_id_ed25519.pub
-   open https://github.com/settings/ssh/new
-   ```
+**案件・会社アカウント用の鍵を作成する（アカウントごとに繰り返す）:**
 
-   **`~/.ssh/config` を作成する:**
+次はテンプレート。`<prefix>` を案件名や会社名（`acme` など。ホスト名は `acme.github.com` になる）に置き換えてから実行する。
 
-   個人アカウント分は固定なので、次のコマンドで作成する。
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/<prefix>_id_ed25519
+ssh-add --apple-use-keychain ~/.ssh/<prefix>_id_ed25519
+pbcopy < ~/.ssh/<prefix>_id_ed25519.pub
+open https://github.com/settings/ssh/new
+```
 
-   ```bash
-   mkdir -p ~/.ssh && chmod 700 ~/.ssh
-   cat >> ~/.ssh/config <<'EOF'
-   # 個人アカウント
-   Host my.github.com
-     HostName github.com
-     AddKeysToAgent yes
-     UseKeychain yes
-     IdentityFile ~/.ssh/my_id_ed25519
-     IdentitiesOnly yes
-   EOF
-   chmod 600 ~/.ssh/config
-   ```
+**`~/.ssh/config` を作成する:**
 
-   案件・会社アカウントを使う場合は、`~/.ssh/config` に次のブロックをプレフィックスごとに追記する。
+個人アカウント分は固定なので、次のコマンドで作成する。
 
-   ```
-   # 案件・会社アカウント（アカウントごとに追加する）
-   Host <prefix>.github.com
-     HostName github.com
-     AddKeysToAgent yes
-     UseKeychain yes
-     IdentityFile ~/.ssh/<prefix>_id_ed25519
-     IdentitiesOnly yes
-   ```
+```bash
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+cat >> ~/.ssh/config <<'EOF'
+# 個人アカウント
+Host my.github.com
+  HostName github.com
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/my_id_ed25519
+  IdentitiesOnly yes
+EOF
+chmod 600 ~/.ssh/config
+```
 
-   `IdentitiesOnly yes` はSSHエージェントに他の鍵が読み込まれていても、指定した鍵のみを使うようにする設定。複数アカウントの混線を防ぐために必須。
+案件・会社アカウントを使う場合は、`~/.ssh/config` に次のブロックをプレフィックスごとに追記する。
 
-   **接続を確認する:**
+```
+# 案件・会社アカウント（アカウントごとに追加する）
+Host <prefix>.github.com
+  HostName github.com
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/<prefix>_id_ed25519
+  IdentitiesOnly yes
+```
 
-   ```bash
-   ssh -T git@my.github.com
-   ```
+`IdentitiesOnly yes` はSSHエージェントに他の鍵が読み込まれていても、指定した鍵のみを使うようにする設定。複数アカウントの混線を防ぐために必須。
 
-   `Hi <個人アカウント名>! You've successfully authenticated...` と表示されれば成功。案件アカウントは `ssh -T git@<prefix>.github.com`（`<prefix>` は設定したホスト名）で同様に確認する。
+**接続を確認する:**
 
-   **SSHが使えるようになったので、dotfilesのリモートURLをSSHに変更し、個人リポジトリをクローンする:**
+```bash
+ssh -T git@my.github.com
+```
 
-   ```bash
-   git -C ~/MY/dotfiles remote set-url origin git@my.github.com:manabuyasuda/dotfiles.git
-   git clone git@my.github.com:manabuyasuda/manabuyasuda ~/MY/manabuyasuda
-   git clone git@my.github.com:manabuyasuda/knowledge-base.git ~/MY/knowledge-base
-   ```
+`Hi <個人アカウント名>! You've successfully authenticated...` と表示されれば成功。案件アカウントは `ssh -T git@<prefix>.github.com`（`<prefix>` は設定したホスト名）で同様に確認する。
 
-   **案件リポジトリをクローンする場合:**
+**SSHが使えるようになったので、dotfilesのリモートURLをSSHに変更し、個人リポジトリをクローンする:**
 
-   `<prefix>`・`<org-or-user>`・`<repo>` を実際の値に置き換えて実行する。
+```bash
+git -C ~/MY/dotfiles remote set-url origin git@my.github.com:manabuyasuda/dotfiles.git
+git clone git@my.github.com:manabuyasuda/manabuyasuda ~/MY/manabuyasuda
+git clone git@my.github.com:manabuyasuda/knowledge-base.git ~/MY/knowledge-base
+```
 
-   ```bash
-   git clone git@<prefix>.github.com:<org-or-user>/<repo>.git ~/PROJECT/<repo>
-   ```
+**案件リポジトリをクローンする場合:**
 
-   Homebrew・dotfiles・SSHまでの手動セットアップはここまで。シェルを読み込み直すとmiseが有効になり、`~/.local/bin` がshimsより前に来るので `which claude` はネイティブ版を指す。あとはVS Codeでdotfilesを開き、ステップ6で入れたClaude Codeに「ステップ10以降を進めて」と依頼すれば、残りのセットアップを任せられる。
+`<prefix>`・`<org-or-user>`・`<repo>` を実際の値に置き換えて実行する。
 
-   ```bash
-   exec $SHELL -l
-   which claude
-   code ~/MY/dotfiles
-   claude
-   ```
+```bash
+git clone git@<prefix>.github.com:<org-or-user>/<repo>.git ~/PROJECT/<repo>
+```
 
-10. フォントをインストールする
+Homebrew・dotfiles・SSHまでの手動セットアップはここまで。シェルを読み込み直すとmiseが有効になり、`~/.local/bin` がshimsより前に来るので `which claude` はネイティブ版を指す。あとはVS Codeでdotfilesを開き、ステップ5で入れたClaude Codeに「ステップ9以降を進めて」と依頼すれば、残りのセットアップを任せられる。
 
-    Noto Sans JPはBrewfileからインストール済み。Source Code Proはコマンドで手動インストールする。
+```bash
+exec $SHELL -l
+which claude
+code ~/MY/dotfiles
+claude
+```
 
-    ```bash
-    curl -LO https://github.com/adobe-fonts/source-code-pro/archive/release.zip
-    unzip release.zip
-    cp -a source-code-pro-release/TTF/* ~/Library/Fonts
-    rm -rf release.zip source-code-pro-release
-    ```
+#### 9. フォントをインストールする
 
-#### アプリの設定
+Noto Sans JPはBrewfileからインストール済み。Source Code Proはコマンドで手動インストールする。
 
-11. 各アプリを設定する（Notionを参照）
+```bash
+curl -LO https://github.com/adobe-fonts/source-code-pro/archive/release.zip
+unzip release.zip
+cp -a source-code-pro-release/TTF/* ~/Library/Fonts
+rm -rf release.zip source-code-pro-release
+```
 
-    brewでインストールしたアプリはFinderから1つずつ起動して設定を進める。アクセシビリティやファイルアクセスなど、セキュリティに関する許可を求められるため、1つずつ確認しながら進めるとわかりやすい。
+### アプリの設定
 
-#### Macの設定
+#### 10. 各アプリを設定する（Notionを参照）
 
-12. `macos.sh` を実行してシステム設定を一括適用する
+brewでインストールしたアプリはFinderから1つずつ起動して設定を進める。アクセシビリティやファイルアクセスなど、セキュリティに関する許可を求められるため、1つずつ確認しながら進めるとわかりやすい。
 
-    ```bash
-    ~/MY/dotfiles/macos.sh
-    ```
+### Macの設定
 
-    以下は手動で設定する:
+#### 11. `macos.sh` を実行してシステム設定を一括適用する
 
-    **一般 → ログイン項目**（ログイン時に開く）
-    - BetterTouchTool、CotEditor、DeepL、Dropbox、Google Chrome、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree、Visual Studio Code
+```bash
+~/MY/dotfiles/macos.sh
+```
 
-    **通知**（通知を許可する）
-    - MeetingBar、ターミナル、Slack
+以下は手動で設定する:
 
-    **コントロールセンター（メニューバー）**
-    - Spotlight：メニューバーに表示しない
+**一般 → ログイン項目**（ログイン時に開く）
+- BetterTouchTool、CotEditor、DeepL、Dropbox、Google Chrome、MeetingBar、Notion、PopClip、Raycast、Slack、Sourcetree、Visual Studio Code
 
-    デスクトップとDock（設定なし）
-    -
+**通知**（通知を許可する）
+- MeetingBar、ターミナル、Slack
 
-    **キーボード → キーボードショートカット**
-    - Spotlight：すべてオフ（Raycastを使用するため）
-    - 入力ソース（前の入力ソースを選択）：オフ
-    - 「次のウィンドウを操作対象にする…」を選択、ショートカットの表示をクリックしてから設定したいショートカットを入力する
+**コントロールセンター（メニューバー）**
+- Spotlight：メニューバーに表示しない
 
-    **キーボード → 入力ソース → 日本語**
-    - 入力モード：英字にチェックを入れる
-    - タイプミスを修正：オフ
-    - Windows風のキー操作：オン
-    - 数字を全角入力：オフ
+デスクトップとDock（設定なし）
+-
 
-    **キーボード → 入力ソース → ABC** を削除する
+**キーボード → キーボードショートカット**
+- Spotlight：すべてオフ（Raycastを使用するため）
+- 入力ソース（前の入力ソースを選択）：オフ
+- 「次のウィンドウを操作対象にする…」を選択、ショートカットの表示をクリックしてから設定したいショートカットを入力する
 
-    **iCloud → iCloudに保存済み → すべて見る**
-    - 写真：クリックして「このMacを同期」のチェックを外して「Macから削除」
+**キーボード → 入力ソース → 日本語**
+- 入力モード：英字にチェックを入れる
+- タイプミスを修正：オフ
+- Windows風のキー操作：オン
+- 数字を全角入力：オフ
 
-13. Macを再起動する
+**キーボード → 入力ソース → ABC** を削除する
 
-    ひととおりの設定が完了したら再起動する。システム設定の変更が反映され、アプリの許可ダイアログなどが表示される。
+**iCloud → iCloudに保存済み → すべて見る**
+- 写真：クリックして「このMacを同期」のチェックを外して「Macから削除」
+
+#### 12. Macを再起動する
+
+ひととおりの設定が完了したら再起動する。システム設定の変更が反映され、アプリの許可ダイアログなどが表示される。
 
 ## 運用
 
@@ -428,7 +429,7 @@ ls -l ~/.claude/downloads/
 
 以下はdotfilesでは管理していない。新しいマシンでは手動インストールが必要。
 
-- **HHKB** — [キーマップ変更ツール](https://happyhackingkb.com/jp/download/#keymap)を手動インストール。設定はステップ3を参照
+- **HHKB** — [キーマップ変更ツール](https://happyhackingkb.com/jp/download/#keymap)を手動インストール。設定はステップ2を参照
 - **OpenVPN Connect** — [公式サイト](https://openvpn.net/client/)からインストール。設定はNotionを参照
 - **Automator（FFmpeg/ImageMagick連携）** — [設定手順](https://zenn.dev/chot/articles/8d2b0e6e0f7741)を参照。FFmpegとImageMagickはBrewfileからインストール済み
 - **VS Code 拡張機能** — GitHubアカウント同期で管理
