@@ -129,14 +129,6 @@ ls -l ~/.claude/downloads/
 
 ステップ7のdotfiles適用後は`.zshrc`/`.zshenv`で`~/.local/bin`がmiseのshimsより前に来るため、ネイティブ版が優先されます。ネイティブ版が自動更新を担うため、`DISABLE_AUTOUPDATER`等は設定しません。
 
-> [!NOTE]
-> 旧npm版からの一度きりの移行（既存マシンのみ）
->
-> 過去に`npm install -g @anthropic-ai/claude-code`で入れていた場合、ネイティブ版が動作確認できてから次で旧版を撤去します。`nodenv`環境だったときは撤去後に`nodenv rehash && hash -r`を実行します（mise移行後は不要）。最後に`which claude`が`~/.local/bin/claude`を指せば完了です。
-> ```bash
-> npm uninstall -g @anthropic-ai/claude-code
-> ```
-
 #### 6. [Homebrew](https://brew.sh/ja/)をインストールする
 
 ```bash
