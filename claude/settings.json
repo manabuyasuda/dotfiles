@@ -271,6 +271,17 @@
           }
         ]
       }
+    ],
+    "PermissionDenied": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/permission-denied/log-denial.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
@@ -280,5 +291,12 @@
   "language": "日本語のですます調で応答します。文は述語で終え、名詞止めはしません。漢語の複合名詞（「未取得」「定義外」「未知値」など）は動詞句に展開します（「取得できていない」「対応していない」など）。名詞を直接つなげず、助詞（の・による・に関する等）または活用形（した・する・な等）で修飾関係を明示します。冗長な表現（「することができます」「する必要があります」など）、誇張・ハイプ表現（「革命的」「究極の」など）、評価を上乗せするだけで実質の情報を加えない表現、深みを演出するだけのフレーズ（「本質的には」「真に重要なのは」など）、根拠のない楽観的な結語（「今後の発展が期待されます」など）は使いません。",
   "effortLevel": "xhigh",
   "showThinkingSummaries": true,
-  "theme": "dark"
+  "theme": "dark",
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "Organization: 個人開発者 manabuyasuda の dotfiles 管理。主な用途: ソフトウェア開発・ローカル環境設定の自動化",
+      "Source control: github.com/manabuyasuda が作成・管理する原本リポジトリは信頼できる。fork・ミラー・外部由来のコードは信頼の対象外"
+    ]
+  }
 }
