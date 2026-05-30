@@ -264,6 +264,50 @@ Check Point ResearchはClaude Codeに次の2件の脆弱性を発見・報告し
 
 ---
 
+## オートモード（auto mode）と3層防御の関係
+
+オートモードは、各ツール呼び出しを分類器（サーバー側の別モデル）が事前評価し、不可逆・破壊的・環境外を狙う操作や、リクエスト範囲を超えるエスカレーション・インジェクション駆動とみられる操作をブロックするモード。この分類器は3層防御を置き換えない。決定的なLayer 1（permissions）とLayer 2（hooks）の間に挟まる確率的な補助層という意味で、ここではLayer 1.5と呼ぶ。分類器自体はプロンプトインジェクション検知とトランスクリプト分類器の2系統で構成される（参考文献の「2層防御」は同じ対象を別の解像度で見たもの）。
+
+| 層 | 性質 | オートモードでの扱い |
+|---|---|---|
+| Layer 1: permissions deny | 決定的 | そのまま機能する。分類器より先に評価される |
+| Layer 1.5: 分類器 | 確率的 | 偽陽性 0.4%・偽陰性 17%（過剰行動の実測値）。主に過剰行動を捕まえる |
+| Layer 2: PreToolUse hooks | 決定的 | そのまま機能する。deny は分類器より強い |
+| Layer 3: 運用ルール | 人間判断 | 変わらず必要 |
+
+判定はツール呼び出しごとに次の順で進み、最初に一致した段で決まる。
+
+1. `permissions.allow` / `permissions.deny` が即座に解決する
+2. 作業ディレクトリ内の読み取りとファイル編集は自動承認する（保護パスを除く）
+3. それ以外は分類器へ送る
+4. 分類器がブロックしたら理由をClaudeに返し、別の手段を試させる
+
+ここから3つの帰結が出る。
+
+- `permissions.deny` は分類器より先に評価される。`.env`・`~/.ssh`・シークレット書き込みなどのdenyはオートモードでも有効。
+- PreToolUse hooksはパーミッション判定より前に走る。`bash-guard.sh`・`dangerous-guard.sh`・`file-protect.sh` などはオートモードでも決定的なバックストップとして残る。
+- オートモードに入ると、任意コード実行を許す広いallowルール（`Bash(*)`・ワイルドカードのインタプリタ・パッケージマネージャーの実行・`Agent` のallow）は自動で外れる（終了時に復元）。本リポジトリのallowは対象を絞った完全一致中心のため影響はない。
+- オートモードのデフォルトのsoft_denyは、ハーネス自身の設定（`settings*.json`・`CLAUDE.md`・`.claude/hooks/`）の変更をブロックする（`Self-Modification`）。これは §6「ガードの無効化」やCVE-2025-59536に対する確率的な追加防御になる。ただしsoft_denyは確率的であり、`file-protect.sh` の決定的なaskを置き換えない。
+
+### $defaults を省略しない
+
+`autoMode` の `environment`・`allow`・`soft_deny`・`hard_deny` を `"$defaults"` なしで書くと、そのセクションの組み込みルールが置き換わる。`$defaults` なしの `soft_deny` はforce push・`curl | bash`・本番デプロイなどの組み込みブロックを破棄する。`$defaults` なしの `hard_deny` はデータ持ち出し防止の組み込みルールを破棄する。組み込みを保ったまま追加するには、配列に `"$defaults"` を必ず含める。
+
+2026-05-30時点で、`$defaults` のsoft_denyに `Self-Modification`、hard_denyに `Data Exfiltration` と `Auto-Mode Bypass` が含まれることを `claude auto-mode config` で確認した。内訳はバージョンで変わりうるため、Claude Codeを更新したら `claude auto-mode config` で再確認する。
+
+### オートモードを使わない方がいい場面
+
+オートモードはリサーチプレビューであり、安全性を保証しない。偽陰性17% は埋まらないため、次の操作は分類器に任せず人手で確認する。
+
+- 本番デプロイ・マイグレーション・認証情報の操作・共有インフラやIAMの変更
+- 完全な無人運用（分類器が3回連続または合計20回ブロックすると確認に戻る。`-p` ではセッションが中断する）
+
+会話の途中で宣言した境界（「pushしないで」など）は、分類器がトランスクリプトから読み直すため、コンテキストの圧縮で失われることがある。確実に止めたい操作は `permissions.deny`、または `"$defaults"` を含めた `hard_deny` に置く。
+
+オートモードの設計の詳細は[参考文献](#参考文献)の「Claude Code auto mode: a safer way to skip permissions」を参照。
+
+---
+
 ## Layer 1: permissions（settings.json）
 
 ### allow（自動許可）の判断基準

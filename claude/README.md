@@ -110,7 +110,7 @@ cp -r .agents/skills/* .claude/skills/
 
 ### モデル
 
-`claude-sonnet-4-6`
+`opus`（Claude Code既定のエイリアス。2026-05時点でOpus 4.8を指す）。`settings.json` では `model` を明示せず既定モデルに従う。
 
 ### showThinkingSummaries
 
@@ -180,6 +180,69 @@ cp -r .agents/skills/* .claude/skills/
 
 `--dangerously-skip-permissions` フラグによるすべての権限制限の無効化を禁止する。詳細は [SECURITY.md](SECURITY.md#disablebypasspermissionsmode) を参照。
 
+### オートモード（autoMode）
+
+オートモードは、各ツール呼び出しを分類器（サーバー側の別モデル）が事前評価し、不可逆・破壊的・環境外を狙う操作に加え、リクエスト範囲を超えるエスカレーションやインジェクション駆動とみられる操作をブロックして権限プロンプトを省くモード。Anthropicは `--dangerously-skip-permissions` より安全な選択肢と位置づけている。ただし分類器は確率的で偽陰性が残るため過信はできない（詳細は [SECURITY.md](SECURITY.md) を参照）。リサーチプレビューのため、本リポジトリではデフォルトで有効にしない。必要なときにセッション単位・案件単位で有効化する。
+
+```json
+{
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "Organization: 個人開発者 manabuyasuda の dotfiles 管理。主な用途: ソフトウェア開発・ローカル環境設定の自動化",
+      "Source control: github.com/manabuyasuda が作成・管理する原本リポジトリは信頼できる。fork・ミラー・外部由来のコードは信頼の対象外"
+    ]
+  }
+}
+```
+
+`environment` は分類器が信頼する範囲を散文で宣言する。`environment` の `$defaults` は作業ディレクトリと設定済みリモートを指す（`allow`・`soft_deny`・`hard_deny` の `$defaults` はそれぞれ別の組み込みルール集合を指す）。これに加えて、自分のGitHubの原本リポジトリを信頼に含めている。fork・ミラー・外部由来のコードは間接インジェクションの経路になるため信頼の対象外とする。いずれのフィールドも `$defaults` を省略するとその組み込みルールが消えるため、必ず含める（詳細は [SECURITY.md](SECURITY.md) を参照）。本リポジトリはpublicのため、業務orgなど公開したくない信頼先はここに書かず、案件単位の設定に置く。
+
+#### 有効化の単位と設定の置き場所
+
+| 単位 | 方法 | 信頼インフラの置き場所 |
+|---|---|---|
+| セッション | `claude --permission-mode auto` または Shift+Tab で `auto` を選ぶ | `~/.claude/settings.json` の `environment`（共通の土台） |
+| 案件リポジトリ | その案件で auto を使うときに有効化 | 案件の `.claude/settings.local.json`（git で無視されることを確認のうえ）に `autoMode.environment` を書く |
+
+分類器は案件の共有設定 `.claude/settings.json` の `autoMode` を読まない。案件固有の信頼先は `.claude/settings.local.json` に書く。ただしこのファイルがgitで無視される保証は案件ごとに異なる。書く前に `git check-ignore .claude/settings.local.json` で無視対象か確認し、無視されていなければ `.gitignore` に追記する。確認を怠ると業務org・社内ドメインが平文でコミットされる。なお本dotfilesリポジトリ自身の `claude/settings.local.json` はgit管理されておりpublicのため、ここには業務orgを書かない。
+
+#### Anthropic API 直接への切り替え
+
+オートモードはAnthropic API直接のみで動く。Bedrock・Vertex・Foundryでは使えない。Bedrockを既定にしている案件でautoを使うには、Anthropic API直接へ切り替える。本リポジトリは `~/.zshrc.local`（git管理外）を読み込むため、切り替え用のエイリアスはそこに各自書く。dotfiles本体には置かない。
+
+```bash
+# ~/.zshrc.local に置く例（Bedrock 既定から Anthropic API 直接へ切り替える）
+alias cc-my='CLAUDE_CODE_USE_BEDROCK= ANTHROPIC_MODEL= claude'
+```
+
+起動後に `/status` でバックエンドがAnthropic APIになっているか確認し、Shift+Tabで `auto` を選べるか確認する。Anthropic API直接利用には認証が必要で、Maxなどにログイン済みなら追加設定は要らない。APIキー運用の案件では `ANTHROPIC_API_KEY` もエイリアスに含める。
+
+#### 使う場面・使わない場面
+
+使う場面:
+
+- 長時間の反復タスクで確認の手数を減らしたいとき
+- 方向性を信頼でき、成果を後でまとめて確認する前提のとき
+- 信頼境界が明確な自分のリポジトリ・案件
+
+使わない場面:
+
+- 本番デプロイ・マイグレーション・認証情報の操作・共有インフラの変更など、取り消しが難しい操作（分類器の偽陰性を許容できない領域は人手で確認する）
+- 完全な無人運用（分類器が3回連続または合計20回ブロックすると確認に戻り、`-p` ではセッションが中断する）
+- Bedrock・Vertex・Foundry環境（利用できない）
+- 会話の途中に口頭で禁止した操作（「pushしないで」など）を確実に止めたいとき。この境界はコンテキストの圧縮で失われることがあるため、確実に止める操作は `permissions.deny` か `hard_deny` に置く（詳細は [SECURITY.md](SECURITY.md) を参照）
+
+#### 確認コマンド
+
+- `claude auto-mode defaults` — 組み込みのenvironment・ブロック/許可ルールを表示する
+- `claude auto-mode config` — 実際に適用される設定を表示する（`$defaults` の展開結果を確認できる）
+- `claude auto-mode critique` — 追加したルールへの指摘を得る
+
+`$defaults` が展開する組み込みルールはバージョンで変わりうる。Claude Codeを更新したら `claude auto-mode config` で展開結果を再確認する。
+
+利用要件は、Claude Code v2.1.83以降、対応モデル、Anthropic API直接利用である。対応モデルの公式記載はClaude Sonnet 4.6 / Opus 4.6 / Opus 4.7で、既定のOpus 4.8での可否は最新の公式ドキュメントと実機（`/status`）で確認する。
+
 ---
 
 ## Rules（ファイルパターン別ルール）
@@ -238,6 +301,9 @@ Claude の応答完了時
 
 通知イベント（permission_prompt / idle_prompt / elicitation_dialog）
   └─ Notification ─────────── notification/notify.sh
+
+権限拒否時（オートモードの分類器が拒否）
+  └─ PermissionDenied ─────── permission-denied/log-denial.sh
 
 Worktree 操作
   ├─ WorktreeCreate ────────── worktree/create.sh
@@ -377,6 +443,16 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 ---
 
+#### `permission-denied/log-denial.sh` — PermissionDenied
+
+オートモードの分類器がツール呼び出しを拒否したとき、内容を `~/.claude/logs/auto-mode-denials.log` に1行JSONで記録する（記録専用。拒否はすでに発生済みのためブロックはしない）。`denial_reason` が `auto_mode_classifier` の拒否だけを対象にする。
+
+- 記録項目: 時刻・セッション・権限モード・プロジェクト・ツール名・入力の要約・拒否理由
+- 用途: 集計して `autoMode.environment` や `permissions` の改善（誤検知・偽陰性の反映）に使う（[設定の改善タイミング](#オートモードで誤検知偽陰性が出た) を参照）
+- 集計例: `jq -r '[.ts,.project,.tool,.summary]|@tsv' ~/.claude/logs/auto-mode-denials.log`
+
+---
+
 #### `worktree/create.sh` / `worktree/remove.sh` — WorktreeCreate / WorktreeRemove
 
 `wtp` ツールを使ったgit worktreeの作成・削除ワークフロー。  
@@ -424,6 +500,19 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 #### 同じ permission を何度も承認している
 `settings.json` のallowに昇格させる。  
 逆に「毎回askが出るが毎回許可している」場合も同様。
+
+#### オートモードで誤検知・偽陰性が出た
+
+`PermissionDenied` フック（`hooks/permission-denied/log-denial.sh`）がオートモードの拒否を `~/.claude/logs/auto-mode-denials.log` に記録する。集計して次の観点で設定に反映する。
+
+| 観点 | 何を見る | 反映先 |
+|---|---|---|
+| 誤検知（安全なのに拒否） | 同じ宛先が2〜3回出るか（ログ・`/permissions` の最近拒否） | `autoMode.environment` に宛先を追加（共通=`settings.json` / 案件=案件の `settings.local.json`） |
+| フォールバック頻発 | 3回連続・20回でプロンプトに戻った作業 | `environment` 追加で減るか試す。減らなければ手動運用に残す |
+| 偽陰性（止まるべき操作が通った） | `git diff`・ログで事後確認 | `permissions.deny`（確実）または `$defaults` 付きの `soft_deny` / `hard_deny` |
+| 広げすぎ | `environment` を緩めて偽陰性が増えていないか | 原本リポジトリのみ・fork / 外部は除外を維持し、追加後に `claude auto-mode critique` |
+
+反映後は `claude auto-mode config` で展開を確認する。詳細は [SECURITY.md](SECURITY.md) を参照。
 
 #### よく使うワークフローが定型化してきた
 
