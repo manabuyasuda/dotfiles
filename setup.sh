@@ -113,6 +113,24 @@ else
   fi
 fi
 
+# === lefthook pre-commit フック ===
+echo ""
+echo "--- lefthook pre-commit hook ---"
+
+# ~/.npmrc に ignore-scripts=true がある環境では `npm ci` 時に prepare
+# （lefthook install）が走らず pre-commit フックが配置されない。ここで明示的に配置する。
+# lefthook 未導入（npm ci より前）の場合はスキップし、再実行を促す。
+LEFTHOOK_BIN="$DOTFILES_DIR/node_modules/.bin/lefthook"
+if [[ -x "$LEFTHOOK_BIN" ]]; then
+  if "$LEFTHOOK_BIN" install >/dev/null 2>&1; then
+    echo "[OK] pre-commit フックを配置しました"
+  else
+    echo "[WARN] lefthook install に失敗しました"
+  fi
+else
+  echo "[SKIP] lefthook 未導入（npm ci 後に setup.sh を再実行するか 'npx lefthook install' を実行）"
+fi
+
 echo ""
 echo "=== 完了 ==="
 
