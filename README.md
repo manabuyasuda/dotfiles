@@ -167,6 +167,7 @@ mise trust ~/.config/mise/config.toml
 mise install node
 mise install
 mise exec -- npm ci
+mise exec -- npx lefthook install
 ```
 
 `brew bundle install`と`mise install`はどちらも時間がかかります。完了を待つ間、依存関係のないステップ8（SSH鍵）・9（フォント）・11（macOS設定）を並行して進められます。
@@ -175,6 +176,7 @@ mise exec -- npm ci
 
 - 既存ファイルを`~/.dotfiles_backup/`にバックアップしてからシンボリックリンクを作成します
 - `gh/extensions`に記載されたgh拡張機能をインストールします
+- `node_modules`がある場合はlefthookのpre-commitフックを配置します（`npm ci`より前に実行するとスキップされるため、後述の`npx lefthook install`で別途配置します）
 
 `mise install`の各行は次の理由によります。
 
@@ -182,7 +184,35 @@ mise exec -- npm ci
 - `node`を先に単体で導入するのは、`npm:`バックエンドのツール（`mermaid-cli`など）がバージョン解決に`npm`を必要とするためです。`node`がない状態で`mise install`を実行すると`npm:*`の解決が`No such file or directory`で失敗します。
 - `pnpm`はmiseのバックエンドがGitHubのリリースから取得するため、回線によっては取得に数分かかります。無反応に見えても中断せず完走させてください。
 
-`npm ci`の実行時に`prepare`スクリプトが走り、lefthookが`.git/hooks/pre-commit`を配置します。これによりステージ済みの`.md`ファイルへtextlintが自動で走り、違反があるとコミットが止まります。詳細は「[textlintとpre-commitフック](#textlintとpre-commitフック)」を参照してください。
+> [!IMPORTANT]
+> このセットアップは`~/.npmrc`に`ignore-scripts=true`と`min-release-age=5`（サプライチェーン対策）が設定されている前提です。これにより次の2点に注意が必要です。
+>
+> - **`mise install`が公開直後の新版で失敗することがあります。** `min-release-age=5`は公開から5日未満の版を拒否するため、`npm:`ツールの`latest`がそうした版を解決すると`No matching version found ... with a date before ...`（npmの`ETARGET`）で失敗します。バージョンは固定せず`latest`のままにし、失敗したときは後述の「[mise installがETARGETで失敗する場合](#mise-installがetargetで失敗する場合)」の手順で対応します。
+> - **`npm ci`で`prepare`スクリプトが走りません。** `ignore-scripts=true`により`prepare`（`lefthook install`）が実行されないため、pre-commitフックは自動配置されません。上記コマンド列の`mise exec -- npx lefthook install`で明示的に配置します（`setup.sh`も`node_modules`があれば配置します）。詳細は「[textlintとpre-commitフック](#textlintとpre-commitフック)」を参照してください。
+
+##### `mise install`がETARGETで失敗する場合
+
+`mise install`が次のように失敗するときは、対象ツールの`latest`が公開5日未満で、`~/.npmrc`の`min-release-age=5`に拒否されています。
+
+```
+mise ERROR npm failed
+npm error code ETARGET
+npm error notarget No matching version found for vercel@54.7.1 with a date before ...
+```
+
+サプライチェーン対策（公開直後の版を避ける）を維持して対応する場合は、公開から5日経過してから`mise install`を再実行します。その間、当該ツールが無くても他のセットアップは進められます。
+
+急いで導入する必要があり、対象リリースを信頼できると判断できる場合に限り、その実行のときだけ`min-release-age`を無効化します（`~/.npmrc`は書き換えません）。対象ツールを名指しして上書き範囲を最小化します。
+
+```bash
+NPM_CONFIG_MIN_RELEASE_AGE=0 mise install npm:vercel@latest
+```
+
+複数のツールがまとめて失敗するときは、引数を付けずに実行すると未導入分をまとめて取得します。
+
+```bash
+NPM_CONFIG_MIN_RELEASE_AGE=0 mise install
+```
 
 #### 8. SSH鍵を設定してGitHubに登録する
 
@@ -392,7 +422,7 @@ gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo manabuyasuda/dotfiles
 
 #### 初回セットアップ
 
-`npm ci`または`npm install`を実行すると、`package.json`の`prepare`スクリプトが`lefthook install`を呼び、`.git/hooks/pre-commit`が自動で配置されます。手動操作は不要です。
+通常は`npm ci`または`npm install`時に`package.json`の`prepare`スクリプトが`lefthook install`を呼び、`.git/hooks/pre-commit`が配置されます。ただし`~/.npmrc`に`ignore-scripts=true`がある環境では`prepare`が走らないため、`npx lefthook install`を実行して配置します（`setup.sh`も`node_modules`があれば配置します）。
 
 #### コミット時の挙動
 

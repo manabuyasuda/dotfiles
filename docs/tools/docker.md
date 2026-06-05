@@ -1,20 +1,40 @@
-# Docker Desktop
+# Docker（OrbStack）
 
-Dockerコンテナーの管理GUIアプリ。`docker` / `docker compose` コマンドのバックエンドとして動作する。**コマンドを使う前に必ずアプリを起動しておく必要がある。**
+Dockerコンテナーを動かすランタイムとしてOrbStackを使う。OrbStackはDocker Desktopの軽量な代替で、`docker` / `docker compose` コマンドのバックエンドとして動作する。`docker` CLIは `~/.orbstack/bin` に置かれ、OrbStackの初回起動で作成される。
 
-## インストール
+> Docker DesktopからOrbStackへ移行済み。Brewfileは `cask "docker"` を削除し `cask "orbstack"` に一本化している。`~/.orbstack/bin` は `zsh/.zshenv` でPATHに追加済み。
 
-```bash
-brew install --cask docker
-```
+## 導入手順（本格導入するとき）
 
-初回は `/usr/local/cli-plugins` ディレクトリが存在しない場合、エラーが発生するため先に作成する。
+業務利用では会社が契約しているOrbStackのシートを使う。次の順に進めれば、`docker` コマンドが使える状態になる。
 
-```bash
-sudo mkdir -p /usr/local/cli-plugins && brew install --cask docker
-```
+1. OrbStackがインストール済みか確認する。未導入なら入れる（Brewfile経由でも入る）。
 
-インストール後、Docker.appを起動してアカウント作成・初期設定を完了する。
+   ```bash
+   brew list --cask | grep -q orbstack && echo installed || brew install --cask orbstack
+   ```
+
+2. OrbStackアプリを起動する。初回起動でセットアップが走り、`~/.orbstack/bin` に `docker` などのCLIが作成される。
+
+   ```bash
+   open -a OrbStack
+   ```
+
+3. 業務利用のライセンスを受けるため、会社アカウント（割り当て元のメールアドレス）でサインインする。会社がOrgでシートを管理しているため、サインインするとシートが割り当てられる。シート枠の残数や課金区分が不明なときは、OrbStackのOrg管理者に確認する。
+
+4. PATHを反映する。`~/.orbstack/bin` は `zsh/.zshenv` でPATHに追加済みなので、シェルを読み込み直すだけでよい。
+
+   ```bash
+   exec $SHELL -l
+   ```
+
+5. `docker` がOrbStack由来になっているか確認する。
+
+   ```bash
+   which docker        # ~/.orbstack/bin/docker を指せばOK
+   docker version      # Server 側に OrbStack が表示されれば成功
+   docker run --rm hello-world
+   ```
 
 ## 基本的な使い方
 
@@ -69,11 +89,12 @@ docker compose down && docker compose up -d
 
 ## 注意
 
-- Docker Desktopアプリが起動していないと `docker` コマンドは使えない
+- OrbStackが起動していないと `docker` コマンドは使えない。OrbStackは軽量で起動も速く、ログイン項目に登録すれば自動起動にできる
 - Docker Compose V1 (`docker-compose`) はメンテナンス終了。V2 (`docker compose`) を使う
 - コンテナーのシェルに入る際、Alpine Linux系は `bash` が入っていないため `ash` を使う
 
 ## 参考リンク
 
-- [Docker Desktop 公式ドキュメント](https://docs.docker.com/desktop/)
+- [OrbStack 公式ドキュメント](https://docs.orbstack.dev/)
+- [OrbStack のライセンス・料金](https://orbstack.dev/pricing)
 - [Docker Compose V1 から V2 への移行](https://docs.docker.com/compose/migrate/)

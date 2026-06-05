@@ -9,6 +9,9 @@ yarn = "latest"
 "npm:@redocly/cli" = "latest"
 "npm:@socketsecurity/cli" = "latest"
 "npm:bundle-phobia-cli" = "latest"
+# npm: ツールはすべて latest。公開5日未満の版は ~/.npmrc の min-release-age=5 に
+# 拒否され mise install が ETARGET で失敗することがある。バージョンは固定せず、
+# README「mise install が ETARGET で失敗する場合」の手順で対応する。
 "npm:create-next-app" = "latest"
 "npm:dependency-cruiser" = "latest"
 "npm:firebase-tools" = "latest"
