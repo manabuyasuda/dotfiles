@@ -26,7 +26,8 @@
 #   - npm install（パッケージ名なし）と pip install -r は deny
 #     WHY: semver範囲でバージョンが解決されるため、意図しないバージョンが入り、
 #          挙動のズレ・脆弱性・サプライチェーン攻撃を含むバージョンを意図せず引き込む可能性がある
-#     ※ npm install <pkg> / npm ci / pnpm install / yarn install / bun install は通過する
+#     ※ npm install <pkg> / npm ci / pnpm install --frozen-lockfile / yarn install --immutable は通過する
+#       pnpm install（--frozen-lockfile なし）・yarn install（--immutable なし）は INSTALL としてユーザー確認
 #
 # 注: rm -rf / shred / xargs rm / find -delete 等は pre-tool-use/dangerous-guard.sh で拒否済み。
 #     単一ファイルの rm は dangerous-guard.sh の対象外のため、このスクリプトで DESTRUCTIVE に分類する。
@@ -67,6 +68,12 @@ classify() {
   local c="$1"
   case "$c" in
 
+    # frozen lockfile install: lockfile に固定されたバージョンのみインストール。新バージョンを解決しない
+    *"npm ci"* |\
+    *"pnpm install --frozen-lockfile"* |\
+    *"yarn install --immutable"*)
+      echo "READ"; return;;
+
     # DESTRUCTIVE: 取り返しがつかない操作
     # ※ git push --force / git reset --hard は NETWORK_WRITE より前に評価する必要がある
     *"git reset --hard"* |\
@@ -102,7 +109,9 @@ classify() {
     *"npm install"* |\
     *"npm i "* |\
     *"yarn add"* |\
+    *"yarn install"* |\
     *"pnpm add"* |\
+    *"pnpm install"* |\
     *"pip install"* |\
     *"brew install"*)
       echo "INSTALL"; return;;
