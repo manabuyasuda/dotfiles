@@ -31,6 +31,9 @@
       "Bash(gh issue view*)",
       "Bash(gh run list*)",
       "Bash(gh run view*)",
+      "Bash(npm ci)",
+      "Bash(pnpm install --frozen-lockfile)",
+      "Bash(yarn install --immutable)",
       "Bash(madge*)",
       "Bash(knip*)",
       "Bash(depcruise*)",
@@ -283,6 +286,10 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
   },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
