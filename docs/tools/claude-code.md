@@ -183,6 +183,50 @@ arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-son
 
 ARNはAWSコンソールの「Amazon Bedrock > 推論プロファイル」から確認できる。
 
+**4. `~/.zshrc.local` に環境変数を設定する**
+
+```bash
+cat >> ~/.zshrc.local << 'EOF'
+
+# Claude Code: AWS Bedrock
+export CLAUDE_CODE_USE_BEDROCK=1
+export AWS_PROFILE=<aws-profile-name>
+export AWS_REGION=ap-northeast-1
+export ANTHROPIC_MODEL=global.anthropic.claude-sonnet-4-6
+export ANTHROPIC_DEFAULT_SONNET_MODEL=global.anthropic.claude-sonnet-4-6
+export ANTHROPIC_DEFAULT_OPUS_MODEL=global.anthropic.claude-opus-4-8
+export ANTHROPIC_DEFAULT_HAIKU_MODEL=global.anthropic.claude-haiku-4-5-20251001-v1:0
+export CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
+export CLAUDE_CODE_DISABLE_1M_CONTEXT=1
+export ENABLE_TOOL_SEARCH=1
+export CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-4-6
+EOF
+```
+
+### 各環境変数の説明
+
+| 変数名 | 説明 |
+|---|---|
+| `CLAUDE_CODE_USE_BEDROCK` | `1` でBedrock経由に切り替える |
+| `AWS_PROFILE` | `~/.aws/config` のプロファイル名 |
+| `AWS_REGION` | Bedrockのリージョン |
+| `ANTHROPIC_MODEL` | メインモデルのID |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL` | Sonnetモデルのデフォルト |
+| `ANTHROPIC_DEFAULT_OPUS_MODEL` | Opusモデルのデフォルト |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL` | Haikuモデルのデフォルト |
+| `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS` | `1` でAnthropicのベータヘッダーを除去する（Bedrockが受け付けないため必要） |
+| `CLAUDE_CODE_DISABLE_1M_CONTEXT` | `1` でコンテキストウィンドウを200Kに制限する |
+| `ENABLE_TOOL_SEARCH` | `1` でMCPツール検索を有効化する（非Anthropicホスト接続時はデフォルト無効） |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | サブエージェントが使うモデルID |
+
+### SSOセッションが切れたとき
+
+AWS SSOのセッションは通常1時間程度で切れる。切れるとClaude Codeへの応答が返らなくなるため、以下を手動実行して再ログインする。
+
+```bash
+aws sso login --profile <aws-profile-name>
+```
+
 ## VS CodeでBedrockを使う
 
 ターミナルで設定した環境変数はVS CodeのClaude Code拡張には引き継がれない。VS Codeからも使う場合は、ユーザー設定（`~/Library/Application Support/Code/User/settings.json`）に以下を追加する。
