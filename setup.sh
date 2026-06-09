@@ -14,7 +14,6 @@ SYMLINKS=(
   "mise/config.toml:.config/mise/config.toml"
   "claude/CLAUDE.md:.claude/CLAUDE.md"
   "claude/settings.json:.claude/settings.json"
-  "claude/settings.local.json:.claude/settings.local.json"
   "claude/keybindings.json:.claude/keybindings.json"
   "claude/skills:.claude/skills"
   "claude/hooks:.claude/hooks"
@@ -80,8 +79,8 @@ else
   mkdir -p "$DOTFILES_DIR/.claude"
   cat > "$DOTFILES_PROJECT_SETTINGS" << 'SETTINGS_EOF'
 {
-  "env": {
-    "EXPECTED_GH_ACCOUNT": "manabuyasuda"
+  "permissions": {
+    "allow": []
   }
 }
 SETTINGS_EOF
