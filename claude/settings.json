@@ -147,6 +147,7 @@
     "disableBypassPermissionsMode": "disable"
   },
   "skillOverrides": {
+    "x-check-me": "user-invocable-only",
     "x-cleanup-merged-branches": "user-invocable-only",
     "x-commit": "user-invocable-only",
     "x-decompose": "user-invocable-only",
@@ -158,6 +159,7 @@
     "x-hotspot-refactoring": "user-invocable-only",
     "x-implementing-plan": "user-invocable-only",
     "x-iterate": "user-invocable-only",
+    "x-keep": "user-invocable-only",
     "x-planning-implementation": "user-invocable-only",
     "x-pre-mortem": "user-invocable-only",
     "x-rebasing-feature-branch": "user-invocable-only",
