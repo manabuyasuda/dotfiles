@@ -31,7 +31,7 @@ tools:
 ### 1-1. 変更ファイルを確定する
 
 ```bash
-CHANGED_FILES=$(git diff --name-only origin/${BASE_BRANCH}...HEAD)
+CHANGED_FILES=$( { git diff --name-only origin/${BASE_BRANCH}...HEAD; git diff --name-only HEAD; } | sort -u | grep -v '^[[:space:]]*$' )
 echo "$CHANGED_FILES"
 ```
 
@@ -76,7 +76,7 @@ done | sort -u | grep -v -F -f <(echo "$CHANGED_FILES")
 差分から追加・変更された関数名・コンポーネント名を抽出し、使用箇所を最大10件探索します。意図しない使われ方・設計的に問題のある使われ方がないかを確認します。
 
 ```bash
-CHANGED_NAMES=$(git diff origin/${BASE_BRANCH}...HEAD | \
+CHANGED_NAMES=$( { git diff origin/${BASE_BRANCH}...HEAD; git diff HEAD; } | \
   grep '^+' | sed 's/^+//' | \
   grep -oE '(export (function|const|class) [A-Za-z][A-Za-z0-9]+|function [A-Za-z][A-Za-z0-9]+)' | \
   sed 's/export \(function\|const\|class\) //' | sort -u | head -10)

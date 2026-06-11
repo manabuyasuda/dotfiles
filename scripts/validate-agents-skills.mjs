@@ -46,10 +46,19 @@ function isKnownTool(tool) {
  * 完全な YAML パースはせず、検証に必要なフィールドだけを取り出す。
  */
 function parseFrontmatter(content) {
-  if (!content.startsWith('---')) return null;
-  const end = content.indexOf('\n---', 3);
-  if (end === -1) return null;
-  const block = content.slice(3, end);
+  // frontmatter は先頭行が `---` で、次に現れる `---` 単独行で閉じる。
+  // 文字列検索（indexOf('\n---')）だと本文中の `---` を終端と誤認するため、行単位で判定する。
+  const lines = content.split('\n');
+  if (lines[0].trim() !== '---') return null;
+  let endIdx = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (/^---\s*$/.test(lines[i])) {
+      endIdx = i;
+      break;
+    }
+  }
+  if (endIdx === -1) return null;
+  const block = lines.slice(1, endIdx).join('\n');
 
   const fm = { name: undefined, hasDescription: false, description: '', tools: [] };
   let currentKey = null;
@@ -109,8 +118,21 @@ const AUTO_INVOKE_PATTERNS = [
   /積極的に(起動|提案)/,
   /明示的に[^。]{0,40}なくても/,
   /自動的に(起動|提案|呼び出)/,
+  /自動で(起動|提案|呼び出|呼ばれ)/,
   /感じたら[^。]{0,30}(提案|起動)/,
 ];
+// 自動起動の方針を運用判断として保留している既知スキル（snapshot）。
+// ここに無い新規の矛盾は error にして、矛盾の放置を構造で禁止する。
+// description の自動起動表現を消すか settings を変えたら、ここからも外す。
+const KNOWN_AUTOINVOKE_CONFLICTS = new Set([
+  'x-check-me',
+  'x-designing-usecases',
+  'x-figma-extract',
+  'x-implementing-plan',
+  'x-planning-implementation',
+  'x-report-it',
+  'x-teach-me',
+]);
 const notices = [];
 const settingsPath = join(ROOT, 'claude/settings.json');
 let skillOverrides = {};
@@ -147,7 +169,11 @@ if (existsSync(SKILLS_DIR)) {
       if (!isKnownTool(tool)) warnings.push(`skills/${entry}/SKILL.md: 未知のツール「${tool}」`);
     }
     if (skillOverrides[entry] === 'user-invocable-only' && AUTO_INVOKE_PATTERNS.some((p) => p.test(fm.description))) {
-      notices.push(`skills/${entry}: settings は user-invocable-only（明示起動専用）だが description が自動起動を促している。自動起動させるなら settings から外し、明示専用なら description の該当表現を削除して揃える`);
+      if (KNOWN_AUTOINVOKE_CONFLICTS.has(entry)) {
+        notices.push(`skills/${entry}: 既知の自動起動矛盾（方針を保留中）。description の自動起動表現を消したら KNOWN_AUTOINVOKE_CONFLICTS から外す`);
+      } else {
+        errors.push(`skills/${entry}: user-invocable-only（明示起動専用）なのに description が自動起動を促している。settings か description を揃える。運用判断で保留するなら KNOWN_AUTOINVOKE_CONFLICTS に追加する`);
+      }
     }
   }
 }
