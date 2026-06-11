@@ -5,5 +5,5 @@ pre-commit:
       glob: "*.md"
       run: npx textlint {staged_files}
     validate-agents-skills:
-      glob: "claude/{skills,agents}/**/*.md"
+      glob: "claude/**/*.md"
       run: node scripts/validate-agents-skills.mjs
