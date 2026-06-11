@@ -4,6 +4,7 @@
     "aws:login": "zsh scripts/aws-sso-login.sh",
     "lint": "textlint 'docs/**/*.md' 'claude/**/*.md' README.md",
     "lint:fix": "textlint --fix 'docs/**/*.md' 'claude/**/*.md' README.md",
+    "validate": "node scripts/validate-agents-skills.mjs",
     "prepare": "lefthook install"
   },
   "devDependencies": {

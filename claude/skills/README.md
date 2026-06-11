@@ -22,11 +22,13 @@ Claude Codeから呼び出せるカスタムスキルの一覧です。
 - [x-thorough-code-review](./x-thorough-code-review/SKILL.md) — GitHubのPRかローカルブランチの変更をレビューします。レビュー観点の指定がなければ標準ルールで進めます。
 - [x-test-review](./x-test-review/SKILL.md) — 既存のテストファイル（`.test.ts`／`.test.tsx`／`.spec.ts`、テストコードブロックを含む`.md`）を、テスト実装ルールに沿って見直して改善します。
 - [x-writing-review](./x-writing-review/SKILL.md) — `.md`ファイルの文章品質を、日本語表現・構造・整形のルールに沿ってレビュー・修正します。
+- [x-check-me](./x-check-me/SKILL.md) — 作った成果物の振る舞いと目的を、問いかけでユーザーとすり合わせて確認します。
 
 ## Shipping（リモートへの反映）
 
 - [x-commit](./x-commit/SKILL.md) — Gitコミットを論理単位で分割し、人とAIにとって有用なメッセージを付けて作成します。プロジェクトの規約（commitlintなど）を遵守します。
 - [x-rebasing-feature-branch](./x-rebasing-feature-branch/SKILL.md) — フィーチャーブランチをベースブランチ（main／master／developなど）にリベースし、リモートに反映するまでを1タスクとして実行します。
+- [x-cleanup-merged-branches](./x-cleanup-merged-branches/SKILL.md) — マージ済みのローカル・リモートブランチを整理します。gh-poi拡張が前提で、ベースブランチは削除しません。
 
 ## Meta（スキルや計画への横断作用）
 
@@ -35,3 +37,5 @@ Claude Codeから呼び出せるカスタムスキルの一覧です。
 - [x-iterate](./x-iterate/SKILL.md) — 指定したスキルを3回繰り返し適用します。レビュー・計画・実装などファイルを変更するスキルに使います。
 - [x-teach-me](./x-teach-me/SKILL.md) — ドキュメント・実装・アーキテクチャを段階的に解説し、その過程と結論をMarkdownドキュメントとして書き出します。
 - [x-retrospective](./x-retrospective/SKILL.md) — セッションのふりかえりをKPTA形式で行い、設定の改善提案と即時反映までを担います。
+- [x-report-it](./x-report-it/SKILL.md) — 結論を先に置き、相手の疑問に先回りする報告・相談の文面を組み立てます。
+- [x-keep](./x-keep/SKILL.md) — `/compact`の前に残したい情報を選び、`/compact`の引数を組み立てます。

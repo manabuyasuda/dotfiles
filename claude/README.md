@@ -516,13 +516,23 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 #### よく使うワークフローが定型化してきた
 
-Q1: 毎回同じ手順で実行できるか？  
-→ YES: `skills/` に切り出す（`/スキル名` で呼び出す）  
-→ NO（状況で判断が変わる）: `agents/` に切り出す（`@エージェント名` で呼び出す）
+skills・agents・commandsを次の判断で使い分ける。commandはskillsに統合済みのため、新規に作るときはskillsかagentsを選ぶ。
 
-Q2: ユーザーが明示的に呼び出すか、自律的に動かすか？  
-→ 明示的: `skills/`  
-→ 自律的（サブタスク委譲）: `agents/`
+- **Q1: 他のスキルやエージェントから部品として呼ばれ、独立コンテキストや並列起動が要るか？**
+  - YES → `agents/` に切り出す（`@エージェント名`・`subagent_type` で呼ぶ）。agentは `skillOverrides` の対象外で、部品として確実に呼べる
+  - NO → Q2へ
+- **Q2: ユーザーとの対話（AskUserQuestion）が処理の本質か？**
+  - YES → `skills/` に切り出す。agentは独立コンテキストで動くため対話に向かない
+  - NO → Q3へ
+- **Q3: 毎回同じ手順の確定ワークフローか？**
+  - YES → `skills/` に切り出す（`/スキル名` で呼び出す）。read-onlyや隔離が要るなら `context: fork` と `disallowed-tools` を併用する
+  - NO（状況で判断が変わる・自律委譲）→ `agents/` に切り出す
+
+補足は以下のとおり。
+
+- read-only化やコンテキスト隔離だけが目的ならagentにはしない。`context: fork` と `disallowed-tools` で足りる。
+- 「必ず明示起動するもの」は、ディレクトリを移すのではなく `skills/` のまま明示起動専用にする。`commands/*.md` は補助ファイル（`references/` など）を持てないため、補助ファイルを伴うワークフローは `skills/<name>/` を使う。明示起動専用は `skillOverrides` を `user-invocable-only` にするか、frontmatterに `disable-model-invocation: true` を書いて表現する。
+- 分類の一貫性は `scripts/validate-agents-skills.mjs`（pre-commitとCI）で強制する。
 
 #### 特定の指示・判断基準を毎回伝えている
 
