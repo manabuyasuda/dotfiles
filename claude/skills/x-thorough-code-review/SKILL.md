@@ -17,15 +17,15 @@ allowed-tools:
 
 # コードレビュー
 
-コードの変更をレビューします。レビューの解析・観点チェックは `code-review-engine` エージェントに委譲し、このスキルは対象の選択（PR/local）・情報取得・結果の統合・GitHubへの投稿を担います。
+コードの変更をレビューします。観点別のレビューは7つの観点エージェントに委譲し、このスキルは対象の選択（PR/local）・情報取得・並列起動・結果の統合・GitHubへの投稿を担います。観点エージェントはreview-logic / review-type / review-design / review-performance / review-security / review-testing / review-a11yです。
 
-重い解析を独立コンテキストのエージェントに隔離することで、メインの会話のコンテキスト消費を抑えます。観点チェックの中身（カテゴリ・自動解析・適用ルール）は`code-review-engine`エージェント側で管理します。
+各観点を独立コンテキストの専門エージェントに分けて並列実行することで、メインの会話のコンテキスト消費を抑えつつ高速にレビューします。各観点の判断基準・自動解析は各エージェント側で管理します。
 
 フローは以下の通りです。
 
 1. Step 1: レビューモードを決定する
 2. Step 2: 情報を取得する
-3. Step 3: code-review-engineエージェントでレビューする
+3. Step 3: 観点別レビューを並列で実行する
 4. Step 4: 結果を統合して出力する
 5. Step 5: レビュー後のアクション
 
@@ -37,7 +37,7 @@ allowed-tools:
 |---|---------|-----------|
 | 1 | Step 1: レビューモードを決定する | — |
 | 2 | Step 2: 情報を取得する | 1 |
-| 3 | Step 3: code-review-engine でレビューする | 2 |
+| 3 | Step 3: 観点別レビューを並列で実行する | 2 |
 | 4 | Step 4: 結果を統合して出力する | 3 |
 | 5 | Step 5: レビュー後のアクション | 4 |
 
@@ -119,7 +119,7 @@ HEAD_BRANCH=$(gh pr view $PR_NUMBER --json headRefName --jq '.headRefName')
 CURRENT_BRANCH=$(git branch --show-current)
 ```
 
-`code-review-engine`エージェントは`origin/<BASE_BRANCH>...HEAD`を解析するため、現在のブランチがPRのヘッドでない場合はチェックアウトします。
+観点エージェントは`origin/<BASE_BRANCH>...HEAD`を解析するため、現在のブランチがPRのヘッドでない場合はチェックアウトします。
 
 ```bash
 if [ "$CURRENT_BRANCH" != "$HEAD_BRANCH" ]; then
@@ -169,21 +169,31 @@ AskUserQuestionでファイルパスまたはURLを尋ねます。
 
 ファイルパスまたはURLが入力された場合は`DESIGN_DOC`に格納します。エージェントが判断基準に加えます。
 
-## Step 3: code-review-engine エージェントでレビューする
+## Step 3: 観点別レビューを並列で実行する
 
-`Agent`ツールで`code-review-engine`エージェントを起動し、以下を渡します。
+7つの観点エージェントを**1つのメッセージ内でまとめて起動**し、並列にレビューさせます。各エージェントは独立コンテキストで差分を取得し、自動解析と観点レビューを経て、その観点の指摘を返します。
+
+起動するエージェントと、それぞれに渡す引数は次のとおりです。
 
 ```
-Agent: code-review-engine
-引数:
+（以下を1メッセージで同時に起動する）
+Agent: review-logic
+Agent: review-type
+Agent: review-design
+Agent: review-performance
+Agent: review-security
+Agent: review-testing
+Agent: review-a11y
+
+各エージェントへ渡す引数（共通）:
 - BASE_BRANCH: <BASE_BRANCH>
 - 設計書: <DESIGN_DOC（なければ省略）>
 - 既存レビューコメント: <REVIEW_COMMENTS（なければ省略）>
 ```
 
-エージェントは差分の取得・自動解析・観点レビューを独立コンテキストで実行し、「レビュー指摘事項」と「git履歴コンテキスト」を構造化して返します。
+`review-design`はgit履歴コンテキスト（ホットスポット・書き換え率・Temporal Coupling）も返します。
 
-`code-review-engine`が起動できない場合は、その旨をユーザーに伝え、エージェントの定義（`agents/code-review-engine.md`）にしたがって手動でレビューします。
+起動できないエージェントがある場合は、その観点をスキップした旨を報告に明記します。特定の観点だけを見たいときは、該当するエージェントだけを起動してかまいません。
 
 ## Step 4: 結果を統合して出力する
 
@@ -213,7 +223,15 @@ Agent: code-review-engine
 
 ### レビュー指摘事項・git履歴コンテキスト
 
-`code-review-engine`が返した内容をそのまま掲載します。
+7つの観点エージェントが返した指摘を集約します。
+
+- ファイルパスでソートし、同じファイルへの指摘はまとめる
+- 観点をまたいで実質同じ指摘は1つに集約し、該当するカテゴリ（`[ロジック]` `[設計]` など）を併記する
+- 既存のレビューコメント（`REVIEW_COMMENTS`）と重複する指摘は除外する
+- どの観点エージェントの担当にも当てはまらない指摘があれば `[その他]` として加える
+- `review-design`が返したgit履歴コンテキストを、シグナルがあれば掲載する
+
+統合した指摘は、ファイルごとに重要度（must / should / nit）とカテゴリを付けて出力します。
 
 ### 総評
 
@@ -246,4 +264,4 @@ AskUserQuestionで次のアクションを選択してもらいます。
 ## 注意事項
 
 - PRの作成者への敬意を忘れず、建設的なフィードバックを心がけます
-- レビュー観点・自動解析・適用ルールの追加や変更は、このスキルではなく`code-review-engine`エージェント（`agents/code-review-engine.md`）で行います
+- レビュー観点・自動解析・適用ルールの追加や変更は、このスキルではなく各観点エージェント（`agents/review-*.md`）で行います

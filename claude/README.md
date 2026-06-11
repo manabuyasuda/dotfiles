@@ -104,7 +104,8 @@ cp -r .agents/skills/* .claude/skills/
 |---|---|---|
 | `doc-critic` | `@doc-critic` | 技術ドキュメントを批判的にレビューし、「実装に着手できる状態か」を検証する。問題を直すのではなく、不足している観点を質問リストとして返す。設計・計画が固まったら自律的に起動する |
 | `pre-mortem` | `@pre-mortem`・`/x-pre-mortem` | 計画・設計が失敗した未来を想定し、技術的・運用的・認知的の3カテゴリで失敗シナリオと予防策を返す。`x-pre-mortem`スキルから委譲される |
-| `code-review-engine` | コードレビュー系スキルから自動で呼ばれる | 変更差分を自動解析と観点レビューで検査し、カテゴリ別の指摘を返す。`x-thorough-code-review`・`x-implementing-plan`の検証部品 |
+| `decompose` | `@decompose`・`/x-decompose` | 大きなタスクを依存順の最小ステップに分解する。タスクが大きいとき自律的に起動する |
+| `review-logic` ほか7観点 | コードレビュー系スキルから並列に呼ばれる | review-logic / review-type / review-design / review-performance / review-security / review-testing / review-a11y。変更差分を観点別にレビューする検出専用エージェント。`@review-security` のように個別起動もできる |
 
 ---
 
