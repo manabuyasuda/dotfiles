@@ -51,7 +51,7 @@ function parseFrontmatter(content) {
   if (end === -1) return null;
   const block = content.slice(3, end);
 
-  const fm = { name: undefined, hasDescription: false, tools: [] };
+  const fm = { name: undefined, hasDescription: false, description: '', tools: [] };
   let currentKey = null;
 
   for (const line of block.split('\n')) {
@@ -62,7 +62,10 @@ function parseFrontmatter(content) {
       currentKey = keyMatch[1];
       const inlineValue = keyMatch[2].trim();
       if (currentKey === 'name') fm.name = inlineValue || undefined;
-      if (currentKey === 'description') fm.hasDescription = true;
+      if (currentKey === 'description') {
+        fm.hasDescription = true;
+        if (inlineValue && inlineValue !== '>' && inlineValue !== '|') fm.description += inlineValue + ' ';
+      }
       if (
         (currentKey === 'tools' || currentKey === 'allowed-tools') &&
         inlineValue &&
@@ -77,6 +80,9 @@ function parseFrontmatter(content) {
       }
     } else if (listMatch && (currentKey === 'tools' || currentKey === 'allowed-tools')) {
       fm.tools.push(listMatch[1].trim());
+    } else if (currentKey === 'description' && line.trim()) {
+      // description の折り畳み（>）の継続行を連結する
+      fm.description += line.trim() + ' ';
     }
   }
   return fm;
@@ -94,6 +100,26 @@ function walkMarkdown(dir) {
     else if (entry.endsWith('.md')) out.push(p);
   }
   return out;
+}
+
+// --- 自動起動の意図と settings の整合（設計判断用の情報） ---
+// description が自動起動を促しているのに settings で明示起動専用（user-invocable-only）に
+// している、という矛盾を検出する。どちらに揃えるかは運用の判断のため、exit には影響しない。
+const AUTO_INVOKE_PATTERNS = [
+  /積極的に(起動|提案)/,
+  /明示的に[^。]{0,40}なくても/,
+  /自動的に(起動|提案|呼び出)/,
+  /感じたら[^。]{0,30}(提案|起動)/,
+];
+const notices = [];
+const settingsPath = join(ROOT, 'claude/settings.json');
+let skillOverrides = {};
+if (existsSync(settingsPath)) {
+  try {
+    skillOverrides = JSON.parse(readFileSync(settingsPath, 'utf8')).skillOverrides || {};
+  } catch {
+    warnings.push('claude/settings.json をパースできませんでした');
+  }
 }
 
 // --- skills の検証 ---
@@ -119,6 +145,9 @@ if (existsSync(SKILLS_DIR)) {
     }
     for (const tool of fm.tools) {
       if (!isKnownTool(tool)) warnings.push(`skills/${entry}/SKILL.md: 未知のツール「${tool}」`);
+    }
+    if (skillOverrides[entry] === 'user-invocable-only' && AUTO_INVOKE_PATTERNS.some((p) => p.test(fm.description))) {
+      notices.push(`skills/${entry}: settings は user-invocable-only（明示起動専用）だが description が自動起動を促している。自動起動させるなら settings から外し、明示専用なら description の該当表現を削除して揃える`);
     }
   }
 }
@@ -167,6 +196,10 @@ if (existsSync(readmePath)) {
 }
 
 // --- 結果出力 ---
+if (notices.length) {
+  console.log('ℹ 自動起動の意図と settings の整合（exit には影響しません。設計判断用）:');
+  for (const n of notices) console.log(`  - ${n}`);
+}
 if (warnings.length) {
   console.warn('⚠ 警告:');
   for (const w of warnings) console.warn(`  - ${w}`);
