@@ -22,7 +22,7 @@
 # 表示例（Max / Pro プラン）:
 #   🤖 Sonnet 4.6 200K   🌿 main
 #   📈 45.0% (+3.2)
-#   🕐 5h: 23% 🔄14:30   📅 7d: 41% 🔄21:00
+#   🕐 5h: 23% 🔄14:30   📅 7d: 41% 🔄6/19 21:00
 
 # jq がインストールされていなければ警告して終了する
 # jq は JSON を解析するためのコマンドラインツール
@@ -182,23 +182,28 @@ fi
 
 # =============================================================================
 # 3行目（サブスク）: 使用量制限
-# 例: 🕐 5h: 23% 🔄14:30   📅 7d: 41% 🔄21:00
+# 例: 🕐 5h: 23% 🔄14:30   📅 7d: 41% 🔄6/19 21:00
 #
 # rate_limits フィールドは Claude.ai サブスクリプション（Pro / Max）のみ提供される。
 # 5 時間ウィンドウ: 直近 5 時間の使用量。短時間の集中作業で上限に当たりやすい
 # 7 日間ウィンドウ: 直近 7 日間の使用量。週単位の総量を管理する
-# 🔄HH:MM はそのウィンドウがリセットされる時刻（ローカル時間）
+# 🔄 のあとはそのウィンドウがリセットされる時刻（ローカル時間）。
+# 5h は時刻のみ、7d は数日先になり得るので「M/D HH:MM」と日付付きで表示する。
 # =============================================================================
 
-# Unix epoch（1970年1月1日からの秒数）をローカル時刻の HH:MM に変換する関数
+# Unix epoch（1970年1月1日からの秒数）をローカル時刻に変換する関数
+# 第2引数に strftime 書式を渡す（省略時は時刻のみ）。
+# 5h ウィンドウはリセットが5時間以内なので時刻だけで一意に定まるが、
+# 7d ウィンドウは数日先になり得るため、呼び出し側で日付付きの書式を渡す。
 # macOS は date -r、Linux は date -d @ という異なる書式を使うため両方に対応する
 _fmt_resets_at() {
   local epoch="$1"
+  local fmt="${2:-+%H:%M}"
   [ -z "$epoch" ] && return
   if date -r "$epoch" &>/dev/null 2>&1; then
-    date -r "$epoch" "+%H:%M"       # macOS
+    date -r "$epoch" "$fmt"       # macOS
   else
-    date -d "@$epoch" "+%H:%M" 2>/dev/null  # Linux
+    date -d "@$epoch" "$fmt" 2>/dev/null  # Linux
   fi
 }
 
@@ -220,7 +225,8 @@ if [ "$HAS_LIMITS" = "yes" ]; then
 
   if [ -n "$SEVEN_D_PCT" ]; then
     SEVEN_D_INT=$(printf '%.0f' "$SEVEN_D_PCT")
-    SEVEN_D_TIME=$(_fmt_resets_at "$SEVEN_D_AT")
+    # 7d は数日先にリセットされ得るので「M/D HH:MM」と日付付きで表示する
+    SEVEN_D_TIME=$(_fmt_resets_at "$SEVEN_D_AT" "+%-m/%-d %H:%M")
     SEVEN_D_STR="${ICON_7D} 7d: ${SEVEN_D_INT}%"
     [ -n "$SEVEN_D_TIME" ] && SEVEN_D_STR+=" ${ICON_RESET}${SEVEN_D_TIME}"
     usage_parts+=("$SEVEN_D_STR")
