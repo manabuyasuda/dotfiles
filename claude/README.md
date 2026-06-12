@@ -106,6 +106,8 @@ cp -r .agents/skills/* .claude/skills/
 | `pre-mortem` | `@pre-mortem`・`/x-pre-mortem` | 計画・設計が失敗した未来を想定し、技術的・運用的・認知的の3カテゴリで失敗シナリオと予防策を返す。`x-pre-mortem`スキルから委譲される |
 | `decompose` | `@decompose`・`/x-decompose` | 大きなタスクを依存順の最小ステップに分解する。タスクが大きいとき自律的に起動する |
 | `review-logic` ほか7観点 | コードレビュー系スキルから並列に呼ばれる | review-logic / review-type / review-design / review-performance / review-security / review-testing / review-a11y。変更差分を観点別にレビューする検出専用エージェント。`@review-security` のように個別起動もできる |
+| `writing-reviewer` / `test-reviewer` | x-writing-review・x-test-reviewから3回呼ばれる | 文章・テストを1周レビューして修正する。各回が独立コンテキストで白紙評価になる |
+| `hotspot-analyzer` | x-hotspot-refactoringから呼ばれる | git履歴・構造・コード品質を分析し、リファクタリング候補を優先度付きで返す。検出専用 |
 
 ---
 
