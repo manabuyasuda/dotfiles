@@ -1,0 +1,26 @@
+name: shellcheck
+
+on:
+  pull_request:
+    paths:
+      - '**/*.sh'
+      - '.github/workflows/shellcheck.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.sh'
+      - '.github/workflows/shellcheck.yml'
+
+jobs:
+  shellcheck:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # ubuntu-latest runner には shellcheck がプリインストールされている
+      - name: Run shellcheck (severity=warning)
+        run: |
+          find . -path ./node_modules -prune -o -name '*.sh' -print0 \
+            | xargs -0 -r shellcheck --severity=warning

@@ -261,6 +261,11 @@
           },
           {
             "type": "command",
+            "command": "$HOME/.claude/hooks/post-tool-use/shellcheck.sh",
+            "timeout": 30
+          },
+          {
+            "type": "command",
             "command": "$HOME/.claude/hooks/post-tool-use/install.sh",
             "timeout": 60
           },
