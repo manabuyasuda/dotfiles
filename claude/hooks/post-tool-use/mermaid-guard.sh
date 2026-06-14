@@ -32,6 +32,8 @@ FILE_PATH=$(jq -r '.tool_input.file_path // ""' <<< "$INPUT")
 [[ "$FILE_PATH" != *.md ]] && exit 0
 # Write ツールは存在しないパスに書き込む場合があるため、ファイルが実在するか確認する
 [[ ! -f "$FILE_PATH" ]] && exit 0
+# mmdc が無い環境では検証をスキップする（pre-commit / CI で補完する）
+command -v mmdc >/dev/null 2>&1 || exit 0
 
 ERRORS=""
 # mmdc への入力・出力を格納する一時ディレクトリ。EXIT 時に自動削除する。
@@ -76,6 +78,17 @@ ${err_msg}
 done < "$FILE_PATH"
 
 if [[ -n "$ERRORS" ]]; then
+  # mmdc はレンダリングに Chrome/Firefox を起動する。ブラウザが無い・壊れている環境では
+  # 構文が正しくてもレンダリング段階で失敗し、その出力も "Error" 行で始まる。
+  # 構文エラーと環境起因エラーを切り分けるため、既知の正しい図（canary）を1度
+  # レンダリングして判定する。canary も失敗するなら環境起因なので、構文チェックを
+  # スキップする（shellcheck.sh と同じ「ツールが動かない環境では止めない」思想）。
+  canary_file="$TMP_DIR/canary.mmd"
+  printf 'flowchart LR\n  A-->B\n' > "$canary_file"
+  if ! mmdc -i "$canary_file" -o "$TMP_DIR/canary.svg" >/dev/null 2>&1; then
+    log "[${FILE_PATH##*/}] mmdc がレンダリングできない環境（ブラウザ未導入等）のため構文チェックをスキップ。pre-commit / CI で補完する"
+    exit 0
+  fi
   _deny "ERROR: Mermaid の構文エラーが見つかりました。WHY: 構文エラーはレンダリング失敗の原因になります。FIX: 以下のエラーを修正してください:
 
 ${ERRORS}"
