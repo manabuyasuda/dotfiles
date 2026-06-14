@@ -109,6 +109,8 @@ cp -r .agents/skills/* .claude/skills/
 | `writing-reviewer` / `test-reviewer` | x-writing-review・x-test-reviewから3回呼ばれる | 文章・テストを1周レビューして修正する。各回が独立コンテキストで白紙評価になる |
 | `hotspot-analyzer` | x-hotspot-refactoringから呼ばれる | git履歴・構造・コード品質を分析し、リファクタリング候補を優先度付きで返す。検出専用 |
 
+各skillとagentが制作フローのどの工程を担うか、工程ごとに何が欠けているかは [workflow.md](./workflow.md) にMermaidで整理している。
+
 ---
 
 ## 基本設定（settings.json）
