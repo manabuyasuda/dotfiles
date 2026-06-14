@@ -68,8 +68,16 @@ USAGE_7D_RED=70      # 7d: 70% 以上 → 赤
 # 年収換算の設定
 # 「いまのペースで1年間使い続けたら年収いくらの人を貼り付けているのと同じか」を出す
 WORK_HOURS_PER_YEAR=2000   # 年間労働時間。時給を年収に引き伸ばす係数
-RATE_PRIOR_HOURS=0.1       # 序盤のブレを抑える擬似時間（時間）。分母に足して発散を防ぐ
 LABOR_COST_FACTOR=1.0      # 1.0=支払い額の年間換算（人件費相当） / 1.4=額面年収相当
+
+# 年収換算の表示ゲート（経過時間ベース）
+# 年収換算は rate = 累計コスト / 経過時間 で、経過時間が小さいほど発散して暴れる。
+# そこで「経過時間がこの分数に達するまでは年収換算を出さない」ことにする。
+# しきい値を超えてから初めて表示するので、擬似時間で下駄を履かせる必要がなくなり、
+# 表示値はバイアスのない実ペースになる（旧 RATE_PRIOR_HOURS と ~ マークは廃止）。
+# しきい値の金額換算はペース次第で変わる（時間ゲートにする理由そのもの）。
+# 分単位の整数で定義し、ミリ秒の整数比較で判定する（浮動小数の丸めに依存しない）。
+RATE_MIN_ELAPSED_MIN=10   # 10分（推奨）。5 に下げれば早く表示されるが序盤の揺れが残る
 
 # アイコン定義
 # 端末やフォントに合わせて差し替えられるよう、ここにまとめて定義する
@@ -310,24 +318,24 @@ if [ "$HAS_LIMITS" = "no" ] && [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) 
   # 年収換算: いまのペースで1年間使い続けたときの年収帯
   # 経過時間は壁時計（total_duration_ms）を使う。total_api_duration_ms（応答待ち時間）は
   # 考えている時間や打鍵時間を除外して過大評価になるため使わない。
+  #
+  # rate = 累計コスト / 経過時間 は経過時間が小さいほど発散する。そこで経過時間が
+  # RATE_MIN_ELAPSED_H に達するまでは年収換算を出さない（精度ゲート）。しきい値を
+  # 超えてから出すので分母が十分に大きく、擬似時間の下駄なしで実ペースを表示できる。
+  RATE_MIN_ELAPSED_MS=$(( RATE_MIN_ELAPSED_MIN * 60000 ))
   DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // empty')
   if [ -n "$DURATION_MS" ] && (( $(echo "$DURATION_MS > 0" | bc -l) )); then
-    # 経過時間（時間）。分母に擬似時間を足して序盤の発散を防ぐ
     ELAPSED_H=$(echo "scale=6; $DURATION_MS / 3600000" | bc -l)
-    DENOM=$(echo "scale=6; $ELAPSED_H + $RATE_PRIOR_HOURS" | bc -l)
-    # 年収（円） = 累計費用 ÷ 分母 × 年間労働時間 ÷ 人件費係数 × 為替
-    ANNUAL_JPY=$(echo "scale=6; $COST / $DENOM * $WORK_HOURS_PER_YEAR / $LABOR_COST_FACTOR * $JPY_PER_USD" | bc -l)
-    # 10万円単位に四捨五入してチラつきを抑える（+50000 してから整数化）
-    ANNUAL_ROUNDED=$(echo "scale=0; ($ANNUAL_JPY + 50000) / 100000 * 100000" | bc -l)
-    ANNUAL_MAN=$(( ANNUAL_ROUNDED / 10000 ))
-
-    # 経過が擬似時間より短い間は参考値なので ~ を付ける
-    TILDE=""
-    if (( $(echo "$ELAPSED_H < $RATE_PRIOR_HOURS" | bc -l) )); then
-      TILDE="~"
+    # 経過時間がしきい値に達していれば年収換算を表示する（未達なら何も足さない）
+    # 判定はミリ秒の整数比較なので、ちょうど10分などの境界が厳密に通る
+    if (( $(echo "$DURATION_MS >= $RATE_MIN_ELAPSED_MS" | bc -l) )); then
+      # 年収（円） = 累計費用 ÷ 経過時間 × 年間労働時間 ÷ 人件費係数 × 為替
+      ANNUAL_JPY=$(echo "scale=6; $COST / $ELAPSED_H * $WORK_HOURS_PER_YEAR / $LABOR_COST_FACTOR * $JPY_PER_USD" | bc -l)
+      # 10万円単位に四捨五入してチラつきを抑える（+50000 してから整数化）
+      ANNUAL_ROUNDED=$(echo "scale=0; ($ANNUAL_JPY + 50000) / 100000 * 100000" | bc -l)
+      ANNUAL_MAN=$(( ANNUAL_ROUNDED / 10000 ))
+      cost_line+="   年収換算 約${ANNUAL_MAN}万円"
     fi
-
-    cost_line+="   年収換算 ${TILDE}約${ANNUAL_MAN}万円"
   fi
 
   lines+=("$cost_line")
