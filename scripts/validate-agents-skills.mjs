@@ -7,6 +7,7 @@
  *
  * 検証する内容:
  *  - skill: SKILL.md の存在、name（ディレクトリ名と一致）、description の必須
+ *  - skill: settings.json の skillOverrides との相互照合（登録漏れ・実体なしを検出）
  *  - agent: name・description の必須、公式非サポートの固定ファイル名の検出、
  *           境界ルール（agent は AskUserQuestion を持てない＝対話は skill の責務）
  *  - 未知ツール名・README 索引の漏れは警告（exit code には影響しない）
@@ -136,9 +137,11 @@ const KNOWN_AUTOINVOKE_CONFLICTS = new Set([
 const notices = [];
 const settingsPath = join(ROOT, 'claude/settings.json');
 let skillOverrides = {};
+let settingsLoaded = false;
 if (existsSync(settingsPath)) {
   try {
     skillOverrides = JSON.parse(readFileSync(settingsPath, 'utf8')).skillOverrides || {};
+    settingsLoaded = true;
   } catch {
     warnings.push('claude/settings.json をパースできませんでした');
   }
@@ -167,6 +170,12 @@ if (existsSync(SKILLS_DIR)) {
     }
     for (const tool of fm.tools) {
       if (!isKnownTool(tool)) warnings.push(`skills/${entry}/SKILL.md: 未知のツール「${tool}」`);
+    }
+    // skillOverrides 登録漏れ: グローバル設定では全 skill を明示起動専用にする前提（README 参照）。
+    // 新規 skill を追加して settings への登録を忘れると、グローバルの skill が意図せず自動起動して
+    // プロジェクト固有 skill の自動起動を奪う。登録漏れを CI で止める。
+    if (settingsLoaded && !(entry in skillOverrides)) {
+      errors.push(`skills/${entry}: settings.json の skillOverrides に登録がありません。全 skill を明示起動専用（user-invocable-only）にする前提のため追加してください`);
     }
     if (skillOverrides[entry] === 'user-invocable-only' && AUTO_INVOKE_PATTERNS.some((p) => p.test(fm.description))) {
       if (KNOWN_AUTOINVOKE_CONFLICTS.has(entry)) {
@@ -206,6 +215,16 @@ if (existsSync(AGENTS_DIR)) {
     }
     for (const tool of fm.tools) {
       if (!isKnownTool(tool)) warnings.push(`${rel}: 未知のツール「${tool}」`);
+    }
+  }
+}
+
+// --- skillOverrides の実体照合（settings にあるが skill がない＝タイポ・削除残骸） ---
+if (settingsLoaded && existsSync(SKILLS_DIR)) {
+  const skillDirs = new Set(listDirs(SKILLS_DIR));
+  for (const key of Object.keys(skillOverrides)) {
+    if (!skillDirs.has(key)) {
+      errors.push(`settings.json skillOverrides:「${key}」に対応する skill が claude/skills/ にありません（タイポか削除残骸）。エントリを削除するか skill 名を直してください`);
     }
   }
 }
