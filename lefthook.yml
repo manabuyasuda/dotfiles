@@ -6,3 +6,6 @@ pre-commit:
       run: npx textlint {staged_files}
     validate-agents-skills:
       run: node scripts/validate-agents-skills.mjs
+    check-symlinks:
+      glob: "{setup.sh,claude/settings.json}"
+      run: bash scripts/check-claude-symlinks.sh

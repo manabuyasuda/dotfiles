@@ -400,6 +400,15 @@ claude setup-token
 gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo manabuyasuda/dotfiles
 ```
 
+### Claude Code対話型ワークフロー（@claude）
+
+IssueやPRで `@claude` とメンションすると、Claude Codeが文脈を分析してコメント返信・コード実装・PR作成をするワークフロー（`.github/workflows/claude.yml`）です。
+
+- 起動条件: Issue本文・タイトル、Issueコメント、PRレビュー、PRレビューコメントに `@claude` を含む場合
+- 認証: watchワークフローと同じリポジトリSecretの `CLAUDE_CODE_OAUTH_TOKEN` を使用します（トークンの再発行手順は上記「Claude Code Update Watch」と共通です）
+- モデル: `claude-opus-4-8`
+- 想定する使い方: watchワークフローが作る `claude-code-update` ラベル付きの取り込み提案Issueに対し、`@claude この提案を実装して` のように指示してPRを作らせます
+
 ### textlintとpre-commitフック
 
 `.md`ファイルの文章品質はtextlintで検証します。検知は3層で行います。

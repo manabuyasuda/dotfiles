@@ -15,6 +15,7 @@ SYMLINKS=(
   "claude/CLAUDE.md:.claude/CLAUDE.md"
   "claude/settings.json:.claude/settings.json"
   "claude/keybindings.json:.claude/keybindings.json"
+  "claude/statusline.sh:.claude/statusline.sh"
   "claude/skills:.claude/skills"
   "claude/hooks:.claude/hooks"
   "claude/agents:.claude/agents"

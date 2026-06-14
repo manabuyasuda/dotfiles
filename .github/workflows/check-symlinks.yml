@@ -1,0 +1,31 @@
+name: check-symlinks
+
+# settings.json が参照する ~/.claude パスを、setup.sh の SYMLINKS が必ずリンクすることを検証する。
+# claude/ 直下に設定ファイルを追加して setup.sh への登録を忘れる事故を CI で機械的に止める。
+
+on:
+  pull_request:
+    paths:
+      - 'setup.sh'
+      - 'claude/settings.json'
+      - 'scripts/check-claude-symlinks.sh'
+      - '.github/workflows/check-symlinks.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'setup.sh'
+      - 'claude/settings.json'
+      - 'scripts/check-claude-symlinks.sh'
+      - '.github/workflows/check-symlinks.yml'
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - run: bash scripts/check-claude-symlinks.sh

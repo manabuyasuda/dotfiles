@@ -5,6 +5,7 @@
     "lint": "textlint 'docs/**/*.md' 'claude/**/*.md' README.md",
     "lint:fix": "textlint --fix 'docs/**/*.md' 'claude/**/*.md' README.md",
     "validate": "node scripts/validate-agents-skills.mjs",
+    "check:symlinks": "bash scripts/check-claude-symlinks.sh",
     "prepare": "lefthook install"
   },
   "devDependencies": {
