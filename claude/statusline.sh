@@ -10,19 +10,22 @@
 #   2行目: コンテキスト使用率（どれだけ詰まっているか）
 #   3行目: 使用量または費用（どれだけ使ったか）
 #
-# 3行目はプランで内容が変わる。
-#   サブスク（Pro / Max）: 5h / 7d の使用量
-#   従量課金            : 円と年収換算
+# 3行目以降はプランで内容が変わる。
+#   従量課金            : 費用（円と年収換算）の1行
+#   サブスク（Pro / Max）: 5h / 7d の使用量 ＋ 費用の2行
+# 費用は従量課金では実際の支払い額、サブスクでは API 公開レート換算の概算（参考値）。
+# サブスクでも計算資源のコスト感を持てるよう、どちらのプランでも費用を表示する。
 #
-# 表示例（従量課金）:
+# 表示例（従量課金・全3行）:
 #   🤖 Sonnet 4.6 200K   🌿 feature/salary-statusline
 #   📈 45.2% (+3.2)
 #   💴 ¥1,273 (+73)   年収換算 約160万円
 #
-# 表示例（Max / Pro プラン）:
+# 表示例（Max / Pro プラン・全4行）:
 #   🤖 Sonnet 4.6 200K   🌿 main
 #   📈 45.0% (+3.2)
 #   🕐 5h: 23% 🔄14:30   📅 7d: 41% 🔄6/19 21:00
+#   💴 ¥839 (+12)   年収換算 約420万円
 
 # jq がインストールされていなければ警告して終了する
 # jq は JSON を解析するためのコマンドラインツール
@@ -56,11 +59,28 @@ COST_RED_JPY=3200      # ¥3,200 以上 → 赤（黄色の2倍）
 COST_YELLOW=$(echo "scale=4; $COST_YELLOW_JPY / $JPY_PER_USD" | bc -l)
 COST_RED=$(echo "scale=4; $COST_RED_JPY / $JPY_PER_USD" | bc -l)
 
+# サブスク使用量（5h / 7d）の色分け閾値（%）
+# この値以上で黄色、次の値以上で赤になる。5h と 7d で閾値を分ける。
+# 7d ウィンドウは数日かけてしか回復しないため、同じ使用率でも 5h より切迫度が
+# 高い。よって 7d の方を低い閾値で警告色（黄・赤）に切り替える。
+USAGE_5H_YELLOW=50   # 5h: 50% 以上 → 黄色
+USAGE_5H_RED=80      # 5h: 80% 以上 → 赤
+USAGE_7D_YELLOW=40   # 7d: 40% 以上 → 黄色
+USAGE_7D_RED=70      # 7d: 70% 以上 → 赤
+
 # 年収換算の設定
 # 「いまのペースで1年間使い続けたら年収いくらの人を貼り付けているのと同じか」を出す
 WORK_HOURS_PER_YEAR=2000   # 年間労働時間。時給を年収に引き伸ばす係数
-RATE_PRIOR_HOURS=0.1       # 序盤のブレを抑える擬似時間（時間）。分母に足して発散を防ぐ
 LABOR_COST_FACTOR=1.0      # 1.0=支払い額の年間換算（人件費相当） / 1.4=額面年収相当
+
+# 年収換算の表示ゲート（経過時間ベース）
+# 年収換算は rate = 累計コスト / 経過時間 で、経過時間が小さいほど発散して暴れる。
+# そこで「経過時間がこの分数に達するまでは年収換算を出さない」ことにする。
+# しきい値を超えてから初めて表示するので、擬似時間で下駄を履かせる必要がなくなり、
+# 表示値はバイアスのない実ペースになる（旧 RATE_PRIOR_HOURS と ~ マークは廃止）。
+# しきい値の金額換算はペース次第で変わる（時間ゲートにする理由そのもの）。
+# 分単位の整数で定義し、ミリ秒の整数比較で判定する（浮動小数の丸めに依存しない）。
+RATE_MIN_ELAPSED_MIN=10   # 10分（推奨）。5 に下げれば早く表示されるが序盤の揺れが残る
 
 # アイコン定義
 # 端末やフォントに合わせて差し替えられるよう、ここにまとめて定義する
@@ -189,7 +209,25 @@ fi
 # 7 日間ウィンドウ: 直近 7 日間の使用量。週単位の総量を管理する
 # 🔄 のあとはそのウィンドウがリセットされる時刻（ローカル時間）。
 # 5h は時刻のみ、7d は数日先になり得るので「M/D HH:MM」と日付付きで表示する。
+#
+# 色分け: 5h / 7d それぞれの使用率に応じて緑→黄→赤に変える（_usage_color）。
+# コンテキスト行と同じく「黄＝注意・赤＝危険」の意味をそろえる。閾値は 5h と
+# 7d で分け、回復の遅い 7d を低めの閾値で警告色にする（USAGE_5H_* / USAGE_7D_*）。
 # =============================================================================
+
+# 使用率（整数 %）と閾値から色（ANSI コード）を返す関数
+# 第2引数以上で黄色、第3引数以上で赤、いずれも下回れば緑を返す。
+# 5h と 7d で異なる閾値を渡せるよう、閾値は引数で受け取る。
+_usage_color() {
+  local pct="$1" yellow="$2" red="$3"
+  if (( pct >= red )); then
+    printf '%s' "$RED"
+  elif (( pct >= yellow )); then
+    printf '%s' "$YELLOW"
+  else
+    printf '%s' "$GREEN"
+  fi
+}
 
 # Unix epoch（1970年1月1日からの秒数）をローカル時刻に変換する関数
 # 第2引数に strftime 書式を渡す（省略時は時刻のみ）。
@@ -220,7 +258,8 @@ if [ "$HAS_LIMITS" = "yes" ]; then
     FIVE_H_TIME=$(_fmt_resets_at "$FIVE_H_AT")
     FIVE_H_STR="${ICON_5H} 5h: ${FIVE_H_INT}%"
     [ -n "$FIVE_H_TIME" ] && FIVE_H_STR+=" ${ICON_RESET}${FIVE_H_TIME}"
-    usage_parts+=("$FIVE_H_STR")
+    FIVE_H_COLOR=$(_usage_color "$FIVE_H_INT" "$USAGE_5H_YELLOW" "$USAGE_5H_RED")
+    usage_parts+=("${FIVE_H_COLOR}${FIVE_H_STR}${RESET}")
   fi
 
   if [ -n "$SEVEN_D_PCT" ]; then
@@ -229,29 +268,36 @@ if [ "$HAS_LIMITS" = "yes" ]; then
     SEVEN_D_TIME=$(_fmt_resets_at "$SEVEN_D_AT" "+%-m/%-d %H:%M")
     SEVEN_D_STR="${ICON_7D} 7d: ${SEVEN_D_INT}%"
     [ -n "$SEVEN_D_TIME" ] && SEVEN_D_STR+=" ${ICON_RESET}${SEVEN_D_TIME}"
-    usage_parts+=("$SEVEN_D_STR")
+    SEVEN_D_COLOR=$(_usage_color "$SEVEN_D_INT" "$USAGE_7D_YELLOW" "$USAGE_7D_RED")
+    usage_parts+=("${SEVEN_D_COLOR}${SEVEN_D_STR}${RESET}")
   fi
 
+  # 各パーツ（5h / 7d）は個別に色付け済みなので、ここでは色を付けず連結のみ行う
   if [ ${#usage_parts[@]} -gt 0 ]; then
     usage_line=""
     for p in "${usage_parts[@]}"; do
       [ -n "$usage_line" ] && usage_line+="   "
       usage_line+="$p"
     done
-    lines+=("${YELLOW}${usage_line}${RESET}")
+    lines+=("$usage_line")
   fi
 fi
 
 # =============================================================================
-# 3行目（従量課金）: 費用（円のみ）+ 年収換算
+# 費用（円のみ）+ 年収換算 … 従量課金・サブスク（Max / Pro）どちらでも表示する
 # 例: 💴 ¥1,273 (+73)   年収換算 約160万円
 #
-# total_cost_usd はセッション開始からの累計コスト（USD）。従量課金では実際の支払い額。
-# 従量課金時はドルを出さず円のみを表示し、円の差分には通貨記号を付けない。
+# total_cost_usd はセッション開始からの累計コスト（USD）。
+#   従量課金       : 実際の支払い額。
+#   サブスク(Max/Pro): 実際には支払わないが、API 公開レートで換算した概算額。
+#                     直接の請求ではなくても、どれだけ計算資源を使ったかのコスト感を
+#                     持つための参考値として表示する。
+# ドルは出さず円のみを表示し、円の差分には通貨記号を付けない。
 # 色の閾値（COST_YELLOW_JPY / COST_RED_JPY を JPY_PER_USD でドル換算した値を使う）。
+# サブスクではこの費用行が使用量行（5h / 7d）の下に並ぶ（4行表示になる）。
 # =============================================================================
 COST=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
-if [ "$HAS_LIMITS" = "no" ] && [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) )); then
+if [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) )); then
 
   # コストの色を決める（bc -l は小数の比較のために必要）
   if (( $(echo "$COST >= $COST_RED" | bc -l) )); then
@@ -280,24 +326,24 @@ if [ "$HAS_LIMITS" = "no" ] && [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) 
   # 年収換算: いまのペースで1年間使い続けたときの年収帯
   # 経過時間は壁時計（total_duration_ms）を使う。total_api_duration_ms（応答待ち時間）は
   # 考えている時間や打鍵時間を除外して過大評価になるため使わない。
+  #
+  # rate = 累計コスト / 経過時間 は経過時間が小さいほど発散する。そこで経過時間が
+  # RATE_MIN_ELAPSED_H に達するまでは年収換算を出さない（精度ゲート）。しきい値を
+  # 超えてから出すので分母が十分に大きく、擬似時間の下駄なしで実ペースを表示できる。
+  RATE_MIN_ELAPSED_MS=$(( RATE_MIN_ELAPSED_MIN * 60000 ))
   DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // empty')
   if [ -n "$DURATION_MS" ] && (( $(echo "$DURATION_MS > 0" | bc -l) )); then
-    # 経過時間（時間）。分母に擬似時間を足して序盤の発散を防ぐ
     ELAPSED_H=$(echo "scale=6; $DURATION_MS / 3600000" | bc -l)
-    DENOM=$(echo "scale=6; $ELAPSED_H + $RATE_PRIOR_HOURS" | bc -l)
-    # 年収（円） = 累計費用 ÷ 分母 × 年間労働時間 ÷ 人件費係数 × 為替
-    ANNUAL_JPY=$(echo "scale=6; $COST / $DENOM * $WORK_HOURS_PER_YEAR / $LABOR_COST_FACTOR * $JPY_PER_USD" | bc -l)
-    # 10万円単位に四捨五入してチラつきを抑える（+50000 してから整数化）
-    ANNUAL_ROUNDED=$(echo "scale=0; ($ANNUAL_JPY + 50000) / 100000 * 100000" | bc -l)
-    ANNUAL_MAN=$(( ANNUAL_ROUNDED / 10000 ))
-
-    # 経過が擬似時間より短い間は参考値なので ~ を付ける
-    TILDE=""
-    if (( $(echo "$ELAPSED_H < $RATE_PRIOR_HOURS" | bc -l) )); then
-      TILDE="~"
+    # 経過時間がしきい値に達していれば年収換算を表示する（未達なら何も足さない）
+    # 判定はミリ秒の整数比較なので、ちょうど10分などの境界が厳密に通る
+    if (( $(echo "$DURATION_MS >= $RATE_MIN_ELAPSED_MS" | bc -l) )); then
+      # 年収（円） = 累計費用 ÷ 経過時間 × 年間労働時間 ÷ 人件費係数 × 為替
+      ANNUAL_JPY=$(echo "scale=6; $COST / $ELAPSED_H * $WORK_HOURS_PER_YEAR / $LABOR_COST_FACTOR * $JPY_PER_USD" | bc -l)
+      # 10万円単位に四捨五入してチラつきを抑える（+50000 してから整数化）
+      ANNUAL_ROUNDED=$(echo "scale=0; ($ANNUAL_JPY + 50000) / 100000 * 100000" | bc -l)
+      ANNUAL_MAN=$(( ANNUAL_ROUNDED / 10000 ))
+      cost_line+="   年収換算 約${ANNUAL_MAN}万円"
     fi
-
-    cost_line+="   年収換算 ${TILDE}約${ANNUAL_MAN}万円"
   fi
 
   lines+=("$cost_line")
