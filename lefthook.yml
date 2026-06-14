@@ -4,3 +4,6 @@ pre-commit:
     textlint:
       glob: "*.md"
       run: npx textlint {staged_files}
+    check-symlinks:
+      glob: "{setup.sh,claude/settings.json}"
+      run: bash scripts/check-claude-symlinks.sh

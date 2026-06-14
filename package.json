@@ -4,6 +4,7 @@
     "aws:login": "zsh scripts/aws-sso-login.sh",
     "lint": "textlint 'docs/**/*.md' 'claude/**/*.md' README.md",
     "lint:fix": "textlint --fix 'docs/**/*.md' 'claude/**/*.md' README.md",
+    "check:symlinks": "bash scripts/check-claude-symlinks.sh",
     "prepare": "lefthook install"
   },
   "devDependencies": {
