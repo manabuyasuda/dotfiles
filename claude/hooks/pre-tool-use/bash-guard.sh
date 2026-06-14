@@ -76,10 +76,10 @@ classify() {
 
     # DESTRUCTIVE: 取り返しがつかない操作
     # ※ git push --force / git reset --hard は NETWORK_WRITE より前に評価する必要がある
+    # ※ git push --force-with-lease は "git push --force" の部分一致で同時にカバーされる
     *"git reset --hard"* |\
     *"git push --force"* |\
     *"git push -f "* |\
-    *"git push --force-with-lease"* |\
     *"git commit"*"--amend"* |\
     *"rm "* |\
     *"unlink "* |\
@@ -106,12 +106,12 @@ classify() {
       echo "NETWORK_WRITE"; return;;
 
     # INSTALL: 依存パッケージの追加（lock file・node_modules を変更する。サプライチェーン攻撃のリスク）
+    # ※ pnpm install は "npm install" の部分一致で同時にカバーされる
     *"npm install"* |\
     *"npm i "* |\
     *"yarn add"* |\
     *"yarn install"* |\
     *"pnpm add"* |\
-    *"pnpm install"* |\
     *"pip install"* |\
     *"brew install"*)
       echo "INSTALL"; return;;

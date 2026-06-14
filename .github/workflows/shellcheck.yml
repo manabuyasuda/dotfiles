@@ -22,5 +22,12 @@ jobs:
       # ubuntu-latest runner には shellcheck がプリインストールされている
       - name: Run shellcheck (severity=warning)
         run: |
+          # shellcheck が対応する shell（sh/bash/dash/ksh）の shebang を持つファイルだけ検査する。
+          # zsh など非対応 shell の .sh は SC1071 で必ず失敗するため除外する。
           find . -path ./node_modules -prune -o -name '*.sh' -print0 \
+            | while IFS= read -r -d '' f; do
+                if head -1 "$f" | grep -qE '^#!.*[/ ](sh|bash|dash|ksh)( |$)'; then
+                  printf '%s\0' "$f"
+                fi
+              done \
             | xargs -0 -r shellcheck --severity=warning

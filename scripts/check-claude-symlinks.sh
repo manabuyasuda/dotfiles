@@ -30,6 +30,8 @@ if [[ ! -f "$SETUP_SH" ]]; then
 fi
 
 # settings.json から ~/.claude/<path> 参照を抽出し、home 相対パス（.claude/<path>）へ正規化する。
+# SC2088: `~/` は展開目的ではなく settings.json 内のリテラル文字列を grep するためのパターン。
+# shellcheck disable=SC2088
 references=$(grep -oE '~/\.claude/[A-Za-z0-9._/-]+' "$SETTINGS_JSON" | sed 's|^~/||' | sort -u || true)
 
 # setup.sh の SYMLINKS から home 相対のリンク先（":" の右側、引用符まで）を抽出する。

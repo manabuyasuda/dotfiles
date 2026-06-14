@@ -16,7 +16,7 @@
 #   warning 以上が見つかったら exit 1 で feedback を返し、エージェントに修正させる。
 #   format.sh と同じ思想（壊れたスクリプトのまま次の作業へ進ませない）。
 #
-# shellcheck 未インストール時:
+# 未インストール時（shellcheck コマンドが無い環境）:
 #   検証をスキップして exit 0（ローカルにツールが無くても作業を止めない）。
 #   未インストール環境の取りこぼしは pre-commit / CI 側で補完する。
 #
@@ -31,7 +31,10 @@ file="$CLAUDE_TOOL_INPUT_FILE_PATH"
 # .sh 以外は対象外
 [[ "$file" =~ \.sh$ ]] || exit 0
 
-# shellcheck が無い環境では検証をスキップする（pre-commit / CI で補完する）
+# 対応 shell（sh/bash/dash/ksh）以外は対象外（zsh など。shellcheck は SC1071 で必ず失敗する）
+head -1 "$file" | grep -qE '^#!.*[/ ](sh|bash|dash|ksh)( |$)' || exit 0
+
+# コマンドが無い環境では検証をスキップする（pre-commit / CI で補完する）
 command -v shellcheck >/dev/null 2>&1 || exit 0
 
 output=$(shellcheck -f gcc --severity=warning "$file" 2>&1)

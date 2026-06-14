@@ -15,6 +15,10 @@
 #   "release/*" のようなパターンはクォートが必要（シェル展開を防ぐため）。
 # =============================================================================
 
+# このファイルで定義する配列は、source した側（bash-guard.sh / branch-guard.sh /
+# push-to-main-guard.sh）が参照する。config.sh 単体では未使用に見えるため SC2034 を無効化する。
+# shellcheck disable=SC2034
+
 # 作業記録ファイル・ディレクトリ（コミット禁止）
 # git commit 時にステージされていた場合、bash-guard.sh が deny する。
 # WORK_RECORD_FILES: ルート直下の特定ファイルを禁止
