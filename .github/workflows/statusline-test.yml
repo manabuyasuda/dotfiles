@@ -1,0 +1,35 @@
+name: statusline-test
+
+# statusline.sh の年収換算ロジックを CI で検証する。
+# 「同じコストなら中断（昼休憩など）の有無で年収換算が変わらない」という不変条件を
+# claude/tests/statusline.test.sh が守る。計算ロジックの改変で不変条件が壊れたら CI で止める。
+
+on:
+  pull_request:
+    paths:
+      - 'claude/statusline.sh'
+      - 'claude/tests/statusline.test.sh'
+      - '.github/workflows/statusline-test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'claude/statusline.sh'
+      - 'claude/tests/statusline.test.sh'
+      - '.github/workflows/statusline-test.yml'
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install jq and bc
+        run: sudo apt-get update && sudo apt-get install -y jq bc
+      - name: Syntax check (bash -n)
+        run: bash -n claude/statusline.sh
+      - name: Run statusline tests
+        run: bash claude/tests/statusline.test.sh
