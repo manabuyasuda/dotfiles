@@ -90,6 +90,14 @@ _assert_eq "T2-b main 作業ツリーの push は deny" \
   "$(_decision "$PUSH_GUARD" "$(_push_json "$MAIN_WT")")" "deny"
 
 # ---------------------------------------------------------------------------
+# T3: コマンド引数（PR 本文など引用符内）に含まれる push 系コマンド名・ブランチ名を
+#     実コマンドと誤検知しない（gh pr create が誤ブロックされない）。
+#     引用符を除去しないと、本文中の "git push" で push 判定に入り "main" で deny になる。
+# ---------------------------------------------------------------------------
+_assert_eq "T3 PR 本文中の git push / main を実コマンドと誤検知しない（通過）" \
+  "$(_decision "$PUSH_GUARD" "$(jq -nc --arg cwd "$FEATURE_WT" --arg c 'gh pr create --base main --title t --body "see git push to main"' '{tool_input:{command:$c},cwd:$cwd}')")" "none"
+
+# ---------------------------------------------------------------------------
 echo "----"
 printf '成功 %d / 失敗 %d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
