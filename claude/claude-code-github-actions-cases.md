@@ -1,9 +1,9 @@
 # Claude Code GitHub Actions 事例集
 
-[Claude Code GitHub Actions ベストプラクティス](./claude-code-github-actions.md) の補足資料です。Claude CodeをCI・自動化（とくにGitHub Actions）で使った実運用の事例を、用途（やりたいこと）別にまとめています。すべて実際にページを開いて、実在と内容を確認しました（確認日: 2026-06-15）。計39件です。
+[Claude Code GitHub Actionsベストプラクティス](./claude-code-github-actions.md)の補足資料です。Claude CodeをCI・自動化（とくにGitHub Actions）で使った実運用の事例を、用途（やりたいこと）別にまとめています。すべて実際にページを開いて、実在と内容を確認しました（確認日: 2026-06-15）。計39件です。
 
 > [!NOTE]
-> 効果欄の削減率やコストは各社・各筆者の自己申告であり、第三者が検証した値ではありません。Claude Code GitHub Actions は更新が速いため、設定の細部は各事例の公開時期に注意して読んでください。
+> 効果欄の削減率やコストは各社・各筆者の自己申告であり、第三者が検証した値ではありません。Claude Code GitHub Actionsは更新が速いため、設定の細部は各事例の公開時期に注意して読んでください。
 
 ## PR の自動レビュー
 
