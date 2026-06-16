@@ -22,6 +22,9 @@ source "$HOOKS_DIR/config.sh"
 
 INPUT=$(cat)
 cmd=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
+# push 元ブランチは「いま作業しているディレクトリ（worktree）」で判定する。
+# CLAUDE_PROJECT_DIR は worktree に追従しないため、Claude Code が hook 入力で渡す .cwd を使う。
+CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 
 # git push コマンドでなければスキップ
 echo "$cmd" | grep -qE 'git[[:space:]]+push' || exit 0
@@ -45,7 +48,7 @@ done
 # SC2053: [[ == ]] の右辺をクォートしないことで glob 展開を有効にする（意図的）
 if echo "$cmd" | grep -qE '^[[:space:]]*git[[:space:]]+push[[:space:]]*$' || \
    echo "$cmd" | grep -qE '^[[:space:]]*git[[:space:]]+push[[:space:]]+[a-zA-Z0-9_.-]+[[:space:]]*$'; then
-  CURRENT=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" branch --show-current 2>/dev/null)
+  CURRENT=$(git -C "${CWD:-$(pwd)}" branch --show-current 2>/dev/null)
   for pattern in "${PROTECTED_BRANCHES[@]}"; do
     # shellcheck disable=SC2053
     if [[ "$CURRENT" == $pattern ]]; then
