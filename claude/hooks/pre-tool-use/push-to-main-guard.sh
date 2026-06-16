@@ -26,6 +26,12 @@ cmd=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 # CLAUDE_PROJECT_DIR は worktree に追従しないため、Claude Code が hook 入力で渡す .cwd を使う。
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 
+# 引用符内の文字列を除去してからコマンド判定する。これをしないと、コマンド引数に含まれる
+# 文字列（例: gh pr create の本文中の "git push" やブランチ名）を実コマンドと誤検知し、
+# gh pr create などを保護ブランチ push として誤ってブロックする（bash-guard.sh の COMMAND_UNQUOTED と同じ方式）。
+# 以降の判定はすべてこの除去後の cmd を使う。
+cmd=$(echo "$cmd" | sed 's/"[^"]*"//g; s/'"'"'[^'"'"']*'"'"'//g')
+
 # git push コマンドでなければスキップ
 echo "$cmd" | grep -qE 'git[[:space:]]+push' || exit 0
 
