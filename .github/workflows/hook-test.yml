@@ -1,0 +1,43 @@
+name: hook-test
+
+# bash-guard.sh / push-to-main-guard.sh の保護ブランチ判定を CI で検証する。
+# 「commit / push の保護ブランチ判定は、いま作業している worktree のブランチ（hook 入力の .cwd）で行う」
+# という不変条件を claude/tests/hook-guard.test.sh が守る。
+# CLAUDE_PROJECT_DIR 依存（worktree 非追従）に戻ると worktree 上の commit/push が誤ブロックされるため、
+# その退行を CI で止める。
+
+on:
+  pull_request:
+    paths:
+      - 'claude/hooks/pre-tool-use/bash-guard.sh'
+      - 'claude/hooks/pre-tool-use/push-to-main-guard.sh'
+      - 'claude/hooks/config.sh'
+      - 'claude/tests/hook-guard.test.sh'
+      - '.github/workflows/hook-test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'claude/hooks/pre-tool-use/bash-guard.sh'
+      - 'claude/hooks/pre-tool-use/push-to-main-guard.sh'
+      - 'claude/hooks/config.sh'
+      - 'claude/tests/hook-guard.test.sh'
+      - '.github/workflows/hook-test.yml'
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Syntax check (bash -n)
+        run: |
+          bash -n claude/hooks/pre-tool-use/bash-guard.sh
+          bash -n claude/hooks/pre-tool-use/push-to-main-guard.sh
+      - name: Run hook guard tests
+        run: bash claude/tests/hook-guard.test.sh

@@ -46,6 +46,11 @@ source "$HOOKS_DIR/config.sh"
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 DESCRIPTION=$(echo "$INPUT" | jq -r '.tool_input.description // ""')
+# コミット先のブランチは「いま作業しているディレクトリ（worktree）」で判定する。
+# CLAUDE_PROJECT_DIR は worktree 切り替えに追従せず起動時のプロジェクトルートを指したままなので、
+# worktree 上での git commit / git merge を誤って保護ブランチ扱いしてしまう。
+# Claude Code が hook 入力で渡す .cwd（worktree に追従する）を使い、空のときだけ pwd にフォールバックする。
+CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 
 # 引用符内の文字列を除去してパターンマッチングの誤検知を防ぐ
 # （例: grep "git push" が git push コマンドとして誤検知されることを防ぐ）
@@ -165,7 +170,7 @@ fi
 
 # --- 個別ルール: 保護ブランチ上での git commit → deny ---
 if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+commit'; then
-  CURRENT_BRANCH=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" branch --show-current 2>/dev/null || echo "")
+  CURRENT_BRANCH=$(git -C "${CWD:-$(pwd)}" branch --show-current 2>/dev/null || echo "")
   for pattern in "${PROTECTED_BRANCHES[@]}"; do
     # shellcheck disable=SC2053
     if [[ "$CURRENT_BRANCH" == $pattern ]]; then
@@ -176,7 +181,7 @@ fi
 
 # --- 個別ルール: 保護ブランチ上での git merge → deny ---
 if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+merge'; then
-  CURRENT_BRANCH=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" branch --show-current 2>/dev/null || echo "")
+  CURRENT_BRANCH=$(git -C "${CWD:-$(pwd)}" branch --show-current 2>/dev/null || echo "")
   for pattern in "${PROTECTED_BRANCHES[@]}"; do
     # shellcheck disable=SC2053
     if [[ "$CURRENT_BRANCH" == $pattern ]]; then
@@ -187,7 +192,7 @@ fi
 
 # --- 個別ルール: git commit で WORK_RECORD_FILES がステージ済み → deny ---
 if echo "$COMMAND_UNQUOTED" | grep -qE 'git[[:space:]]+commit'; then
-  STAGED=$(git -C "${CLAUDE_PROJECT_DIR:-$(pwd)}" diff --cached --name-only 2>/dev/null || echo "")
+  STAGED=$(git -C "${CWD:-$(pwd)}" diff --cached --name-only 2>/dev/null || echo "")
   file_pattern=$(IFS='|'; echo "${WORK_RECORD_FILES[*]}" | sed 's/\./\\./g')
   dir_pattern=$(IFS='|'; echo "${WORK_RECORD_DIRS[*]}")
   matched=$(echo "$STAGED" | grep -E "^($file_pattern)$|^($dir_pattern)/")
