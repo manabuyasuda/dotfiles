@@ -49,11 +49,25 @@ CACHE_FILE="${TMPDIR:-/tmp}/statusline-prev-${SESSION_ID}"
 # 為替レート（円/ドル）。相場が変わったらここだけ更新する
 JPY_PER_USD=160
 
+# コンテキスト使用率の色分け閾値（%）
+# この値以上で黄色、次の値以上で赤になる。pre-tool-use/usage-guard.sh はこの閾値で
+# 算出された「赤帯」をキャッシュ経由で読み、赤帯でツール実行を止める。閾値の数値は
+# ここ一箇所だけに置き、判定・コメント・フックのメッセージに数値を散らさない
+# （散らすと片方だけ変えてズレる。グローバル指示の再発防止に沿う）。
+CTX_YELLOW=50   # 50% 以上 → 黄色（能動的 /compact を検討すべき転換点）
+CTX_RED=75      # 75% 以上 → 赤（劣化が体感で出始めるライン）
+
 # コスト色分けの閾値（円建て）
 # この金額を超えると黄色、次の金額を超えると赤になる
 # ドル換算は JPY_PER_USD から自動計算する
 COST_YELLOW_JPY=1600   # ¥1,600 以上 → 黄色
 COST_RED_JPY=3200      # ¥3,200 以上 → 赤（黄色の2倍）
+
+# 赤帯を超えた後の段階ガードの刻み（赤帯金額の何倍ごとに止めるか）。
+# pre-tool-use/usage-guard.sh は statusline.sh が書いた cost_level を見て、この刻みごと
+# に一度ずつツール実行を止める（赤帯で打ち止めにせず、青天井でいつの間にか高額になるの
+# を防ぐ）。刻みの数値もここ一箇所だけに置き、フックや本文に散らさない。
+COST_STEP_RATIO="0.5"  # 0.5 → 赤帯, 赤帯*1.5, 赤帯*2.0, … と 0.5 倍刻みで止める
 
 # 円をドルに換算して閾値を作る（bc -l は小数計算のため）
 COST_YELLOW=$(echo "scale=4; $COST_YELLOW_JPY / $JPY_PER_USD" | bc -l)
@@ -170,10 +184,10 @@ fi
 # 例: 📈 45.2% (+3.2)
 #
 # used_percentage = 現在の入力トークン数 ÷ コンテキストウィンドウサイズ × 100
-# 色の閾値:
-#   50% 未満 → 緑（フル精度。Claude はセッション全体に非圧縮でアクセスできる）
-#   50〜74%  → 黄（能動的 /compact を検討すべき転換点。ここで圧縮すると要約の質が高い）
-#   75% 以上 → 赤 + ⚠️（劣化が体感で出始めるライン。auto-compact は 95% なので手遅れ気味）
+# 色の閾値（数値は冒頭の CTX_YELLOW / CTX_RED で定義）:
+#   CTX_YELLOW 未満      → 緑（フル精度。Claude はセッション全体に非圧縮でアクセスできる）
+#   CTX_YELLOW〜CTX_RED   → 黄（能動的 /compact を検討すべき転換点。ここで圧縮すると要約の質が高い）
+#   CTX_RED 以上         → 赤 + ⚠️（劣化が体感で出始めるライン。auto-compact は 95% なので手遅れ気味）
 # =============================================================================
 CTX=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 if [ -n "$CTX" ]; then
@@ -181,15 +195,18 @@ if [ -n "$CTX" ]; then
   CTX_FMT=$(printf '%.1f' "$CTX")
   CTX_INT=$(printf '%.0f' "$CTX")
 
-  if (( CTX_INT >= 75 )); then
+  if (( CTX_INT >= CTX_RED )); then
     CTX_COLOR=$RED
     WARN="⚠️ "
-  elif (( CTX_INT >= 50 )); then
+    CTX_BAND="red"
+  elif (( CTX_INT >= CTX_YELLOW )); then
     CTX_COLOR=$YELLOW
     WARN=""
+    CTX_BAND="yellow"
   else
     CTX_COLOR=$GREEN
     WARN=""
+    CTX_BAND="green"
   fi
 
   # 前回の値をキャッシュファイルから読み込んで差分を計算する
@@ -346,13 +363,24 @@ fi
 COST=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
 if [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) )); then
 
-  # コストの色を決める（bc -l は小数の比較のために必要）
+  # コストの色と段階ガードのレベルを決める（bc -l は小数の比較のために必要）。
+  # cost_level は赤帯で打ち止めにせず COST_STEP_RATIO（=0.5×赤帯）刻みで増やし、
+  # フックが段階的に止める:
+  #   0 = 黄帯未満（止めない） / 1 = 黄帯 / 2 = 赤帯(=COST_RED) /
+  #   3 = 赤帯*1.5 / 4 = 赤帯*2.0 / … と刻みごとに +1 される。
   if (( $(echo "$COST >= $COST_RED" | bc -l) )); then
     COST_COLOR=$RED
+    COST_BAND="red"
+    COST_STEP=$(echo "scale=10; $COST_RED * $COST_STEP_RATIO" | bc -l)
+    COST_LEVEL=$(echo "scale=0; 2 + ($COST - $COST_RED) / $COST_STEP" | bc -l)
   elif (( $(echo "$COST >= $COST_YELLOW" | bc -l) )); then
     COST_COLOR=$YELLOW
+    COST_BAND="yellow"
+    COST_LEVEL=1
   else
     COST_COLOR=$GREEN
+    COST_BAND="green"
+    COST_LEVEL=0
   fi
 
   # 円表示（3桁区切り、小数切り捨て）
@@ -397,6 +425,14 @@ fi
 # キャッシュ更新
 # 現在の ctx と cost を次回の差分計算のためにファイルに保存する
 # SESSION_ID をファイル名に含めることでセッション間の混在を防ぐ
+#
+# ctx_band（green/yellow/red）と cost_level（0=黄帯未満 /1=黄帯 /2=赤帯 /3=赤帯*1.5 …）も
+# 保存する。これは表示には使わないが、pre-tool-use/usage-guard.sh がこのキャッシュを読み、
+# コンテキストが黄帯/赤帯のとき、コストが各レベルに達したときにツール実行をハードブロック
+# して「使いすぎ」を止めるために参照する。閾値（CTX_YELLOW/CTX_RED/COST_YELLOW/COST_RED/
+# COST_STEP_RATIO）の判定をこの statusline.sh 一箇所に集約し、フック側で再実装して二重定義
+# にならないようにするための受け渡し。CTX / COST が無い行では帯/レベルも空文字になる。
+# （cost_band は色表示の名残で、フックはより細かい cost_level を使う。）
 # =============================================================================
 if [ -n "$SESSION_ID" ]; then
   jq -n \
@@ -404,7 +440,10 @@ if [ -n "$SESSION_ID" ]; then
     --arg cost "${COST:-}" \
     --arg dur "${DUR_INT:-}" \
     --arg idle "${ACCUMULATED_IDLE_MS:-}" \
-    '{"ctx": $ctx, "cost": $cost, "dur": $dur, "idle": $idle}' > "$CACHE_FILE"
+    --arg ctxband "${CTX_BAND:-}" \
+    --arg costband "${COST_BAND:-}" \
+    --arg costlevel "${COST_LEVEL:-}" \
+    '{"ctx": $ctx, "cost": $cost, "dur": $dur, "idle": $idle, "ctx_band": $ctxband, "cost_band": $costband, "cost_level": $costlevel}' > "$CACHE_FILE"
 fi
 
 # =============================================================================
