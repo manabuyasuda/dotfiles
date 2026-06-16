@@ -184,12 +184,15 @@ if [ -n "$CTX" ]; then
   if (( CTX_INT >= 75 )); then
     CTX_COLOR=$RED
     WARN="⚠️ "
+    CTX_BAND="red"
   elif (( CTX_INT >= 50 )); then
     CTX_COLOR=$YELLOW
     WARN=""
+    CTX_BAND="yellow"
   else
     CTX_COLOR=$GREEN
     WARN=""
+    CTX_BAND="green"
   fi
 
   # 前回の値をキャッシュファイルから読み込んで差分を計算する
@@ -349,10 +352,13 @@ if [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) )); then
   # コストの色を決める（bc -l は小数の比較のために必要）
   if (( $(echo "$COST >= $COST_RED" | bc -l) )); then
     COST_COLOR=$RED
+    COST_BAND="red"
   elif (( $(echo "$COST >= $COST_YELLOW" | bc -l) )); then
     COST_COLOR=$YELLOW
+    COST_BAND="yellow"
   else
     COST_COLOR=$GREEN
+    COST_BAND="green"
   fi
 
   # 円表示（3桁区切り、小数切り捨て）
@@ -397,6 +403,12 @@ fi
 # キャッシュ更新
 # 現在の ctx と cost を次回の差分計算のためにファイルに保存する
 # SESSION_ID をファイル名に含めることでセッション間の混在を防ぐ
+#
+# ctx_band / cost_band（green / yellow / red）も保存する。これは表示には使わないが、
+# pre-tool-use/usage-guard.sh がこのキャッシュを読み、red 帯のときにツール実行を
+# ハードブロックして「使いすぎ」を止めるために参照する。閾値（75% / ¥3,200 など）の
+# 判定ロジックをこの statusline.sh 一箇所に集約し、フック側で再実装して二重定義に
+# ならないようにするための受け渡し。CTX / COST が無い行では帯も空文字になる。
 # =============================================================================
 if [ -n "$SESSION_ID" ]; then
   jq -n \
@@ -404,7 +416,9 @@ if [ -n "$SESSION_ID" ]; then
     --arg cost "${COST:-}" \
     --arg dur "${DUR_INT:-}" \
     --arg idle "${ACCUMULATED_IDLE_MS:-}" \
-    '{"ctx": $ctx, "cost": $cost, "dur": $dur, "idle": $idle}' > "$CACHE_FILE"
+    --arg ctxband "${CTX_BAND:-}" \
+    --arg costband "${COST_BAND:-}" \
+    '{"ctx": $ctx, "cost": $cost, "dur": $dur, "idle": $idle, "ctx_band": $ctxband, "cost_band": $costband}' > "$CACHE_FILE"
 fi
 
 # =============================================================================
