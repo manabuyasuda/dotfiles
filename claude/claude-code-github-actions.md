@@ -1,6 +1,6 @@
 # Claude Code GitHub Actions ベストプラクティス
 
-公式ドキュメントと一般的なGitHub Actionsの運用知見、および筆者自身の検証をもとにまとめた設計指針です。
+Claude CodeをGitHub Actionsで運用するための設定指針です。
 
 > [!NOTE]
 > 確認日: 2026-06-15。Claude Code GitHub Actionsは更新が速いため、利用時は末尾の「参考リンク」にある一次情報を再確認してください。実運用の事例は別ファイル[Claude Code GitHub Actions事例集](./claude-code-github-actions-cases.md)にまとめています。
@@ -16,15 +16,15 @@
 | `anthropics/claude-code-action` | Claude CLI をサブプロセスとして起動（v1 が標準） | API Key / OAuth / Bedrock / Vertex AI | 読み込みあり | 組み込み（自動で検知・返信） |
 | `anthropics/claude-code-base-action` | Claude Code を実行する薄いラッパー | API Key / OAuth / Bedrock / Vertex AI / Foundry | 読み込みあり | なし（`prompt` を自分で渡す） |
 
-> `claude-code-base-action`は`claude-code-action`内の`base-action`を自動ミラーしたものです。新規プロジェクトは`claude-code-action@v1`が標準で、メンション対話や進捗コメントが要らない独自の自動化や、trust boundaryを厳密に管理したい場合にbase-actionを選びます。どちらも有効な選択肢で、base-actionが非推奨というわけではありません。
+> `claude-code-base-action`は`claude-code-action`内の`base-action`を自動ミラーしたものです。新規プロジェクトは`claude-code-action@v1`が標準で、メンション対話や進捗コメントが要らない独自の自動化や、trust boundaryを厳密に管理したい場合にbase-actionを選びます。どちらも有効な選択肢です。
 
-両Actionの差は「GitHubイベント文脈の自動付与」と「`@claude`対話の有無」であって、CLAUDE.mdを読み込むかどうかではありません。
+両Actionの差は「GitHubイベント文脈の自動付与」と「`@claude`対話の有無」です。
 
-- CLAUDE.md・スキル（`.claude/`）: どちらのActionも、チェックアウト済みのリポジトリにあれば自動で読み込みます。base-actionのREADMEにも「Claude reads project-level configuration (`.claude/`, `CLAUDE.md`, `.mcp.json`, etc.) from the working directory」と明記されています。「base-actionはCLAUDE.mdを読まずクリーンなプロンプトになる」は誤りです。
+- CLAUDE.md・スキル（`.claude/`）: どちらのActionも、チェックアウト済みのリポジトリにあれば自動で読み込みます。
 - `claude-code-action`: Issue / PRの本文やコメントといったGitHubイベントの文脈を自動でプロンプトに付与し、`@claude`メンションを検知して返信・進捗コメントまで行います。ローカルでの作業に近い挙動です。
 - `claude-code-base-action`: GitHub文脈の自動付与やメンション検知はなく、`prompt` / `prompt_file`で渡した内容だけを実行します。文脈を自分で制御できるぶん、CI自動化を細かく組みたい場合に向きます。
 
-この差は課金形態（従量課金/サブスク）とは無関係で、Actionの種類と設定に由来します。`@claude`対話はサブスク専用ではなく、従量課金の`ANTHROPIC_API_KEY`でも動作します。どのイベントで起動するか（`@claude`メンション/ラベル/PRイベント）は`on:`と権限・トリガー設定次第です。
+この差はActionの種類と設定に由来します。`@claude`対話は`ANTHROPIC_API_KEY`と`CLAUDE_CODE_OAUTH_TOKEN`のどちらでも動作します。どのイベントで起動するか（`@claude`メンション/ラベル/PRイベント）は`on:`と権限・トリガー設定次第です。
 
 ### Action 選択と設定の対応
 
@@ -117,7 +117,7 @@ PRの開閉やプッシュを起点に自動レビューを回す場合は、`pu
 ターン数だけで打ち切ると、タスクの複雑さに関係なく止まり、複雑な実装タスクで未完了になりやすいです。一方で上限がないと、暴走時にジョブが長時間ぶら下がります。claude-code-actionでは、ジョブの`timeout-minutes`（実時間の上限）と`claude_args`の`--max-turns` / `--max-budget-usd`（作業量と費用の上限）を組み合わせて制御します。
 
 > [!NOTE]
-> base-actionにはClaude実行専用の`timeout_minutes`というinputがありますが、claude-code-action（v1）にはありません。claude-code-actionでは、実行時間はジョブの`timeout-minutes`で、作業量と費用は`claude_args`で抑えます。コスト管理が主目的なら、API利用額で打ち切る`--max-budget-usd`（printモードのオプション）の方が`--max-turns`より意図に合います。ただし`--max-budget-usd`はprintモード前提のオプションで、action経由で確実に打ち切られるかは公式に明記がないため、小さい値で実測してから本運用してください。
+> base-actionにはClaude実行専用の`timeout_minutes`というinputがありますが、claude-code-action（v1）にはありません。claude-code-actionでは、実行時間はジョブの`timeout-minutes`で、作業量と費用は`claude_args`で抑えます。コスト管理が主目的なら、API利用額で打ち切る`--max-budget-usd`（printモードのオプション）の方が`--max-turns`より意図に合います。`--max-budget-usd`はprintモード前提のため、本運用前に小さい値で打ち切りを実測してください。
 
 ```yaml
 jobs:
@@ -369,7 +369,7 @@ concurrency:
     claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
-ただし公式の既定は`ANTHROPIC_API_KEY`です。サブスク（Consumer向け）トークンをCIのような自動実行に使うことは利用規約上のグレーゾーンとされます。筆者の個人検証では動作しましたが、推奨はしません。本番運用ではAPI Keyか、後述のクラウドプロバイダー認証を選びます。
+公式の既定は`ANTHROPIC_API_KEY`です。サブスク（Consumer向け）トークンをCIのような自動実行に使うことは利用規約上のグレーゾーンとされ、本番運用では推奨しません。API Keyか、後述のクラウドプロバイダー認証を選びます。
 
 ### 3. Workload Identity Federation（静的キーを置かない）
 
