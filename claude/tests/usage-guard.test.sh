@@ -138,6 +138,30 @@ printf '{"session_id":"t8","cost":{"total_cost_usd":25,"total_duration_ms":1000}
 GENERATED_COST_BAND=$(jq -r '.cost_band // empty' "$TMPDIR/statusline-prev-t8" 2>/dev/null)
 _assert_eq      "T8-a statusline が cost_band=red を書く" "$GENERATED_COST_BAND" "red"
 _assert_eq      "T8-b その帯で usage-guard が deny する"   "$(_decision t8)" "deny"
+GENERATED_CTX_BAND=$(jq -r '.ctx_band // empty' "$TMPDIR/statusline-prev-t8" 2>/dev/null)
+_assert_eq      "T8-c statusline が ctx_band=red を書く（CTX_RED 閾値を used%=80 が超える）" "$GENERATED_CTX_BAND" "red"
+
+# ---------------------------------------------------------------------------
+# T9: 閾値の具体数値をフックのメッセージにハードコードしない（statusline.sh への一元化を維持）
+#     閾値を変えてもメッセージがズレない構造を壊さないための番人。
+#     auto-compact の 95% は Claude Code 仕様値（閾値ではない）なので対象外。
+# ---------------------------------------------------------------------------
+if grep -nE '75 ?%|¥?3,?200' "$GUARD" >/dev/null 2>&1; then
+  FAIL=$((FAIL + 1))
+  printf 'FAIL - T9 フックに閾値数値(75%%/3200)がハードコードされている\n       検出: %s\n' "$(grep -nE '75 ?%|¥?3,?200' "$GUARD")"
+else
+  PASS=$((PASS + 1)); printf 'ok   - T9 フックに閾値数値をハードコードしていない\n'
+fi
+
+# ---------------------------------------------------------------------------
+# T10: 境界 — used%=74 は赤帯に入らない（CTX_RED 閾値の直下は yellow）。
+#      ctx 閾値が変数で正しく効いていることを end-to-end で守る。
+# ---------------------------------------------------------------------------
+printf '{"session_id":"t10","cost":{"total_cost_usd":0.01,"total_duration_ms":1000},"context_window":{"used_percentage":74,"context_window_size":200000}}' \
+  | bash "$STATUSLINE" >/dev/null
+T10_BAND=$(jq -r '.ctx_band // empty' "$TMPDIR/statusline-prev-t10" 2>/dev/null)
+_assert_eq      "T10-a used%=74 は ctx_band=yellow（CTX_RED 直下は赤でない）" "$T10_BAND" "yellow"
+_assert_eq      "T10-b その帯では usage-guard は通過"                      "$(_decision t10)" "none"
 
 # ---------------------------------------------------------------------------
 echo "----"

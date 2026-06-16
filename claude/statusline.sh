@@ -49,6 +49,14 @@ CACHE_FILE="${TMPDIR:-/tmp}/statusline-prev-${SESSION_ID}"
 # 為替レート（円/ドル）。相場が変わったらここだけ更新する
 JPY_PER_USD=160
 
+# コンテキスト使用率の色分け閾値（%）
+# この値以上で黄色、次の値以上で赤になる。pre-tool-use/usage-guard.sh はこの閾値で
+# 算出された「赤帯」をキャッシュ経由で読み、赤帯でツール実行を止める。閾値の数値は
+# ここ一箇所だけに置き、判定・コメント・フックのメッセージに数値を散らさない
+# （散らすと片方だけ変えてズレる。グローバル指示の再発防止に沿う）。
+CTX_YELLOW=50   # 50% 以上 → 黄色（能動的 /compact を検討すべき転換点）
+CTX_RED=75      # 75% 以上 → 赤（劣化が体感で出始めるライン）
+
 # コスト色分けの閾値（円建て）
 # この金額を超えると黄色、次の金額を超えると赤になる
 # ドル換算は JPY_PER_USD から自動計算する
@@ -170,10 +178,10 @@ fi
 # 例: 📈 45.2% (+3.2)
 #
 # used_percentage = 現在の入力トークン数 ÷ コンテキストウィンドウサイズ × 100
-# 色の閾値:
-#   50% 未満 → 緑（フル精度。Claude はセッション全体に非圧縮でアクセスできる）
-#   50〜74%  → 黄（能動的 /compact を検討すべき転換点。ここで圧縮すると要約の質が高い）
-#   75% 以上 → 赤 + ⚠️（劣化が体感で出始めるライン。auto-compact は 95% なので手遅れ気味）
+# 色の閾値（数値は冒頭の CTX_YELLOW / CTX_RED で定義）:
+#   CTX_YELLOW 未満      → 緑（フル精度。Claude はセッション全体に非圧縮でアクセスできる）
+#   CTX_YELLOW〜CTX_RED   → 黄（能動的 /compact を検討すべき転換点。ここで圧縮すると要約の質が高い）
+#   CTX_RED 以上         → 赤 + ⚠️（劣化が体感で出始めるライン。auto-compact は 95% なので手遅れ気味）
 # =============================================================================
 CTX=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 if [ -n "$CTX" ]; then
@@ -181,11 +189,11 @@ if [ -n "$CTX" ]; then
   CTX_FMT=$(printf '%.1f' "$CTX")
   CTX_INT=$(printf '%.0f' "$CTX")
 
-  if (( CTX_INT >= 75 )); then
+  if (( CTX_INT >= CTX_RED )); then
     CTX_COLOR=$RED
     WARN="⚠️ "
     CTX_BAND="red"
-  elif (( CTX_INT >= 50 )); then
+  elif (( CTX_INT >= CTX_YELLOW )); then
     CTX_COLOR=$YELLOW
     WARN=""
     CTX_BAND="yellow"
