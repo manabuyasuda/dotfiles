@@ -224,6 +224,11 @@
           },
           {
             "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-use/plan-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "$HOME/.claude/hooks/pre-tool-use/file-protect.sh",
             "timeout": 5
           },
