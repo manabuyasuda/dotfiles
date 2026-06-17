@@ -37,10 +37,42 @@ fi
 # Claude Code から渡された JSON をすべて読み込む
 input=$(cat)
 
-# セッション ID を取得する（差分計算のキャッシュファイル名に使う）
-# セッションをまたいで値がリセットされないよう、セッションごとに別ファイルにする
-SESSION_ID=$(echo "$input" | jq -r '.session_id // empty')
+# 入力 JSON から必要なフィールドを「1回の jq」でまとめて取り出す。
+# 値ごとに echo|jq を起動すると毎ターン十数回のプロセス生成になり、これが statusline の
+# 主要なレイテンシ源になる。1回に集約してプロセス生成を削る。欠損は // "" で空文字にして
+# 列数を保つ（// empty だと列が消えて read の代入がずれる）。数値は tostring で文字列化する。
+#
+# 区切りは Unit Separator(\x1f)。タブ区切り(@tsv)＋IFS=タブだと、タブが「IFS空白文字」
+# 扱いになり連続する空フィールドが1個の区切りに圧縮されて列がずれる（多くのフィールドが
+# 空になる従量課金/最小JSONで顕在化）。\x1f は非空白なので空フィールドも圧縮されず列が保たれる。
+IFS=$'\x1f' read -r SESSION_ID MODEL CTX_SIZE CUR_DIR CTX HAS_LIMITS \
+  FIVE_H_PCT FIVE_H_AT SEVEN_D_PCT SEVEN_D_AT DURATION_MS COST \
+  <<<"$(printf '%s' "$input" | jq -r '[
+    .session_id // "",
+    .model.display_name // "",
+    (.context_window.context_window_size // "" | tostring),
+    .workspace.current_dir // "",
+    (.context_window.used_percentage // "" | tostring),
+    (if .rate_limits then "yes" else "no" end),
+    (.rate_limits.five_hour.used_percentage // "" | tostring),
+    .rate_limits.five_hour.resets_at // "",
+    (.rate_limits.seven_day.used_percentage // "" | tostring),
+    .rate_limits.seven_day.resets_at // "",
+    (.cost.total_duration_ms // "" | tostring),
+    (.cost.total_cost_usd // "" | tostring)
+  ] | join("\u001f")')"
+
+# セッションごとの差分計算キャッシュ。値がセッションをまたいでリセットされないよう
+# セッション ID 別のファイルにする。
 CACHE_FILE="${TMPDIR:-/tmp}/statusline-prev-${SESSION_ID}"
+
+# 前回値（差分・アイドル集計に使う）も「1回の jq」でまとめて読む。無ければ全て空にする。
+PREV_CTX=""; PREV_COST=""; PREV_DURATION_MS=""; ACCUMULATED_IDLE_MS=""
+if [ -f "$CACHE_FILE" ]; then
+  # 区切りは Unit Separator(\x1f)。@tsv だと空フィールド（初回 ctx 等）が圧縮され列がずれる
+  IFS=$'\x1f' read -r PREV_CTX PREV_COST PREV_DURATION_MS ACCUMULATED_IDLE_MS \
+    <<<"$(jq -r '[.ctx // "", .cost // "", .dur // "", .idle // ""] | join("\u001f")' "$CACHE_FILE" 2>/dev/null)"
+fi
 
 # =============================================================================
 # カスタマイズ可能な設定
@@ -135,7 +167,7 @@ _group_digits() {
 # rate_limits はサブスクでのみ最初の API 応答後に現れるフィールド。
 # cost.total_cost_usd はサブスクでも公開 API レートでの推定額が入り 0 にならないため、
 # 金額の大小ではサブスクと従量課金を判別できない。判定軸は rate_limits の有無にする。
-HAS_LIMITS=$(echo "$input" | jq -r 'if .rate_limits then "yes" else "no" end')
+# （HAS_LIMITS は冒頭の一括 jq で取得済み）
 
 # 各行を組み立てて配列に積む。最後に改行で結合して出力する
 lines=()
@@ -146,8 +178,7 @@ lines=()
 # =============================================================================
 line1_parts=()
 
-MODEL=$(echo "$input" | jq -r '.model.display_name // empty')
-CTX_SIZE=$(echo "$input" | jq -r '.context_window.context_window_size // empty')
+# MODEL / CTX_SIZE は冒頭の一括 jq で取得済み
 if [ -n "$MODEL" ]; then
   MODEL_STR="$MODEL"
   if [ -n "$CTX_SIZE" ]; then
@@ -160,7 +191,7 @@ fi
 
 # ブランチ名を workspace.current_dir 起点に git から取得する
 # 取得できない場合（git 管理下でない、detached HEAD など）は表示しない
-CUR_DIR=$(echo "$input" | jq -r '.workspace.current_dir // empty')
+# CUR_DIR は冒頭の一括 jq で取得済み
 if [ -n "$CUR_DIR" ]; then
   BRANCH=$(git -C "$CUR_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null)
   # detached HEAD では "HEAD" が返るので、その場合は表示しない
@@ -189,7 +220,7 @@ fi
 #   CTX_YELLOW〜CTX_RED   → 黄（能動的 /compact を検討すべき転換点。ここで圧縮すると要約の質が高い）
 #   CTX_RED 以上         → 赤 + ⚠️（劣化が体感で出始めるライン。auto-compact は 95% なので手遅れ気味）
 # =============================================================================
-CTX=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
+# CTX は冒頭の一括 jq で取得済み
 if [ -n "$CTX" ]; then
   # 小数第1位まで表示（例: 75.3）。色の閾値判定には整数部を使う
   CTX_FMT=$(printf '%.1f' "$CTX")
@@ -209,9 +240,7 @@ if [ -n "$CTX" ]; then
     CTX_BAND="green"
   fi
 
-  # 前回の値をキャッシュファイルから読み込んで差分を計算する
-  # キャッシュファイルがなければ（初回）差分は表示しない
-  PREV_CTX=$([ -f "$CACHE_FILE" ] && jq -r '.ctx // empty' "$CACHE_FILE" 2>/dev/null || echo "")
+  # 前回の値（PREV_CTX）は冒頭でキャッシュから一括読み込み済み。初回は空で差分を出さない
   CTX_DIFF_STR=""
   if [ -n "$PREV_CTX" ]; then
     # bc -l で小数第1位まで差分を計算し、符号を付ける（/compact 後はマイナスになる）
@@ -274,11 +303,7 @@ _fmt_resets_at() {
 if [ "$HAS_LIMITS" = "yes" ]; then
   usage_parts=()
 
-  FIVE_H_PCT=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
-  FIVE_H_AT=$(echo "$input"  | jq -r '.rate_limits.five_hour.resets_at // empty')
-  SEVEN_D_PCT=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
-  SEVEN_D_AT=$(echo "$input"  | jq -r '.rate_limits.seven_day.resets_at // empty')
-
+  # 5h / 7d の使用率・リセット時刻は冒頭の一括 jq で取得済み
   if [ -n "$FIVE_H_PCT" ]; then
     FIVE_H_INT=$(printf '%.0f' "$FIVE_H_PCT")
     FIVE_H_TIME=$(_fmt_resets_at "$FIVE_H_AT")
@@ -322,14 +347,12 @@ fi
 # （通常の読み込み・熟考・長文入力）は作業時間に残す。
 # =============================================================================
 IDLE_GAP_THRESHOLD_MS=$(( IDLE_GAP_THRESHOLD_MIN * 60000 ))
-DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // empty')
+# DURATION_MS は冒頭の一括 jq で取得済み
 # 整数ミリ秒に正規化する（万一小数が来ても (( )) の整数演算で落ちないように）
 DUR_INT=""
 [ -n "$DURATION_MS" ] && DUR_INT=$(printf '%.0f' "$DURATION_MS")
 
-# 前回実行時の duration と、それまでに累積したアイドルをキャッシュから読む
-PREV_DURATION_MS=$([ -f "$CACHE_FILE" ] && jq -r '.dur // empty' "$CACHE_FILE" 2>/dev/null || echo "")
-ACCUMULATED_IDLE_MS=$([ -f "$CACHE_FILE" ] && jq -r '.idle // empty' "$CACHE_FILE" 2>/dev/null || echo "")
+# 前回 duration（PREV_DURATION_MS）と累積アイドル（ACCUMULATED_IDLE_MS）は冒頭で一括読み込み済み
 [ -z "$ACCUMULATED_IDLE_MS" ] && ACCUMULATED_IDLE_MS=0
 
 # 前回値があり、ギャップが閾値を超えていれば中断とみなしてギャップ全量を足す
@@ -360,7 +383,7 @@ fi
 # 色の閾値（COST_YELLOW_JPY / COST_RED_JPY を JPY_PER_USD でドル換算した値を使う）。
 # サブスクではこの費用行が使用量行（5h / 7d）の下に並ぶ（4行表示になる）。
 # =============================================================================
-COST=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
+# COST は冒頭の一括 jq で取得済み
 if [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) )); then
 
   # コストの色と段階ガードのレベルを決める（bc -l は小数の比較のために必要）。
@@ -387,8 +410,7 @@ if [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) )); then
   COST_JPY_NUM=$(echo "$COST * $JPY_PER_USD" | bc -l | cut -d. -f1)
   COST_JPY="${ICON_JPY} ¥$(_group_digits "$COST_JPY_NUM")"
 
-  # 前回値をキャッシュから読み込んで差分を計算する（通貨記号は付けない）
-  PREV_COST=$([ -f "$CACHE_FILE" ] && jq -r '.cost // empty' "$CACHE_FILE" 2>/dev/null || echo "")
+  # 前回値（PREV_COST）は冒頭でキャッシュから一括読み込み済み（通貨記号は付けない）
   COST_JPY_DIFF_STR=""
   if [ -n "$PREV_COST" ] && (( $(echo "$PREV_COST > 0" | bc -l) )); then
     DIFF_JPY=$(echo "($COST - $PREV_COST) * $JPY_PER_USD" | bc -l | cut -d. -f1)
