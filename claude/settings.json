@@ -224,6 +224,11 @@
           },
           {
             "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-use/plan-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "$HOME/.claude/hooks/pre-tool-use/file-protect.sh",
             "timeout": 5
           },
@@ -335,7 +340,6 @@
   },
   "language": "日本語のですます調で応答します。文は述語で終え、名詞止めはしません。漢語の複合名詞（「未取得」「定義外」「未知値」など）は動詞句に展開します（「取得できていない」「対応していない」など）。名詞を直接つなげず、助詞（の・による・に関する等）または活用形（した・する・な等）で修飾関係を明示します。冗長な表現（「することができます」「する必要があります」など）、誇張・ハイプ表現（「革命的」「究極の」など）、評価を上乗せするだけで実質の情報を加えない表現、深みを演出するだけのフレーズ（「本質的には」「真に重要なのは」など）、根拠のない楽観的な結語（「今後の発展が期待されます」など）は使いません。",
   "effortLevel": "high",
-  "showThinkingSummaries": true,
   "theme": "dark",
   "autoMode": {
     "environment": [

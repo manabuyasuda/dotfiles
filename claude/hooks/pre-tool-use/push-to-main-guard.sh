@@ -21,10 +21,16 @@ HOOKS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "$HOOKS_DIR/config.sh"
 
 INPUT=$(cat)
-cmd=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
+# command / cwd を1回の jq でまとめて取得する（同一 stdin を2回 parse しない）。
+# command は改行を含み得るため、read（改行で切れる）ではなく NUL 区切り＋mapfile で分割する。
+# 各フィールドを NUL 終端して連結し、末尾要素のズレを防ぐ。
 # push 元ブランチは「いま作業しているディレクトリ（worktree）」で判定する。
 # CLAUDE_PROJECT_DIR は worktree に追従しないため、Claude Code が hook 入力で渡す .cwd を使う。
-CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+mapfile -d '' -t _fields < <(
+  jq -j '[.tool_input.command // "", .cwd // ""] | join("\u0000") + "\u0000"' <<<"$INPUT"
+)
+cmd="${_fields[0]:-}"
+CWD="${_fields[1]:-}"
 
 # 引用符内の文字列を除去してからコマンド判定する。これをしないと、コマンド引数に含まれる
 # 文字列（例: gh pr create の本文中の "git push" やブランチ名）を実コマンドと誤検知し、

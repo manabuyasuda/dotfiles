@@ -98,6 +98,51 @@ _assert_eq "T3 PR 本文中の git push / main を実コマンドと誤検知し
   "$(_decision "$PUSH_GUARD" "$(jq -nc --arg cwd "$FEATURE_WT" --arg c 'gh pr create --base main --title t --body "see git push to main"' '{tool_input:{command:$c},cwd:$cwd}')")" "none"
 
 # ---------------------------------------------------------------------------
+# T4: 改行を含む command でも後続フィールド（description）がずれない（bash-guard）
+#     bash-guard.sh は command/description/cwd を1回の jq でまとめて取り、NUL 区切り＋
+#     mapfile で分割する。もし read（改行で切れる）で分割すると、改行入り command が1行目で
+#     切れて COMMAND が壊れ（例: "rm foo" が "rm" になり READ へ誤分類）、description も
+#     ずれて読まれる。結果として判定が ask 以外（none や deny）に変わる。
+#     正しく分割できていれば DESTRUCTIVE のまま description も完全に読め、ask になる。
+#       正: ask / 誤（field-shift）: ask 以外
+# ---------------------------------------------------------------------------
+_multiline_destructive_json() {  # $1=cwd  改行を含む rm（DESTRUCTIVE）+ 完全な description
+  jq -nc --arg cwd "$1" --arg c $'rm foo\nrm bar' \
+    '{tool_input:{command:$c,description:"目的:検証 影響:なし 許可:常に 拒否:なし"},cwd:$cwd}'
+}
+_assert_eq "T4 改行入り command でも description がずれず ask（field-shift なし）" \
+  "$(_decision "$BASH_GUARD" "$(_multiline_destructive_json "$FEATURE_WT")")" "ask"
+
+# ---------------------------------------------------------------------------
+# T5: 改行を含む command でも3番目のフィールド（cwd）がずれない（bash-guard）
+#     改行入りの git commit を main 作業ツリーで実行。cwd が正しく読めていれば branch=main で
+#     deny になる。もし cwd が field-shift で空になれば pwd（テスト実行ディレクトリ）に
+#     フォールバックし保護判定に入らず deny 以外になってしまう。
+#       正: deny（cwd=main が読めている） / 誤（field-shift）: deny 以外
+# ---------------------------------------------------------------------------
+_multiline_commit_json() {  # $1=cwd  改行を含む git commit + 完全な description
+  jq -nc --arg cwd "$1" --arg c $'git commit -m a\ngit commit -m b' \
+    '{tool_input:{command:$c,description:"目的:検証 影響:なし 許可:常に 拒否:なし"},cwd:$cwd}'
+}
+_assert_eq "T5 改行入り command でも cwd がずれず main を deny（field-shift なし）" \
+  "$(_decision "$BASH_GUARD" "$(_multiline_commit_json "$MAIN_WT")")" "deny"
+
+# ---------------------------------------------------------------------------
+# T6: 改行を含む command でも push 先ブランチ判定がずれない（push-to-main-guard）
+#     1行目が無害なコマンド、2行目で `git push origin main`。push-to-main-guard.sh は
+#     command/cwd を1回の jq＋NUL 区切り＋mapfile で取る。read（改行で切れる）だと cmd が
+#     1行目で切れて push 部分が失われ、保護ブランチ push を見逃して通過（none）してしまう。
+#     正しく全行読めていれば引数の main を検出して deny になる。
+#       正: deny / 誤（field-shift）: deny 以外（none）
+# ---------------------------------------------------------------------------
+_multiline_push_json() {  # $1=cwd  1行目無害＋2行目で保護ブランチ push
+  jq -nc --arg cwd "$1" --arg c $'echo setup\ngit push origin main' \
+    '{tool_input:{command:$c},cwd:$cwd}'
+}
+_assert_eq "T6 改行入り command でも push 先 main を検出して deny（field-shift なし）" \
+  "$(_decision "$PUSH_GUARD" "$(_multiline_push_json "$FEATURE_WT")")" "deny"
+
+# ---------------------------------------------------------------------------
 echo "----"
 printf '成功 %d / 失敗 %d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
