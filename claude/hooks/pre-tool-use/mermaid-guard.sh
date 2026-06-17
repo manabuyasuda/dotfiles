@@ -22,8 +22,18 @@ _deny() {
 }
 
 INPUT=$(cat)
-TOOL_NAME=$(jq -r '.tool_name // ""' <<< "$INPUT")
-FILE_PATH=$(jq -r '.tool_input.file_path // ""' <<< "$INPUT")
+# tool_name / file_path / new_string / content を1回の jq でまとめて取得する
+# （同一 stdin を最大4回 parse しない）。new_string / content は確実に改行を含むため、
+# read（改行で切れる）ではなく NUL 区切り＋mapfile で分割する。
+# 各フィールドを NUL 終端して連結し（join + 末尾 NUL）、末尾要素のズレを防ぐ。
+mapfile -d '' -t _fields < <(
+  jq -j '[.tool_name // "", .tool_input.file_path // "", .tool_input.new_string // "", .tool_input.content // ""]
+         | join("\u0000") + "\u0000"' <<<"$INPUT"
+)
+TOOL_NAME="${_fields[0]:-}"
+FILE_PATH="${_fields[1]:-}"
+NEW_STRING="${_fields[2]:-}"
+WRITE_CONTENT="${_fields[3]:-}"
 
 # .md 以外のファイルは Mermaid を含まないのでスキップ
 [[ "$FILE_PATH" != *.md ]] && exit 0
@@ -31,9 +41,9 @@ FILE_PATH=$(jq -r '.tool_input.file_path // ""' <<< "$INPUT")
 # ツール種別ごとに書き込み内容が格納されるフィールドが異なる
 # Edit: new_string（置換後の文字列）/ Write: content（ファイル全体）
 if [[ "$TOOL_NAME" == "Edit" ]]; then
-  CONTENT=$(jq -r '.tool_input.new_string // ""' <<< "$INPUT")
+  CONTENT="$NEW_STRING"
 elif [[ "$TOOL_NAME" == "Write" ]]; then
-  CONTENT=$(jq -r '.tool_input.content // ""' <<< "$INPUT")
+  CONTENT="$WRITE_CONTENT"
 else
   exit 0
 fi

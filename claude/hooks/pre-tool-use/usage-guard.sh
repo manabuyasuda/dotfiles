@@ -51,13 +51,18 @@ STATE_FILE="${TMPDIR:-/tmp}/usage-guard-${session_id}"
 # statusline がまだ一度も走っていなければ帯が無い。止めずに通す。
 [ -f "$CACHE_FILE" ] || exit 0
 
-ctx_band=$(jq -r '.ctx_band // empty' "$CACHE_FILE" 2>/dev/null)
-cost_level=$(jq -r '.cost_level // empty' "$CACHE_FILE" 2>/dev/null)
+# CACHE_FILE の2値を1回の jq で取る。区切りは Unit Separator(\u001f)。値は帯名/整数で
+# 改行を含まないため read で安全（@tsv ではなく \u001f なのは空フィールドを潰さないため）。
+IFS=$'\x1f' read -r ctx_band cost_level \
+  <<<"$(jq -r '[.ctx_band // "", .cost_level // ""] | join("\u001f")' "$CACHE_FILE" 2>/dev/null)"
 cur_cost_level=${cost_level:-0}
 
-# 前回までに止めた帯/レベルを読む（無ければ空）
-prev_ctx_warned=$([ -f "$STATE_FILE" ] && jq -r '.ctx_warned // empty' "$STATE_FILE" 2>/dev/null || echo "")
-prev_cost_level=$([ -f "$STATE_FILE" ] && jq -r '.cost_level // empty' "$STATE_FILE" 2>/dev/null || echo "")
+# 前回までに止めた帯/レベルを1回の jq で読む（無ければ空）
+prev_ctx_warned=""; prev_cost_level=""
+if [ -f "$STATE_FILE" ]; then
+  IFS=$'\x1f' read -r prev_ctx_warned prev_cost_level \
+    <<<"$(jq -r '[.ctx_warned // "", .cost_level // ""] | join("\u001f")' "$STATE_FILE" 2>/dev/null)"
+fi
 prev_cl=${prev_cost_level:-0}
 
 # --- コンテキスト判定: yellow / red それぞれで一度だけ止める ---

@@ -44,13 +44,20 @@ HOOKS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "$HOOKS_DIR/config.sh"
 
 INPUT=$(cat)
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
-DESCRIPTION=$(echo "$INPUT" | jq -r '.tool_input.description // ""')
+# command / description / cwd を1回の jq でまとめて取得する（同一 stdin を3回 parse しない）。
+# command/description は改行を含み得るため、read（改行で切れる）ではなく NUL 区切り＋mapfile で
+# 分割する。各フィールドを NUL 終端して連結し（join + 末尾 NUL）、末尾要素のズレを防ぐ。
 # コミット先のブランチは「いま作業しているディレクトリ（worktree）」で判定する。
 # CLAUDE_PROJECT_DIR は worktree 切り替えに追従せず起動時のプロジェクトルートを指したままなので、
 # worktree 上での git commit / git merge を誤って保護ブランチ扱いしてしまう。
 # Claude Code が hook 入力で渡す .cwd（worktree に追従する）を使い、空のときだけ pwd にフォールバックする。
-CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+mapfile -d '' -t _fields < <(
+  jq -j '[.tool_input.command // "", .tool_input.description // "", .cwd // ""]
+         | join("\u0000") + "\u0000"' <<<"$INPUT"
+)
+COMMAND="${_fields[0]:-}"
+DESCRIPTION="${_fields[1]:-}"
+CWD="${_fields[2]:-}"
 
 # 引用符内の文字列を除去してパターンマッチングの誤検知を防ぐ
 # （例: grep "git push" が git push コマンドとして誤検知されることを防ぐ）
