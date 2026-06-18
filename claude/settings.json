@@ -169,7 +169,6 @@
     "x-teach-me": "user-invocable-only",
     "x-test-review": "user-invocable-only",
     "x-thorough-code-review": "user-invocable-only",
-    "x-verifying-npm-package-security": "user-invocable-only",
     "x-writing-review": "user-invocable-only"
   },
   "hooks": {
@@ -242,6 +241,11 @@
       {
         "matcher": "Bash",
         "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre-tool-use/verify-package-install.sh",
+            "timeout": 5
+          },
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/pre-tool-use/bash-guard.sh",
