@@ -9,5 +9,14 @@ export PATH="$HOME/.local/bin:$PATH"
 # Claude Codeの環境変数をクリア（新しいターミナルでclaudeコマンドを直接実行可能にする）
 unset CLAUDECODE 2>/dev/null
 
+# Socket Firewall でパッケージマネージャーをラップする
+alias npm="sfw npm"
+alias npx="sfw npx"
+alias yarn="sfw yarn"
+alias pnpm="sfw pnpm"
+alias pip="sfw pip"
+alias uv="sfw uv"
+alias cargo="sfw cargo"
+
 # local overrides (not tracked in dotfiles)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
