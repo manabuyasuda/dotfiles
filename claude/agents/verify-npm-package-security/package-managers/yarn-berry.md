@@ -34,8 +34,8 @@ yarn npm audit --recursive --json 2>/dev/null \
 
 `yarn npm audit --json`は版で形が揺れます。
 
-- 4.0.1未満は単一JSONで小文字`severity`
-- 4.0.1以降はNDJSONで`children`配下の大文字`Severity`
+- 4.0.1未満は単一JSONで小文字`severity`を使います
+- 4.0.1以降はNDJSONで`children`配下の大文字`Severity`を使います
 
 抽出式は両形式を吸収するため`(.severity // .Severity)`を使い、`jq -s`でストリームをまとめて受けます。yarn 4.5.0の実機検証では、`{"value":"<pkg>","children":{"ID":...,"Severity":"<level>",...}}`の形を`{critical,high,moderate,low}`に正規化できることを確認しました。
 

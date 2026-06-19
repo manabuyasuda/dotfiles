@@ -165,6 +165,7 @@ mise exec -- npx lefthook install
 - 既存ファイルを`~/.dotfiles_backup/`にバックアップしてからシンボリックリンクを作成します
 - `gh/extensions`に記載されたgh拡張機能をインストールします
 - `node_modules`がある場合はlefthookのpre-commitフックを配置します（`npm ci`より前に実行するとスキップされるため、後述の`npx lefthook install`で別途配置します）
+- `~/.local/share/bashlex-venv`に`bashlex`を導入したPython venvを作成します。`pre-tool-use/verify-package-install.sh`がコマンド文字列をAST解析して`npm install`の誤検知を防ぐために利用します。venvがすでにあり`bashlex`も入っていればスキップし、`python3`がない環境では作成自体をスキップします（hookはbashフォールバック経路で動作します）
 
 `mise install`の各行は次の理由によります。
 

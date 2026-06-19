@@ -1,0 +1,50 @@
+name: verify-package-install-test
+
+# verify-package-install.sh の判定ロジックを CI で回帰検証する。
+# Python (bashlex) 経路と bash フォールバック経路の両方を実行し、
+# 「HEREDOC・引数本文の文字列を install と誤検知しない」「install 系は確実に deny する」
+# という不変条件を claude/tests/verify-package-install.test.sh が守る。
+# どちらかの経路が壊れた退行を CI で止める。
+
+on:
+  pull_request:
+    paths:
+      - 'claude/hooks/pre-tool-use/verify-package-install.sh'
+      - 'claude/hooks/pre-tool-use/verify-package-install-parse.py'
+      - 'claude/tests/verify-package-install.test.sh'
+      - '.github/workflows/verify-package-install-test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'claude/hooks/pre-tool-use/verify-package-install.sh'
+      - 'claude/hooks/pre-tool-use/verify-package-install-parse.py'
+      - 'claude/tests/verify-package-install.test.sh'
+      - '.github/workflows/verify-package-install-test.yml'
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.x'
+      - name: Syntax check
+        run: |
+          bash -n claude/hooks/pre-tool-use/verify-package-install.sh
+          bash -n claude/tests/verify-package-install.test.sh
+          python3 -m py_compile claude/hooks/pre-tool-use/verify-package-install-parse.py
+      - name: Create bashlex venv
+        run: |
+          python3 -m venv "$HOME/.local/share/bashlex-venv"
+          "$HOME/.local/share/bashlex-venv/bin/pip" install --quiet bashlex
+      - name: Run regression tests (both paths)
+        run: bash claude/tests/verify-package-install.test.sh

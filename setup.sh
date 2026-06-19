@@ -131,6 +131,29 @@ else
   echo "[SKIP] lefthook 未導入（npm ci 後に setup.sh を再実行するか 'npx lefthook install' を実行）"
 fi
 
+# === bashlex venv (verify-package-install hook 用) ===
+# pre-tool-use/verify-package-install.sh が install コマンドの誤検知を避けるため
+# Python の bashlex で AST 解析する。PEP 668 環境を避けて専用の venv に隔離する。
+# venv が無ければ作成し、bashlex が未導入なら入れる。両方揃っていればスキップする。
+# python3 が無い環境ではフォールバック（bash 単独経路）に任せて SKIP する。
+echo ""
+echo "--- bashlex venv ---"
+
+BASHLEX_VENV="$HOME/.local/share/bashlex-venv"
+BASHLEX_PY="$BASHLEX_VENV/bin/python3"
+if ! command -v python3 &>/dev/null; then
+  echo "[SKIP] python3 が見つかりません（hook は bash フォールバック経路で動作します）"
+elif [[ -x "$BASHLEX_PY" ]] && "$BASHLEX_PY" -c 'import bashlex' &>/dev/null; then
+  echo "[OK] 導入済み: $BASHLEX_VENV"
+else
+  if [[ ! -x "$BASHLEX_PY" ]]; then
+    echo "[CREATE] $BASHLEX_VENV"
+    python3 -m venv "$BASHLEX_VENV"
+  fi
+  echo "[INSTALL] bashlex"
+  "$BASHLEX_VENV/bin/pip" install --quiet bashlex
+fi
+
 echo ""
 echo "=== 完了 ==="
 
