@@ -107,6 +107,35 @@ if [ -n "$textlint_cmd" ]; then
   [ $? -ne 0 ] && textlint_remaining="$remaining_output"
 fi
 
+# Git管理外（.gitignore対象 / 作業記録ファイル・ディレクトリ）は校正サブエージェント起動の対象外。
+# textlint --fix は自動置換のためコストが低く実行済み。サブエージェントによる手動修正だけスキップする。
+# 判定条件は config.sh の WORK_RECORD_FILES / WORK_RECORD_DIRS と .gitignore に一元化する。
+HOOKS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=../config.sh
+source "$HOOKS_DIR/config.sh"
+if git -C "$(dirname "$file")" rev-parse --git-dir &>/dev/null 2>&1; then
+  skip_review=0
+  if git -C "$(dirname "$file")" check-ignore -q "$file" 2>/dev/null; then
+    skip_review=1
+  fi
+  if [ $skip_review -eq 0 ]; then
+    repo_root=$(git -C "$(dirname "$file")" rev-parse --show-toplevel 2>/dev/null)
+    rel_path="${file#${repo_root}/}"
+    for wf in "${WORK_RECORD_FILES[@]}"; do
+      [ "$rel_path" = "$wf" ] && skip_review=1 && break
+    done
+    if [ $skip_review -eq 0 ]; then
+      for wd in "${WORK_RECORD_DIRS[@]}"; do
+        [[ "$rel_path" == "$wd"/* ]] && skip_review=1 && break
+      done
+    fi
+  fi
+  if [ $skip_review -eq 1 ]; then
+    echo '{"suppressOutput": true}'
+    exit 0
+  fi
+fi
+
 # git diff で変更箇所を取得（レビュー範囲を変更行に絞るため）
 git_diff_section=""
 if git -C "$(dirname "$file")" rev-parse --git-dir &>/dev/null 2>&1; then
