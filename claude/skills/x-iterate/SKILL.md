@@ -23,7 +23,7 @@ allowed-tools:
 ```
 利用可能なスキル:
 x-thorough-code-review
-x-writing-review
+x-test-review
 （以下、取得した一覧を一行ずつ）
 ```
 
