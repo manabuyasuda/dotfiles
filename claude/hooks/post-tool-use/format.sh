@@ -21,17 +21,32 @@
 #   3. node_modules/.bin/oxfmt / oxfmt（ローカル → グローバル）
 #   4. prettier（グローバルフォールバック）
 #
-# 出力（PostToolUse の hookSpecificOutput.additionalContext 経由）:
-#   成功: {"suppressOutput": true} を stdout、exit 0
-#   失敗: {"hookSpecificOutput": {"hookEventName": "PostToolUse",
-#         "additionalContext": "ERROR: ..."}} を stdout、exit 0
-#         additionalContext が次回モデル呼び出し時の context に注入される
+# 出力:
+#   成功（JS/TS フォーマット成功 など）:
+#     {"suppressOutput": true} を stdout、exit 0
+#   JS/TS フォーマット失敗:
+#     {"hookSpecificOutput": {"hookEventName": "PostToolUse",
+#      "additionalContext": "ERROR: ..."}} を stdout、exit 0
+#     additionalContext は次回モデル呼び出し時の context に注入される（弱い通知）。
+#   .md で校正が必要なとき:
+#     {"decision": "block", "reason": "..."} を stdout、exit 0
+#     decision: block は親エージェントを強くブロックし、reason を必ず見せる
+#     （additionalContext は親が拾い漏らす実例があったため、校正経路は block に統一）。
 #
-# 入力 : stdin の JSON（tool_input.file_path）— 編集されたファイルのパス
+# サブエージェント識別:
+#   stdin の JSON に agent_id が含まれる場合（サブエージェント内の Edit）はスキップする。
+#   japanese-writing-review サブエージェントが校正のために Edit するたびに block すると
+#   無限ネストを起こすため、サブエージェント内の Edit には本フックを発火させない。
+#
+# 入力 : stdin の JSON（tool_input.file_path, agent_id）
 #        $FORMATTER（session-start.sh が設定した環境変数、未設定時は自動検出）
 # =============================================================================
 INPUT=$(cat)
 file=$(jq -r '.tool_input.file_path // ""' <<<"$INPUT")
+agent_id=$(jq -r '.agent_id // ""' <<<"$INPUT")
+
+# サブエージェント内の Edit ではスキップする（無限ネスト防止）
+[[ -n "$agent_id" ]] && exit 0
 
 # JS/TS でも .md でもないファイルは対象外
 [[ "$file" =~ \.(js|jsx|ts|tsx|md)$ ]] || exit 0
@@ -104,13 +119,13 @@ ${diff_output}"
   fi
 fi
 
-# 校正を指示（実施手段はAIエージェントに委ねる）
-# textlint 残存エラーがある場合はそれも添付してエージェントに渡す
+# 校正を強制する（decision: block で親エージェントに必ず読ませる）。
+# 親は reason を読んで Task tool で japanese-writing-review サブエージェントを起動する。
+# サブエージェント内の Edit はスクリプト冒頭の agent_id 判定でスキップされるため、再帰しない。
 if [ -n "$textlint_remaining" ]; then
-  msg="ERROR: textlint エラーが残っています。\nWHY: textlint --fix で自動修正できない違反が残っています。\nFIX: このファイルの日本語文章を校正してください。\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
+  msg="ERROR: 日本語の.md編集後に校正が未実施です。次の作業に進む前に Task tool で japanese-writing-review サブエージェントを起動し、このファイルの校正を完了してください。\n\nWHY: textlint --fix で自動修正できない違反が残っています。サブエージェントが3周ループで評価→編集を繰り返し、親コンテキストを汚さずに校正します。\n\nFIX: Task tool で japanese-writing-review を呼び、対象ファイルを引数として渡してください。\n\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
 else
-  msg="ERROR: 文章の校正が必要です。\nWHY: textlint を通過しても文章ルールへの違反が残っている可能性があります。\nFIX: このファイルの日本語文章を校正してください。\nファイル: ${file}${git_diff_section}"
+  msg="ERROR: 日本語の.md編集後に校正が未実施です。次の作業に進む前に Task tool で japanese-writing-review サブエージェントを起動し、このファイルの校正を完了してください。\n\nWHY: textlint を通過しても文章ルールへの違反が残っている可能性があります。サブエージェントが3周ループで評価→編集を繰り返し、親コンテキストを汚さずに校正します。\n\nFIX: Task tool で japanese-writing-review を呼び、対象ファイルを引数として渡してください。\n\nファイル: ${file}${git_diff_section}"
 fi
-feedback=$(printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': sys.stdin.read()}}))")
-echo "$feedback"
+printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'decision': 'block', 'reason': sys.stdin.read()}))"
 exit 0
