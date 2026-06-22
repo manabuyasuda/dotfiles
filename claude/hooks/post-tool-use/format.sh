@@ -123,9 +123,9 @@ fi
 # 親は reason を読んで Task tool で japanese-writing-review サブエージェントを起動する。
 # サブエージェント内の Edit はスクリプト冒頭の agent_id 判定でスキップされるため、再帰しない。
 if [ -n "$textlint_remaining" ]; then
-  msg="ERROR: 日本語の.md編集後に校正が未実施です。次の作業に進む前に Task tool で japanese-writing-review サブエージェントを起動し、このファイルの校正を完了してください。\n\nWHY: textlint --fix で自動修正できない違反が残っています。サブエージェントが3周ループで評価→編集を繰り返し、親コンテキストを汚さずに校正します。\n\nFIX: Task tool で japanese-writing-review を呼び、対象ファイルを引数として渡してください。\n\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
+  msg="ERROR: 日本語の.md編集後に校正が未実施です。次の作業に進む前に Task tool で japanese-writing-review サブエージェントを起動し、このファイルの校正を完了してください。\n\nWHY: textlint --fix で自動修正できない違反が残っています。サブエージェントが3周ループで評価→編集を繰り返し、親コンテキストを汚さずに校正します。\n\nFIX: Task tool で japanese-writing-review を呼び、対象ファイルを引数として渡してください。校正の対象は下記の変更差分スニペットだけです。サブエージェントは対象ファイルをReadせず、スニペット内の文章だけを判定材料にします。\n\nファイル: ${file}\n\ntextlint 残存エラー:\n${textlint_remaining}${git_diff_section}"
 else
-  msg="ERROR: 日本語の.md編集後に校正が未実施です。次の作業に進む前に Task tool で japanese-writing-review サブエージェントを起動し、このファイルの校正を完了してください。\n\nWHY: textlint を通過しても文章ルールへの違反が残っている可能性があります。サブエージェントが3周ループで評価→編集を繰り返し、親コンテキストを汚さずに校正します。\n\nFIX: Task tool で japanese-writing-review を呼び、対象ファイルを引数として渡してください。\n\nファイル: ${file}${git_diff_section}"
+  msg="ERROR: 日本語の.md編集後に校正が未実施です。次の作業に進む前に Task tool で japanese-writing-review サブエージェントを起動し、このファイルの校正を完了してください。\n\nWHY: textlint を通過しても文章ルールへの違反が残っている可能性があります。サブエージェントが3周ループで評価→編集を繰り返し、親コンテキストを汚さずに校正します。\n\nFIX: Task tool で japanese-writing-review を呼び、対象ファイルを引数として渡してください。校正の対象は下記の変更差分スニペットだけです。サブエージェントは対象ファイルをReadせず、スニペット内の文章だけを判定材料にします。\n\nファイル: ${file}${git_diff_section}"
 fi
 printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'decision': 'block', 'reason': sys.stdin.read()}))"
 exit 0
