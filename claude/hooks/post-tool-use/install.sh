@@ -23,17 +23,21 @@
 #   pre-tool-use/file-protect.sh の lock file ガードとは干渉しない。
 #
 # 終了コード:
-#   0 → インストール成功
-#   1 → インストール失敗（エージェントに修正させる）
+#   0 → 常に 0（PostToolUse はツール実行後のためブロック不可。
+#        install 失敗は additionalContext で次ターンに通知する）
 #
-# 出力（feedback）:
-#   成功: {"feedback": "<pkg> install completed.", "suppressOutput": true}
-#   失敗: {"feedback": "ERROR: ..."} → exit 1 でエージェントに修正させる
+# 出力（PostToolUse の hookSpecificOutput.additionalContext 経由）:
+#   成功: {"suppressOutput": true} を stdout、exit 0
+#   失敗: {"hookSpecificOutput": {"hookEventName": "PostToolUse",
+#         "additionalContext": "ERROR: ..."}} を stdout、exit 0
 #
-# 入力 : $CLAUDE_TOOL_INPUT_FILE_PATH
+# 入力 : stdin の JSON（tool_input.file_path）
 #        $PKG_MANAGER（session-start.sh が設定した環境変数、未設定時は自動検出）
 # =============================================================================
-[[ "$CLAUDE_TOOL_INPUT_FILE_PATH" =~ package\.json$ ]] || exit 0
+INPUT=$(cat)
+file=$(jq -r '.tool_input.file_path // ""' <<<"$INPUT")
+
+[[ "$file" =~ package\.json$ ]] || exit 0
 
 # $PKG_MANAGER → packageManager フィールド → lock file → npm の順で解決する
 _resolve_pkg() {
@@ -51,9 +55,12 @@ _resolve_pkg() {
 }
 
 cmd="$(_resolve_pkg) install"
-echo "{\"feedback\": \"Running $cmd to sync lock file...\"}" >&2
-$cmd >/dev/null 2>&1 && \
-  echo "{\"feedback\": \"$cmd completed.\", \"suppressOutput\": true}" || {
-  echo "{\"feedback\": \"ERROR: $cmd の実行に失敗しました。WHY: lock file との整合性がとれていないか、パッケージに問題がある可能性があります。FIX: エラーの出力を確認してパッケージの問題を解決してください。\"}" >&2
-  exit 1
-}
+output=$($cmd 2>&1)
+exit_code=$?
+if [ $exit_code -eq 0 ]; then
+  echo '{"suppressOutput": true}'
+  exit 0
+fi
+msg="ERROR: ${cmd} の実行に失敗しました。\nWHY: lock file との整合性がとれていないか、パッケージに問題がある可能性があります。\nFIX: 下記の出力を確認してパッケージの問題を解決してください。\n\n${output}"
+printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': sys.stdin.read()}}))"
+exit 0

@@ -168,8 +168,7 @@
     "x-retrospective": "user-invocable-only",
     "x-teach-me": "user-invocable-only",
     "x-test-review": "user-invocable-only",
-    "x-thorough-code-review": "user-invocable-only",
-    "x-writing-review": "user-invocable-only"
+    "x-thorough-code-review": "user-invocable-only"
   },
   "hooks": {
     "SessionStart": [
