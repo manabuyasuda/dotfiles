@@ -13,6 +13,13 @@
 #   stdout   → Claude のコンテキストに注入される（エージェントが読む）
 #   $CLAUDE_ENV_FILE → 後続フック（post-tool-use/format.sh 等）が source して使う環境変数ファイル
 #
+# ユーザーへの視覚通知について:
+#   Claude Code は起動時に TUI（raw mode で画面全体を制御）になるため、SessionStart の
+#   stdout/stderr はターミナルに直接表示されない。確定的にユーザーへ知らせる手段は
+#   現状の hook の仕組みにはない（macOS 通知は環境依存のため採用しない）。
+#   ここでの出力はあくまでメインエージェントのコンテキストに注入され、ユーザーが
+#   何か入力した時点でエージェントが判断して案内・サブエージェント起動を行う前提。
+#
 # 終了コード: 常に 0（ブロックしない。情報提供のみ）
 #
 # ツール検出の優先順位:
@@ -24,6 +31,7 @@
 # $CLAUDE_ENV_FILE が設定されている場合のみ環境変数を書き出す。
 # 未設定時はスキップ（後続フックに渡す変数がないだけで動作には影響しない）。
 _env() { [ -n "$CLAUDE_ENV_FILE" ] && echo "$1" >> "$CLAUDE_ENV_FILE"; }
+
 
 # ツールをローカル → グローバルの順で検索し、見つかった場所（"local"/"global"）を返す。
 # 見つからない場合は空文字を返す。
@@ -181,6 +189,60 @@ if [ -n "$UNCOMMITTED" ]; then
   echo ""
   echo "=== 未コミット変更あり ==="
   echo "$UNCOMMITTED"
+fi
+
+# --- worktree検出と初期化サブエージェントの起動指示 ---
+# 現在のディレクトリがgit worktree（メインworktreeではない）で、かつ未初期化
+# （node_modules がない等）の場合に worktree-init サブエージェントの起動を促す。
+#
+# 注意: 以下の echo はすべて stdout への出力で、Claude のコンテキストにのみ注入される。
+# ターミナルにはリアルタイムには表示されない。Claude Code は起動時に raw mode で
+# 画面全体を制御する TUI のため、hook の stdout/stderr 出力は上書きされて視認できない。
+# ユーザーへの確定的な視覚通知は現状の hook の仕組みでは難しいため、メインエージェントが
+# 初期化対応を判断する目的でのみコンテキスト注入を行う（ユーザーがプロンプトに何か
+# 打った時点で Claude がコンテキストを参照し、必要なら通知や worktree-init 起動を行う）。
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null || echo "")
+if echo "$GIT_DIR" | grep -q "/worktrees/"; then
+  NEEDS_INIT="false"
+  # package.json があるのに node_modules がなければ未初期化と判断
+  if [ -f "package.json" ] && [ ! -d "node_modules" ]; then
+    NEEDS_INIT="true"
+  fi
+  # メインworktreeに .envrc があり、現worktreeにない場合も未初期化扱い
+  MAIN_REPO=$(dirname "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null || echo "")
+  if [ -n "$MAIN_REPO" ] && [ -f "$MAIN_REPO/.envrc" ] && [ ! -f ".envrc" ]; then
+    NEEDS_INIT="true"
+  fi
+
+  if [ "$NEEDS_INIT" = "true" ]; then
+    echo ""
+    echo "=== worktree初期化が必要です ==="
+    echo "現在のディレクトリは git worktree ですが、依存パッケージや gitignored ファイル（.envrc等）がそろっていません。"
+    echo "worktree-init サブエージェントを起動して初期化を任せてください（gitignoredファイルのコピーと依存インストールを実行します）。"
+  fi
+
+  # --- 計画ファイル（plan/<branch>.md）の存在通知 ---
+  # worktree内またはメインworktreeに対応する計画ファイルがあれば、メインエージェントが
+  # 自発的にReadできるようパスを通知する。worktree-initの最終メッセージはメインに要約
+  # されることがあるため、確定的に伝える役目をhookが担う。
+  BRANCH_NAME=$(git branch --show-current 2>/dev/null) || BRANCH_NAME=""
+  if [ -n "$BRANCH_NAME" ]; then
+    STRIPPED_SLASH="${BRANCH_NAME#*/}"
+    STRIPPED_WT="${BRANCH_NAME#worktree-}"
+    PLAN_FILE=""
+    for cand in "plan/${BRANCH_NAME}.md" "plan/${STRIPPED_SLASH}.md" "plan/${STRIPPED_WT}.md"; do
+      if [ -f "$cand" ] || { [ -n "$MAIN_REPO" ] && [ -f "$MAIN_REPO/$cand" ]; }; then
+        PLAN_FILE="$cand"
+        break
+      fi
+    done
+    if [ -n "$PLAN_FILE" ]; then
+      echo ""
+      echo "=== このworktreeの計画ファイル ==="
+      echo "$PLAN_FILE"
+      echo "worktree-init を起動するとこのファイルを worktree 内へコピーします（既にあればそのまま）。初期化が完了したら、このファイルを読んで作業を進めてください。"
+    fi
+  fi
 fi
 
 exit 0
