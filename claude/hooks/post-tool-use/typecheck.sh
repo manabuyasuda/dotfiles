@@ -18,22 +18,25 @@
 # 終了コード:
 #   0 → 常に 0（型エラーがあってもブロックしない設計）
 #
-# 出力（feedback）:
-#   エラーなし: {"feedback": "No TypeScript errors.", "suppressOutput": true}
-#   エラーあり: エラー内容（先頭30行）を stderr に出力 + feedback でエージェントに通知
+# 出力（PostToolUse の hookSpecificOutput.additionalContext 経由）:
+#   エラーなし: {"suppressOutput": true} を stdout、exit 0
+#   エラーあり: {"hookSpecificOutput": {"hookEventName": "PostToolUse",
+#               "additionalContext": "ERROR: ..."}} を stdout、exit 0
 #
-# 入力 : $CLAUDE_TOOL_INPUT_FILE_PATH
+# 入力 : stdin の JSON（tool_input.file_path）
 # =============================================================================
-[[ "$CLAUDE_TOOL_INPUT_FILE_PATH" =~ \.(ts|tsx)$ ]] || exit 0
+INPUT=$(cat)
+file=$(jq -r '.tool_input.file_path // ""' <<<"$INPUT")
 
-echo '{"feedback": "Checking TypeScript types..."}' >&2
+[[ "$file" =~ \.(ts|tsx)$ ]] || exit 0
+
 output=$(npx tsc --noEmit 2>&1)
 exit_code=$?
 if [ $exit_code -eq 0 ]; then
-  echo '{"feedback": "No TypeScript errors.", "suppressOutput": true}'
-else
-  errors=$(echo "$output" | grep -A 2 "error TS" | head -30)
-  [ -n "$errors" ] && echo "$errors" >&2
-  echo '{"feedback": "ERROR: TypeScript の型エラーが見つかりました。WHY: 型エラーはビルドが失敗する原因になります。FIX: 上記エラーの出力を確認して型を修正してください。"}' >&2
+  echo '{"suppressOutput": true}'
+  exit 0
 fi
+errors=$(echo "$output" | grep -A 2 "error TS" | head -30)
+msg="ERROR: TypeScript の型エラーが見つかりました。\nWHY: 型エラーはビルドが失敗する原因になります。\nFIX: 下記エラーを確認して型を修正してください。\n\n${errors}"
+printf '%s' "$msg" | python3 -c "import json,sys; print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': sys.stdin.read()}}))"
 exit 0
