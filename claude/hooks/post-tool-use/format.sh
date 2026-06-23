@@ -139,7 +139,9 @@ fi
 # git diff で変更箇所を取得（レビュー範囲を変更行に絞るため）
 git_diff_section=""
 if git -C "$(dirname "$file")" rev-parse --git-dir &>/dev/null 2>&1; then
-  diff_output=$(git diff "$file" 2>/dev/null)
+  # -U1: 変更行とその直前直後1行のみ。文中か箇条書きかを判定する最低限の手がかりに絞る。
+  # 段落全体のレビューはユーザーが直接サブエージェントを呼ぶ経路に任せる。
+  diff_output=$(git diff -U1 "$file" 2>/dev/null)
   if [ -n "$diff_output" ]; then
     git_diff_section="
 
