@@ -27,7 +27,27 @@ _deny() {
   exit 2
 }
 
-current_branch="$(git branch --show-current 2>/dev/null)"
+input="$(cat)"
+file_path="$(echo "$input" | jq -r '.tool_input.file_path // .tool_input.path // empty')"
+
+# file_path が取れない場合は判定対象がないため通過させる。
+if [ -z "$file_path" ]; then
+  exit 0
+fi
+
+# 新規ファイルで親ディレクトリが未作成のケースに備え、存在する祖先ディレクトリまで遡る。
+search_dir="$(dirname "$file_path")"
+while [ ! -d "$search_dir" ] && [ "$search_dir" != "/" ] && [ "$search_dir" != "." ]; do
+  search_dir="$(dirname "$search_dir")"
+done
+
+# file_path が属するリポジトリを特定する。git 管理外なら通過させる。
+repo_root="$(git -C "$search_dir" rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$repo_root" ]; then
+  exit 0
+fi
+
+current_branch="$(git -C "$repo_root" branch --show-current 2>/dev/null)"
 
 # detached HEAD はブランチ名が取れないためブロックできない。警告のみ出して通過させる。
 if [ -z "$current_branch" ]; then
@@ -40,7 +60,7 @@ fi
 for pattern in "${PROTECTED_BRANCHES[@]}"; do
   # shellcheck disable=SC2053
   if [[ "$current_branch" == $pattern ]]; then
-    _deny "ERROR: ブランチ '$current_branch' は保護ブランチです。直接編集できません。WHY: 保護ブランチへの直接コミットを防ぎ、レビューを必須化するためです。FIX: git pull で最新にしてから git checkout -b feature/your-branch-name でフィーチャーブランチを作成してから作業してください。"
+    _deny "ERROR: ブランチ '${current_branch}' は保護ブランチです（リポジトリ: ${repo_root}）。直接編集できません。WHY: 保護ブランチへの直接コミットを防ぎ、レビューを必須化するためです。FIX: git pull で最新にしてから git checkout -b feature/your-branch-name でフィーチャーブランチを作成してから作業してください。"
   fi
 done
 
