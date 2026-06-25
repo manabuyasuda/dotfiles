@@ -112,6 +112,10 @@ cp -r .agents/skills/* .claude/skills/
 
 `opus`（Claude Code既定のエイリアス。2026-05時点でOpus 4.8を指す）。`settings.json` では `model` を明示せず既定モデルに従う。
 
+#### `/model`で切り替える場合の注意
+
+v2.1.153以降、`/model`で選んだモデルは新規セッションの既定として保存される。一時的な切り替えのつもりでも、次回`claude`を起動すると同じモデルが選ばれる。現セッション限定で切り替えたい場合は、モデル選択画面で`s`キーを押す（`thisSessionOnly`）。`settings.json`の`model`を空のままにしている場合、ここで保存された値が起動時の既定として適用されるため、想定外のモデルで作業を始めないよう注意する。
+
 ### showThinkingSummaries
 
 ```json
