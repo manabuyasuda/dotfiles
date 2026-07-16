@@ -1,0 +1,8 @@
+---
+description: 日本語表現・文書構造ルール（全ファイル編集時に適用）
+globs: "**/*"
+alwaysApply: false
+---
+
+@.claude/agents/japanese-writing-review/rule-japanese-expressions.md
+@.claude/agents/japanese-writing-review/rule-structure.md
