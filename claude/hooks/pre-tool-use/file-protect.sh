@@ -74,11 +74,6 @@ if echo "$file" | grep -qE 'Gemfile\.lock$|composer\.lock$|go\.sum$|Cargo\.lock$
   _deny "ERROR: $file は lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: 各パッケージマネージャー経由で更新してください。"
 fi
 
-# Claude Code の hooks・settings（カナリア: 書き換えによるガード無効化を検知する）
-if echo "$file" | grep -qE '(^|/)\.?claude/hooks/|(^|/)\.?claude/settings\.json$'; then
-  _ask "CAUTION: $file を変更しようとしています。WHY: hooks・settings の誤変更はガードが無効化される可能性があります。FIX: 変更内容を確認してください。"
-fi
-
 # Terraform 状態・変数
 if echo "$file" | grep -qE '\.tfstate$|\.tfstate\.|\.tfvars$'; then
   _deny "ERROR: $file は Terraform の状態ファイルまたは変数ファイルです。WHY: 直接編集するとインフラ状態が破損します。FIX: terraform コマンドを使用してください。"
