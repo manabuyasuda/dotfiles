@@ -1,0 +1,45 @@
+name: cursor-hook-test
+
+# cursor/hooks/adapters/ の JSON 変換・安全判定を CI で検証する。
+# git worktree はテスト内の一時リポジトリ用であり、Cursor の WorktreeCreate とは無関係。
+
+on:
+  pull_request:
+    paths:
+      - 'cursor/**'
+      - 'scripts/sync-cursor-cli-permissions.sh'
+      - 'scripts/merge-cursor-cli-config.sh'
+      - '.github/workflows/cursor-hook-test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'cursor/**'
+      - 'scripts/sync-cursor-cli-permissions.sh'
+      - 'scripts/merge-cursor-cli-config.sh'
+      - '.github/workflows/cursor-hook-test.yml'
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq bc
+      - name: Syntax check adapters
+        run: |
+          for f in cursor/hooks/adapters/*.sh cursor/hooks/lib/*.sh cursor/statusline.sh; do
+            bash -n "$f"
+          done
+      - name: Sync cursor permissions (for test)
+        run: bash scripts/sync-cursor-cli-permissions.sh
+      - name: Run cursor adapter tests
+        run: |
+          for f in cursor/tests/*.test.sh; do
+            echo "=== $f ==="
+            bash "$f"
+          done
