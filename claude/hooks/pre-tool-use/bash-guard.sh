@@ -222,7 +222,7 @@ if echo "$COMMAND_UNQUOTED" | grep -qE '(^|[|;&][[:space:]]*)npm[[:space:]]+(ins
   rest=$(echo "$COMMAND_UNQUOTED" \
     | grep -oE 'npm[[:space:]]+(install|i)[[:space:]]*[^|;&]*' \
     | head -1 \
-    | sed 's/npm[[:space:]]\+i\(nstall\)\?[[:space:]]*//')
+    | sed -E 's/^npm[[:space:]]+(i|install)[[:space:]]*//')
   pkg_count=$(echo "$rest" | tr ' ' '\n' | grep -v '^$' | grep -cvE '^-' || true)
   if [ "$pkg_count" -eq 0 ]; then
     _deny "ERROR: npm install をパッケージ名なしで実行しようとしています。WHY: semver範囲でバージョンが解決されるため、挙動のズレ・脆弱性・サプライチェーン攻撃を含むバージョンを意図せず引き込む可能性があります。FIX: 特定のパッケージを追加したい場合はnpm install <package-name>を、lockfileを再現したい場合はnpm ciを使ってください。"

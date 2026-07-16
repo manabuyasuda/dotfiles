@@ -38,6 +38,77 @@ cursor_io_shell_to_claude_json() {
   }'
 }
 
+# bash-guard.sh の classify と同型。引用符除去済み command を渡す。
+# INSTALL / NETWORK_WRITE / DESTRUCTIVE のみ 1 を返す（WRITE 以下は 1 を返さない）。
+cursor_io_shell_is_high_risk() {
+  local c="$1"
+  case "$c" in
+    *"git reset --hard"* |\
+    *"git push --force"* |\
+    *"git push -f "* |\
+    *"git push --force-with-lease"* |\
+    *"git commit"*"--amend"* |\
+    *"rm "* |\
+    *"unlink "* |\
+    *"truncate "*)
+      return 0 ;;
+    *"git commit"* |\
+    *"git push"* |\
+    *"npm publish"* |\
+    *"gh pr merge"* |\
+    *"gh issue close"* |\
+    *"gh api"*"-X POST"* |\
+    *"gh api"*"-X PUT"* |\
+    *"gh api"*"-X PATCH"* |\
+    *"gh api"*"-X DELETE"* |\
+    *"gh api"*"--method POST"* |\
+    *"gh api"*"--method PUT"* |\
+    *"gh api"*"--method PATCH"* |\
+    *"gh api"*"--method DELETE"* |\
+    *"gh api"*"--field "* |\
+    *"gh api"*" -f "*)
+      return 0 ;;
+    *"npm install"* |\
+    *"npm i "* |\
+    *"yarn add"* |\
+    *"yarn install"* |\
+    *"pnpm add"* |\
+    *"pnpm install"* |\
+    *"pip install"* |\
+    *"brew install"*)
+      return 0 ;;
+    *)
+      return 1 ;;
+  esac
+}
+
+# Cursor で description が空のとき、高リスク Shell だけ ask へ回すプレースホルダを入れる。
+cursor_io_shell_inject_description_fallback() {
+  local input="$1"
+  local command description command_unquoted
+
+  description=$(printf '%s' "$input" | jq -r '.tool_input.description // .description // ""')
+  if [[ -n "$description" ]]; then
+    printf '%s' "$input"
+    return
+  fi
+
+  command=$(printf '%s' "$input" | jq -r '.tool_input.command // .command // ""')
+  command_unquoted=$(printf '%s' "$command" | sed 's/"[^"]*"//g; s/'"'"'[^'"'"']*'"'"'//g')
+  if ! cursor_io_shell_is_high_risk "$command_unquoted"; then
+    printf '%s' "$input"
+    return
+  fi
+
+  printf '%s' "$input" | jq '
+    if .tool_input then
+      .tool_input.description = "目的:エージェントのdescriptionがフックに届かないため 影響:下記コマンドの実行 許可:内容確認後 拒否:不審または意図と異なる操作"
+    else
+      .description = "目的:エージェントのdescriptionがフックに届かないため 影響:下記コマンドの実行 許可:内容確認後 拒否:不審または意図と異なる操作"
+    end
+  '
+}
+
 # Cursor preToolUse(Write) JSON → Claude PreToolUse(Edit|Write) JSON
 cursor_io_write_to_claude_json() {
   jq '{

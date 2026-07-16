@@ -14,20 +14,8 @@ source "$LIB_DIR/cursor-io.sh"
 
 INPUT=$(cat)
 
-# Cursor の Shell フックでは description が空で届くことがある（beforeShellExecution は非対応、
-# preToolUse でもバージョンによって省略される）。空のときは deny せず ask へ回すプレースホルダを入れる。
-INPUT=$(
-  printf '%s' "$INPUT" | jq '
-    (.tool_input.description // .description // "") as $d |
-    if $d == "" then
-      (if .tool_input then
-        .tool_input.description = "目的:エージェントのdescriptionがフックに届かないため 影響:下記コマンドの実行 許可:内容確認後 拒否:不審または意図と異なる操作"
-      else
-        .description = "目的:エージェントのdescriptionがフックに届かないため 影響:下記コマンドの実行 許可:内容確認後 拒否:不審または意図と異なる操作"
-      end)
-    else . end
-  '
-)
+# Cursor の Shell フックでは description が空で届くことがある。高リスク操作だけ ask へ回す。
+INPUT=$(cursor_io_shell_inject_description_fallback "$INPUT")
 
 CLAUDE_HOOK="$(cursor_io_claude_pre_tool_use_hook bash-guard.sh)"
 

@@ -91,9 +91,13 @@ _assert_eq "T7 改行入り rm は ask（field-shift なし）" \
 _assert_eq "T8 改行入り git commit + main cwd は deny" \
   "$(_permission "$(_shell_json "$MAIN_WT" $'git commit -m a\ngit commit -m b' "$FULL_DESC")")" "deny"
 
-# npm install（パッケージ名なし）: claude 本体は INSTALL として ask（deny ルートは GNU sed 依存）
-_assert_eq "T9 npm install（パッケージ名なし）は ask" \
-  "$(_permission "$(_shell_json "$FEATURE_WT" "npm install" "$FULL_DESC")")" "ask"
+# npm install（パッケージ名なし）: bash-guard 本体は deny（GNU sed で検出可能な環境）
+_assert_eq "T9 npm install（パッケージ名なし）は deny" \
+  "$(_permission "$(_shell_json "$FEATURE_WT" "npm install" "$FULL_DESC")")" "deny"
+
+# description 未送信の git commit: 高リスクフォールバックで ask
+_assert_eq "T10 description 未送信の git commit は ask" \
+  "$(_permission "$(_shell_json "$FEATURE_WT" "git commit -m msg")")" "ask"
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
