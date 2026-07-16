@@ -1,15 +1,10 @@
 ---
 description: テスト実装ルール。テストファイルを編集するときに適用する
-paths:
-  - "**/*.test.{ts,tsx}"
-  - "**/*.spec.{ts,tsx}"
-  - "**/__tests__/**"
-  - "**/tests/**"
-  - "**/src/test/**"
-  - "**/src/mocks/**"
+globs: "**/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/__tests__/**, **/tests/**, **/src/test/**, **/src/mocks/**"
+alwaysApply: false
 ---
 
-@docs/test-implementation.md
+@.claude/docs/test-implementation.md
 
 @.claude/agents/japanese-writing-review/rule-japanese-expressions.md
 

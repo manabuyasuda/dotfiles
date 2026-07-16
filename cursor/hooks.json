@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "./hooks/adapters/session-start.sh",
+        "timeout": 15
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "./hooks/adapters/dangerous-guard.sh",
+        "timeout": 5,
+        "failClosed": true
+      },
+      {
+        "command": "./hooks/adapters/verify-package-install.sh",
+        "timeout": 5,
+        "failClosed": true
+      },
+      {
+        "command": "./hooks/adapters/push-to-main-guard.sh",
+        "timeout": 5,
+        "failClosed": true
+      },
+      {
+        "command": "./hooks/adapters/check-gh-account.sh",
+        "timeout": 5,
+        "failClosed": false
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "./hooks/adapters/bash-guard.sh",
+        "matcher": "Shell",
+        "timeout": 10,
+        "failClosed": false
+      },
+      {
+        "command": "./hooks/adapters/branch-guard.sh",
+        "matcher": "Write",
+        "timeout": 5,
+        "failClosed": true
+      },
+      {
+        "command": "./hooks/adapters/plan-guard.sh",
+        "matcher": "Write",
+        "timeout": 5,
+        "failClosed": true
+      },
+      {
+        "command": "./hooks/adapters/file-protect.sh",
+        "matcher": "Write",
+        "timeout": 5,
+        "failClosed": true
+      },
+      {
+        "command": "./hooks/adapters/mermaid-guard-pre.sh",
+        "matcher": "Write",
+        "timeout": 10,
+        "failClosed": true
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "./hooks/adapters/format.sh",
+        "matcher": "Write",
+        "timeout": 60,
+        "failClosed": false
+      },
+      {
+        "command": "./hooks/adapters/install.sh",
+        "matcher": "Write",
+        "timeout": 120,
+        "failClosed": false
+      },
+      {
+        "command": "./hooks/adapters/test.sh",
+        "matcher": "Write",
+        "timeout": 120,
+        "failClosed": false
+      },
+      {
+        "command": "./hooks/adapters/typecheck.sh",
+        "matcher": "Write",
+        "timeout": 60,
+        "failClosed": false
+      },
+      {
+        "command": "./hooks/adapters/mermaid-guard-post.sh",
+        "matcher": "Write",
+        "timeout": 30,
+        "failClosed": false
+      }
+    ],
+    "stop": [
+      {
+        "command": "./hooks/adapters/notify.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}

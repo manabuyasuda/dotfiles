@@ -16,10 +16,16 @@ SYMLINKS=(
   "claude/settings.json:.claude/settings.json"
   "claude/keybindings.json:.claude/keybindings.json"
   "claude/statusline.sh:.claude/statusline.sh"
+  "cursor/statusline.sh:.cursor/statusline.sh"
   "claude/skills:.claude/skills"
   "claude/hooks:.claude/hooks"
   "claude/agents:.claude/agents"
+  "claude/agents:.cursor/agents"
+  "claude/docs:.claude/docs"
   "claude/rules:.claude/rules"
+  "cursor/rules:.cursor/rules"
+  "cursor/hooks.json:.cursor/hooks.json"
+  "cursor/hooks:.cursor/hooks"
 )
 
 backup_and_link() {
@@ -68,6 +74,19 @@ for mapping in "${SYMLINKS[@]}"; do
   dst="${mapping##*:}"
   backup_and_link "$src" "$dst"
 done
+
+# === Cursor CLI permissions（shared → cli-config.json）===
+echo ""
+echo "--- Cursor CLI permissions ---"
+
+SYNC_CURSOR_PERMS="$DOTFILES_DIR/scripts/sync-cursor-cli-permissions.sh"
+MERGE_CURSOR_CONFIG="$DOTFILES_DIR/scripts/merge-cursor-cli-config.sh"
+if [[ -x "$SYNC_CURSOR_PERMS" ]] && [[ -x "$MERGE_CURSOR_CONFIG" ]]; then
+  "$SYNC_CURSOR_PERMS"
+  "$MERGE_CURSOR_CONFIG"
+else
+  echo "[SKIP] sync/merge スクリプトが見つかりません"
+fi
 
 # === dotfiles プロジェクトの .claude/settings.local.json ===
 echo ""

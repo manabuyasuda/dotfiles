@@ -14,9 +14,8 @@
 #            （計画を書かせるため）。計画を書いて一度通れば、その後は黙る。
 #          記録は ${TMPDIR:-/tmp}/plan-guard-<session_id>。
 #
-# 対象範囲: 作業記録ディレクトリ（explore/ plan/ retrospective/）配下への書き込みは
-#          常に対象外（でないと計画ファイル自体を作れず無限ロックになる）。それ以外の
-#          すべてのファイル（*.md を含む）が対象。
+# 対象範囲: プロジェクトルート外・作業記録ディレクトリ（explore/ plan/ retrospective/）
+#          配下への書き込みは常に対象外。ルート内のそれ以外（*.md を含む）が対象。
 #
 # プロジェクトルート: hook 入力の .cwd を起点に git rev-parse --show-toplevel で求める
 #          （worktree に追従する）。git 管理外なら .cwd をそのまま使う。plan/ はこの
@@ -60,6 +59,12 @@ esac
 # プロジェクトルート（plan/ の所在）。worktree に追従させるため .cwd を起点にする。
 ROOT=$(git -C "${CWD:-$(pwd)}" rev-parse --show-toplevel 2>/dev/null)
 [ -z "$ROOT" ] && ROOT="${CWD:-$(pwd)}"
+
+# プロジェクトルート外への書き込みは対象外（/tmp 等・他リポジトリ。branch-guard と同様）
+case "$FILE_PATH" in
+  "$ROOT"/*|"$ROOT") ;;
+  *) exit 0;;
+esac
 
 # 作業記録ディレクトリ配下は常に対象外（計画ファイル自体の作成をブロックしないため）
 case "$FILE_PATH" in

@@ -21,9 +21,22 @@ dotfiles/
 │   └── extensions        # gh拡張機能一覧
 ├── claude/
 │   ├── CLAUDE.md         # グローバル指示
-│   ├── settings.json     # Claude Code設定
+│   ├── settings.json     # 共有permissionsの定義（Claude Code向け設定もここ）
 │   ├── skills/           # カスタムスキル
-│   └── hooks/            # フック設定
+│   ├── hooks/            # 共有フック（ガード本体）
+│   ├── agents/           # サブエージェント定義
+│   ├── docs/             # エージェント向けドキュメント（テスト実装ルール等）
+│   └── rules/            # ファイルパターン別ルール（Claude Code形式）
+├── cursor/
+│   ├── rules/            # Cursor User Rules（*.mdc）
+│   ├── hooks.json        # Cursorフック設定
+│   ├── hooks/            # 共有フック呼び出し用アダプター
+│   ├── statusline.sh     # CLI statuslineアダプタ
+│   ├── cli-permissions.json
+│   └── cli-statusline.json
+├── scripts/
+│   ├── sync-cursor-cli-permissions.sh
+│   └── merge-cursor-cli-config.sh
 └── docs/
     └── tools/            # 開発ツールのドキュメント
 ```
@@ -123,7 +136,7 @@ ls -l ~/.claude/downloads/
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Apple Siliconの場合、インストール完了時にPATHを通すコマンドの案内が表示されます。案内にしたがって次を実行します（`.zprofile`への追記はステップ7でdotfilesのsymlinkに置き換わりますが、現在のシェルへ反映するためここで実行します）。
+Apple Siliconの場合、インストール完了時にPATHを通すコマンドの案内が表示されます。案内にしたがって次を実行します（`.zprofile`への追記はステップ7でdotfilesのシンボリックリンクに置き換わりますが、現在のシェルへ反映するためここで実行します）。
 
 ```bash
 echo >> ~/.zprofile
@@ -166,6 +179,7 @@ mise exec -- npx lefthook install
 - `gh/extensions`に記載されたgh拡張機能をインストールします
 - `node_modules`がある場合はlefthookのpre-commitフックを配置します（`npm ci`より前に実行するとスキップされるため、後述の`npx lefthook install`で別途配置します）
 - `~/.local/share/bashlex-venv`に`bashlex`を導入したPython venvを作成します。`pre-tool-use/verify-package-install.sh`がコマンド文字列をAST解析して`npm install`の誤検知を防ぐために利用します。venvがすでにあり`bashlex`も入っていればスキップし、`python3`がない環境では作成自体をスキップします（hookはbashフォールバック経路で動作します）
+- `cursor/`配下を`~/.cursor/`にリンクし、CLI permissions / statusLineをマージします（詳細は「[AIエージェントの共有設定](#aiエージェントの共有設定)」のCursor節）。Cursorを使う場合は`setup.sh`後にCursorを再起動するかDeveloper → Reload Windowを実行してください。
 
 `mise install`の各行は次の理由によります。
 
@@ -357,6 +371,44 @@ brewでインストールしたアプリはFinderから1つずつ起動して設
 #### 12. Macを再起動する
 
 ひととおりの設定が完了したら再起動します。システム設定の変更が反映され、アプリの許可ダイアログなどが表示されます。
+
+## AIエージェントの共有設定
+
+Claude CodeとCursorで、同じガード・permissions・ルールを使う構成です。
+
+`claude/`に本体を置き、`cursor/`にCursor向けの形式へ合わせた設定を置きます。
+
+### 全体像
+
+| 種類 | 代表例 | 要点 |
+|------|--------|------|
+| 1. シンボリックリンク | agents | 両ツールの公式パスへ`claude/agents/`のシンボリックリンクを張ります |
+| 1. シンボリックリンク + @参照 | docs | `claude/docs/`を`~/.claude/docs`へシンボリックリンクでつなぎます。CursorはRulesの`@.claude/docs/...`で参照します |
+| 2. 別ファイル（手動で同期） | フック、ルール、statusLine | 本体は`claude/`に置きます。Cursor向けの登録と書式は`cursor/`側を編集します |
+| 3. スクリプト同期 | permissions | `claude/settings.json`の`permissions`のみが対象です |
+
+### 変更したいとき
+
+変更後はCursorを再起動してください（`setup.sh`は実行時にpermissionsのsync/merge用スクリプトも自動で実行します）。
+
+| 変更したいもの | 編集するファイル | 実行するコマンド | 注意 |
+|---------------|-----------------|-----------------|------|
+| 共有のpermissions | `claude/settings.json` | `./scripts/sync-cursor-cli-permissions.sh` → `./scripts/merge-cursor-cli-config.sh` | mergeは`cli-config.json`の`permissions`と`statusLine`だけを更新します。承認ダイアログで足したallowはmergeすると消えますので、残す場合は`settings.json`へ移してください |
+| フックのガード本体 | `claude/hooks/` | なし | 判定ロジックの本体です。Cursor側の登録は`cursor/hooks.json`と`cursor/hooks/adapters/`にあります（`adapters/`はdotfilesでのディレクトリ名です） |
+| フックのCursor側 | `cursor/hooks.json`, `cursor/hooks/adapters/` | `bash cursor/tests/<name>-adapter.test.sh` | 本体を新設したときは`claude/hooks/`も追加します。未移植のものは`worktree/*`、`log-denial`、`usage-guard`などがあります（詳細は`claude/SECURITY.md`を参照してください） |
+| サブエージェント | `claude/agents/` | なし | `claude/agents/`から`~/.claude/agents`と`~/.cursor/agents`へシンボリックリンクを張ります |
+| エージェント向けドキュメント | `claude/docs/` | なし | `claude/docs/`を`~/.claude/docs`へシンボリックリンクでつなぎます。Cursorは`@.claude/docs/...`で参照します（`~/.cursor/docs`は作りません） |
+| スキル | `claude/skills/` | なし | `~/.claude/skills`にだけシンボリックリンクを張ります。Cursor向けの扱いは別途確認してください |
+| グローバル指示 | `claude/CLAUDE.md` | なし | あわせて`cursor/rules/global-instructions.mdc`も更新します（近い内容ですが、同一ではありません） |
+| パス別ルール | `claude/rules/*.md` | なし | あわせて`cursor/rules/*.mdc`も更新します（`paths:`と`globs:`で書式が違います） |
+| Cursor専用ルール | `cursor/rules/*.mdc` | なし | — |
+| statusline | `cursor/statusline.sh`, `cursor/cli-statusline.json` | `./scripts/merge-cursor-cli-config.sh` | Cursor CLIでのみ表示されます（IDE Agentでは表示されません） |
+| Claudeの個別設定を新規追加 | `claude/`に作成 | `./setup.sh` | `SYMLINKS`への追記が必要な場合は、先に`setup.sh`を編集します |
+| 新規マシン・リンクの張り直し | — | `./setup.sh` | 実行すると、シンボリックリンクの作成とpermissionsのsync/mergeをまとめて行います |
+
+`claude/settings.json`の`hooks`はClaude Code専用です。Cursorは`cursor/hooks.json`を読みます。
+
+`StrReplace`/`Delete`が`preToolUse`で発火するかは、Cursorのバージョンに依存します。
 
 ## 運用
 
