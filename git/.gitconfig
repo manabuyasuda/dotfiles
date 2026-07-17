@@ -10,6 +10,9 @@
 [user]
 	name = 安田学
 	email = 19850318m.yasuda@gmail.com
+
+[includeIf "gitdir:~/PROJECT/"]
+	path = ~/.gitconfig-work
 [commit]
 	template = ~/.stCommitMsg
 [merge]

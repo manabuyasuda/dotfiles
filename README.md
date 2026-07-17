@@ -295,6 +295,15 @@ git clone git@my.github.com:manabuyasuda/knowledge-base.git ~/MY/knowledge-base
 
 ##### 案件リポジトリをクローンする場合
 
+`~/PROJECT/`配下のリポジトリでは、`~/.gitconfig-work`の`[user]`設定でメールアドレスを上書きします。
+
+```bash
+cat > ~/.gitconfig-work <<'EOF'
+[user]
+	email = you@company.example
+EOF
+```
+
 `<prefix>`・`<org-or-user>`・`<repo>`を実際の値に置き換えて実行します。
 
 ```bash
@@ -510,4 +519,4 @@ npm run lint:fix
 ## 注意事項
 
 - `.zprofile`のHomebrewパス（`/opt/homebrew`）はApple Silicon専用です。Intel Macでは異なります
-- `.gitconfig`が参照する`.gitignore_global`と`.stCommitMsg`は管理対象外です
+- `.gitconfig`が参照する`.gitignore_global`、`.stCommitMsg`、`.gitconfig-work`は、いずれもdotfilesでは管理していません
