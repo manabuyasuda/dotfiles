@@ -19,7 +19,7 @@ Claude Codeから呼び出せるカスタムスキルの一覧です。
 
 ## Reviewing（成果物の点検）
 
-- [x-thorough-code-review](./x-thorough-code-review/SKILL.md) — GitHubのPRかローカルブランチの変更をレビューします。レビュー観点の指定がなければ標準ルールで進めます。
+- [x-thorough-code-review](./x-thorough-code-review/SKILL.md) — 状況に応じてサブエージェントを起動するコードレビューのオーケストレータ。GitHubのPRかローカルブランチの変更をレビューします。
 - [x-test-review](./x-test-review/SKILL.md) — 既存のテストファイル（`.test.ts`／`.test.tsx`／`.spec.ts`、テストコードブロックを含む`.md`）を、テスト実装ルールに沿って見直して改善します。
 
 `.md`ファイルの文章品質レビューは `claude/agents/japanese-writing-review/` のサブエージェントが担当します。`format.sh`（PostToolUse hook）から自動起動するほか、「日本語チェック」「writing-review」などの依頼でも起動できます。

@@ -28,7 +28,7 @@ claude/
 
 | スキル | 呼び出し例 | 概要 |
 |---|---|---|
-| `thorough-code-review` | 「PRレビューして」「#123をレビュー」 | GitHub PR またはローカルブランチの変更をレビュー |
+| `thorough-code-review` | 「PRレビューして」「#123をレビュー」 | 状況に応じてサブエージェントを起動するコードレビューのオーケストレータ |
 | `hotspot-refactoring` | 「hotspot」「リファクタリング提案して」 | git log の hotspot 分析・循環参照・不安定性メトリクスからリファクタリング優先候補を提案 |
 | `rebasing-feature-branch` | 「リベースして」「mainを取り込んで」 | フィーチャーブランチをベースブランチにリベースするワークフロー |
 | `retrospective` | 「ふりかえりして」 | セッションの KPTA ふりかえりを実施し `retrospective/YYYY-MM-DD.md` に記録 |
@@ -103,6 +103,15 @@ cp -r .agents/skills/* .claude/skills/
 | エージェント | 呼び出し例 | 概要 |
 |---|---|---|
 | `critical-doc-review` | `@critical-doc-review` | ドキュメントや調査結果を批判的にレビューし、「読み手がドキュメントの目的に応じたネクストアクションに踏み出せる状態か」を検証する。問題を直すのではなく、ネクストアクションの確度を高める観点を返す。叩き台・全体像・草稿完成の節目で起動する |
+| `review-react` | `@review-react` | Reactコンポーネントの描画や合成に関わる実装を追加または変更する場合に呼び出します |
+| `review-a11y` | `@review-a11y` | ユーザーが操作・知覚するUIのマークアップやセマンティクスを追加または変更する場合に呼び出します |
+| `review-security-static` | `@review-security-static` | 攻撃に使われうる面や層の境界に関わる実装を追加または変更する場合に呼び出します |
+| `review-deps-structure` | `@review-deps-structure` | モジュール間の依存関係や公開している面を追加または変更する場合に呼び出します |
+| `review-supply-chain` | `@review-supply-chain` | 依存パッケージの追加・更新・削除など、依存関係の構成を変える場合に呼び出します |
+| `review-git-hotspot` | `@review-git-hotspot` | 変更頻度が高く行数も多いファイルを追加または変更する場合に、責務が肥大化するリスクを見るために呼び出します |
+| `review-git-rewrite-rate` | `@review-git-rewrite-rate` | 書いては消す傾向があるファイルを追加または変更する場合に、設計の不安定さを見るために呼び出します |
+| `review-git-temporal-coupling` | `@review-git-temporal-coupling` | 変更の漏れや暗黙の結合を疑う場合に呼び出します |
+| `review-code` | `@review-code` | 実装の振る舞い・設計・型・テストが十分かを、読んで判断する場合に呼び出します |
 
 ---
 
