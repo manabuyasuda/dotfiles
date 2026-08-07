@@ -34,9 +34,19 @@ dotfiles/
 │   ├── statusline.sh     # CLI statuslineアダプタ
 │   ├── cli-permissions.json
 │   └── cli-statusline.json
+├── codex/
+│   ├── README.md         # フック実装の補足（運用は README.md）
+│   ├── config.toml       # Codex CLI 設定（model・TUI 等）
+│   ├── hooks.json        # Codex フック登録
+│   ├── hooks/wrap/       # claude/hooks 呼び出しラッパ
+│   ├── rules/            # prefix_rule（npm install 禁止等）
+│   └── agents/           # サブエージェント TOML（SUBAGENT.md から生成）
 ├── scripts/
 │   ├── sync-cursor-cli-permissions.sh
-│   └── merge-cursor-cli-config.sh
+│   ├── merge-cursor-cli-config.sh
+│   ├── merge-codex-config.sh
+│   ├── generate-codex-agents.sh
+│   └── generate-codex-agents.py
 └── docs/
     └── tools/            # 開発ツールのドキュメント
 ```
@@ -383,18 +393,42 @@ brewでインストールしたアプリはFinderから1つずつ起動して設
 
 ## AIエージェントの共有設定
 
-Claude CodeとCursorで、同じガード・permissions・ルールを使う構成です。
+Claude Code・Cursor・Codexで、同じガード・permissions・ルール・スキルを使う構成です。変更手順は下の表と「運用」を参照し、Codexのフック実装の技術補足は`codex/README.md`を参照してください。
 
-`claude/`に本体を置き、`cursor/`にCursor向けの形式へ合わせた設定を置きます。
+`claude/`に本体を置き、`cursor/`と`codex/`に各ツール向けの形式へ合わせた設定を置きます。Codexの`config.toml`は`codex/config.toml`で管理し、`setup.sh`が`~/.codex/config.toml`へマージします。
 
 ### 全体像
 
 | 種類 | 代表例 | 要点 |
 |------|--------|------|
-| 1. シンボリックリンク | agents | 両ツールの公式パスへ`claude/agents/`のシンボリックリンクを張ります |
+| 1. シンボリックリンク | agents（Claude/Cursor）, skills（Codex） | `claude/agents/`→`~/.claude/agents`と`~/.cursor/agents`。`claude/skills`→`~/.agents/skills`（Codex） |
 | 1. シンボリックリンク + @参照 | docs | `claude/docs/`を`~/.claude/docs`へシンボリックリンクでつなぎます。CursorはRulesの`@.claude/docs/...`で参照します |
-| 2. 別ファイル（手動で同期） | フック、ルール、statusLine | 本体は`claude/`に置きます。Cursor向けの登録と書式は`cursor/`側を編集します |
-| 3. スクリプト同期 | permissions | `claude/settings.json`の`permissions`のみが対象です |
+| 1. シンボリックリンク | Codex 指示・フック・rules・agents | `CLAUDE.md`→`~/.codex/AGENTS.md`。`codex/hooks.json`・`codex/rules/`・`codex/agents/`を`~/.codex/`へリンク |
+| 2. 別ファイル（手動で同期） | フック、ルール、statusLine | 本体は`claude/`に置きます。Cursorは`cursor/hooks.json`とアダプター、Codexは`codex/hooks/wrap/`で呼び出します |
+| 2. 生成物 | Codex サブエージェント TOML | `claude/agents/*/SUBAGENT.md`から`scripts/generate-codex-agents.sh`で`codex/agents/*.toml`を生成します |
+| 3. スクリプト同期 | permissions, Codex config | `claude/settings.json`の`permissions`（Cursor CLI）。`codex/config.toml`は`merge-codex-config.sh`で反映します |
+
+### Codex のファイル配置
+
+| ホームのパス | dotfiles | 内容 |
+|-------------|----------|------|
+| `~/.codex/config.toml` | `codex/config.toml`（merge） | モデル・TUI status line 等。`[projects.*]`と`[hooks.state.*]`はCodexがローカルに追記します |
+| `~/.codex/AGENTS.md` | `claude/CLAUDE.md`（symlink） | グローバル指示 |
+| `~/.codex/hooks.json` | `codex/hooks.json` | フック登録 |
+| `~/.codex/hooks/wrap/` | `codex/hooks/wrap/` | `claude/hooks/`呼び出しラッパ |
+| `~/.codex/rules/` | `codex/rules/` | `prefix_rule`（npm install 禁止等） |
+| `~/.codex/agents/` | `codex/agents/` | サブエージェント TOML（生成物） |
+| `~/.agents/skills/` | `claude/skills`（symlink） | スキル |
+
+`~/.codex/config.toml`はシンボリックリンクにしません。`setup.sh`が`scripts/merge-codex-config.sh`で`codex/config.toml`を反映し、既存のフックtrust（`[hooks.state.*]`）とプロジェクトtrust（`[projects.*]`）は保持します。
+
+Codex CLIでは次も踏まえます。
+
+- `setup.sh`はCodex CLI本体をインストールしません。未導入のマシンではCLIを入れ、`codex login`で認証してから`./setup.sh`を実行します。認証情報は`~/.codex/`配下に保存されます（dotfiles外）。
+- 非managedのcommandフックは、TUIの`/hooks`でtrustするまで実行されません。trust状態は`[hooks.state.*]`に保存され、merge時も保持しますが、dotfilesにはコミットしません。`codex/hooks.json`やラッパを変えたあとは再trustが必要です。
+- スキルは`~/.agents/skills`（`claude/skills`へのsymlink）を読みます。Claude Codeの`~/.claude/skills`とはパスが異なります。
+- サブエージェントTOMLは`scripts/generate-codex-agents.sh`で`claude/agents/*/SUBAGENT.md`から生成します。`SUBAGENT.md`だけ直しても`~/.codex/agents`へは反映されません。
+- `commit-message-writer`はCodexではClaude Codeのtranscript JSONLを読めません（`codex/agents/commit-message-writer.toml`に制約を記載しています）。
 
 ### 変更したいとき
 
@@ -407,7 +441,12 @@ Claude CodeとCursorで、同じガード・permissions・ルールを使う構�
 | フックのCursor側 | `cursor/hooks.json`, `cursor/hooks/adapters/` | `bash cursor/tests/<name>-adapter.test.sh` | 本体を新設したときは`claude/hooks/`も追加します。未移植のものは`worktree/*`、`log-denial`、`usage-guard`などがあります（詳細は`claude/SECURITY.md`を参照してください） |
 | サブエージェント | `claude/agents/` | なし | `claude/agents/`から`~/.claude/agents`と`~/.cursor/agents`へシンボリックリンクを張ります |
 | エージェント向けドキュメント | `claude/docs/` | なし | `claude/docs/`を`~/.claude/docs`へシンボリックリンクでつなぎます。Cursorは`@.claude/docs/...`で参照します（`~/.cursor/docs`は作りません） |
-| スキル | `claude/skills/` | なし | `~/.claude/skills`にだけシンボリックリンクを張ります。Cursor向けの扱いは別途確認してください |
+| スキル | `claude/skills/` | なし | `~/.claude/skills`と`~/.agents/skills`（Codex）へシンボリックリンクを張ります |
+| Codex サブエージェント | `claude/agents/*/SUBAGENT.md` | `./scripts/generate-codex-agents.sh` → `git add codex/agents/` | 生成物は`codex/agents/*.toml`。`setup.sh`で`~/.codex/agents`へリンクします |
+| Codex フック登録 | `codex/hooks.json`, `codex/hooks/wrap/` | なし | 本体は`claude/hooks/`。SessionStart/PostToolUseはラッパでJSON形式へ変換します。初回および定義変更後はTUIの`/hooks`でtrustが必要です |
+| Codex rules | `codex/rules/` | なし | `~/.codex/rules`へシンボリックリンクを張ります |
+| Codex config.toml | `codex/config.toml` | `./scripts/merge-codex-config.sh` | `[projects.*]`と`[hooks.state.*]`はローカル状態として保持します。TUIの`/statusline`で変えた`[tui]`は`~/.codex/config.toml`に直接書き込まれるため、dotfilesへ取り込むときは手動コピーします |
+| Codex グローバル指示 | `claude/CLAUDE.md` | なし | `~/.codex/AGENTS.md`へシンボリックリンクを張ります |
 | グローバル指示 | `claude/CLAUDE.md` | なし | あわせて`cursor/rules/global-instructions.mdc`も更新します（近い内容ですが、同一ではありません） |
 | パス別ルール | `claude/rules/*.md` | なし | あわせて`cursor/rules/*.mdc`も更新します（`paths:`と`globs:`で書式が違います） |
 | Cursor専用ルール | `cursor/rules/*.mdc` | なし | — |
@@ -415,7 +454,7 @@ Claude CodeとCursorで、同じガード・permissions・ルールを使う構�
 | Claudeの個別設定を新規追加 | `claude/`に作成 | `./setup.sh` | `SYMLINKS`への追記が必要な場合は、先に`setup.sh`を編集します |
 | 新規マシン・リンクの張り直し | — | `./setup.sh` | 実行すると、シンボリックリンクの作成とpermissionsのsync/mergeをまとめて行います |
 
-`claude/settings.json`の`hooks`はClaude Code専用です。Cursorは`cursor/hooks.json`を読みます。
+`claude/settings.json`の`hooks`はClaude Code専用です。Cursorは`cursor/hooks.json`、Codexは`codex/hooks.json`を読みます。
 
 `StrReplace`/`Delete`が`preToolUse`で発火するかは、Cursorのバージョンに依存します。
 

@@ -26,6 +26,12 @@ SYMLINKS=(
   "cursor/rules:.cursor/rules"
   "cursor/hooks.json:.cursor/hooks.json"
   "cursor/hooks:.cursor/hooks"
+  "claude/CLAUDE.md:.codex/AGENTS.md"
+  "codex/hooks.json:.codex/hooks.json"
+  "codex/hooks:.codex/hooks"
+  "codex/rules:.codex/rules"
+  "codex/agents:.codex/agents"
+  "claude/skills:.agents/skills"
 )
 
 backup_and_link() {
@@ -69,11 +75,30 @@ echo "=== dotfiles setup ==="
 echo "リポジトリ: $DOTFILES_DIR"
 echo ""
 
+# Codex / Agents スキル用ディレクトリ（シンボリックリンク先の親）
+for codex_parent in "$HOME/.codex" "$HOME/.agents"; do
+  if [[ ! -d "$codex_parent" ]]; then
+    echo "[MKDIR] $codex_parent"
+    mkdir -p "$codex_parent"
+  fi
+done
+
 for mapping in "${SYMLINKS[@]}"; do
   src="${mapping%%:*}"
   dst="${mapping##*:}"
   backup_and_link "$src" "$dst"
 done
+
+# === Codex config.toml（dotfiles → ~/.codex/config.toml、ローカル state は保持）===
+echo ""
+echo "--- Codex config.toml ---"
+
+MERGE_CODEX_CONFIG="$DOTFILES_DIR/scripts/merge-codex-config.sh"
+if [[ -x "$MERGE_CODEX_CONFIG" ]]; then
+  "$MERGE_CODEX_CONFIG"
+else
+  echo "[SKIP] merge-codex-config.sh が見つかりません"
+fi
 
 # === Cursor CLI permissions（shared → cli-config.json）===
 echo ""

@@ -1,0 +1,15 @@
+# Codex ユーザー設定（dotfiles）。
+# [projects.*] と [hooks.state.*] は Codex が ~/.codex/config.toml に書き込むため、
+# setup.sh の merge-codex-config.sh がローカル状態を保持してマージします。
+
+model = "gpt-5.6-luna"
+
+[tui]
+status_line = [
+  "model-with-reasoning",
+  "context-used",
+  "five-hour-limit",
+  "weekly-limit",
+  "git-branch",
+]
+status_line_use_colors = true
