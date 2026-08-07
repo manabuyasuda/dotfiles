@@ -1,0 +1,117 @@
+{
+  "description": "dotfiles Codex hooks（本体は claude/hooks/ を共有）",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/session-start.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" dangerous-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" verify-package-install.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" push-to-main-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" check-gh-account.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" bash-guard.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "^(Edit|Write|MultiEdit)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" branch-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" plan-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" file-protect.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/pre-tool-use.sh\" mermaid-guard.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(Edit|Write|MultiEdit)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" format.sh",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" install.sh",
+            "timeout": 120
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" test.sh",
+            "timeout": 120
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" typecheck.sh",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" mermaid-guard.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/notify.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

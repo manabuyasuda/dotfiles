@@ -3,6 +3,8 @@
 このディレクトリ（`claude/`）は[Claude Code](https://docs.anthropic.com/en/docs/claude-code)のグローバル設定を管理する。
 `setup.sh` によって `~/.claude/` 以下にシンボリックリンクが張られる。
 
+Cursor向けは`cursor/`、Codex向けは`codex/`に各ツールの形式へ合わせた設定を置く。運用・変更手順はリポジトリ直下の [README.md](../README.md) の「AIエージェントの共有設定」を参照する。Codexのフック実装の補足は [codex/README.md](../codex/README.md) を参照する。
+
 ---
 
 ## ディレクトリ構成

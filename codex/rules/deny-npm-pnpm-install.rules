@@ -1,0 +1,20 @@
+prefix_rule(
+    pattern = ["npm", "install"],
+    decision = "forbidden",
+    justification = "npm install は実行できません。npm ci を使用してください。",
+    match = ["npm install express", "npm install", "npm install --save lodash"],
+)
+
+prefix_rule(
+    pattern = ["npm", "i"],
+    decision = "forbidden",
+    justification = "npm i は実行できません。npm ci を使用してください。",
+    match = ["npm i express", "npm i", "npm i --save lodash"],
+)
+
+prefix_rule(
+    pattern = ["pnpm", "install"],
+    decision = "forbidden",
+    justification = "pnpm install は実行できません。実行する場合は --frozen-lockfile オプションを使用してください。",
+    match = ["pnpm install", "pnpm install express", "pnpm install --frozen-lockfile"],
+)
