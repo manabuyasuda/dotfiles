@@ -29,7 +29,6 @@ SYMLINKS=(
   "claude/CLAUDE.md:.codex/AGENTS.md"
   "codex/hooks.json:.codex/hooks.json"
   "codex/hooks:.codex/hooks"
-  "codex/rules:.codex/rules"
   "codex/agents:.codex/agents"
   "claude/skills:.agents/skills"
 )
@@ -82,6 +81,14 @@ for codex_parent in "$HOME/.codex" "$HOME/.agents"; do
     mkdir -p "$codex_parent"
   fi
 done
+
+# Codexの自動生成ルールはホーム側に残し、共有ルールだけを個別にリンクする。
+CODEX_RULES_SETUP="$DOTFILES_DIR/scripts/setup-codex-rules.sh"
+if [[ -f "$CODEX_RULES_SETUP" ]]; then
+  bash "$CODEX_RULES_SETUP" "$DOTFILES_DIR" "$HOME/.codex/rules" "$BACKUP_DIR"
+else
+  echo "[SKIP] setup-codex-rules.sh が見つかりません"
+fi
 
 for mapping in "${SYMLINKS[@]}"; do
   src="${mapping%%:*}"
