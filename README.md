@@ -39,7 +39,7 @@ dotfiles/
 │   ├── config.toml       # Codex CLI 設定（model・TUI 等）
 │   ├── hooks.json        # Codex フック登録
 │   ├── hooks/wrap/       # claude/hooks 呼び出しラッパ
-│   ├── rules/            # prefix_rule（npm install 禁止等）
+│   ├── rules/            # Git管理するprefix_rule（npm install 禁止等）
 │   └── agents/           # サブエージェント TOML（SUBAGENT.md から生成）
 ├── scripts/
 │   ├── sync-cursor-cli-permissions.sh
@@ -403,7 +403,7 @@ Claude Code・Cursor・Codexで、同じガード・permissions・ルール・�
 |------|--------|------|
 | 1. シンボリックリンク | agents（Claude/Cursor）, skills（Codex） | `claude/agents/`→`~/.claude/agents`と`~/.cursor/agents`。`claude/skills`→`~/.agents/skills`（Codex） |
 | 1. シンボリックリンク + @参照 | docs | `claude/docs/`を`~/.claude/docs`へシンボリックリンクでつなぎます。CursorはRulesの`@.claude/docs/...`で参照します |
-| 1. シンボリックリンク | Codex 指示・フック・rules・agents | `CLAUDE.md`→`~/.codex/AGENTS.md`。`codex/hooks.json`・`codex/rules/`・`codex/agents/`を`~/.codex/`へリンク |
+| 1. シンボリックリンク | Codex 指示・フック・rules・agents | `CLAUDE.md`→`~/.codex/AGENTS.md`。hooks・agentsはディレクトリ単位、Git管理するrulesはファイル単位で`~/.codex/`へリンク |
 | 2. 別ファイル（手動で同期） | フック、ルール、statusLine | 本体は`claude/`に置きます。Cursorは`cursor/hooks.json`とアダプター、Codexは`codex/hooks/wrap/`で呼び出します |
 | 2. 生成物 | Codex サブエージェント TOML | `claude/agents/*/SUBAGENT.md`から`scripts/generate-codex-agents.sh`で`codex/agents/*.toml`を生成します |
 | 3. スクリプト同期 | permissions, Codex config | `claude/settings.json`の`permissions`（Cursor CLI）。`codex/config.toml`は`merge-codex-config.sh`で反映します |
@@ -416,7 +416,8 @@ Claude Code・Cursor・Codexで、同じガード・permissions・ルール・�
 | `~/.codex/AGENTS.md` | `claude/CLAUDE.md`（symlink） | グローバル指示 |
 | `~/.codex/hooks.json` | `codex/hooks.json` | フック登録 |
 | `~/.codex/hooks/wrap/` | `codex/hooks/wrap/` | `claude/hooks/`呼び出しラッパ |
-| `~/.codex/rules/` | `codex/rules/` | `prefix_rule`（npm install 禁止等） |
+| `~/.codex/rules/default.rules` | なし | Codexが生成する個人の許可状態。ホーム側だけに保存し、Git管理しません |
+| `~/.codex/rules/deny-npm-pnpm-install.rules` | `codex/rules/deny-npm-pnpm-install.rules` | Git管理する共有の`prefix_rule`。ファイル単位でリンクします |
 | `~/.codex/agents/` | `codex/agents/` | サブエージェント TOML（生成物） |
 | `~/.agents/skills/` | `claude/skills`（symlink） | スキル |
 
@@ -444,7 +445,7 @@ Codex CLIでは次も踏まえます。
 | スキル | `claude/skills/` | なし | `~/.claude/skills`と`~/.agents/skills`（Codex）へシンボリックリンクを張ります |
 | Codex サブエージェント | `claude/agents/*/SUBAGENT.md` | `./scripts/generate-codex-agents.sh` → `git add codex/agents/` | 生成物は`codex/agents/*.toml`。`setup.sh`で`~/.codex/agents`へリンクします |
 | Codex フック登録 | `codex/hooks.json`, `codex/hooks/wrap/` | なし | 本体は`claude/hooks/`。SessionStart/PostToolUseはラッパでJSON形式へ変換します。初回および定義変更後はTUIの`/hooks`でtrustが必要です |
-| Codex rules | `codex/rules/` | なし | `~/.codex/rules`へシンボリックリンクを張ります |
+| Codex rules | `codex/rules/*.rules` | `npm run test:codex-rules` | `~/.codex/rules`は実ディレクトリにし、Git管理するルールだけをファイル単位でリンクします。Codexが生成する`default.rules`はホーム側に残します |
 | Codex config.toml | `codex/config.toml` | `./scripts/merge-codex-config.sh` | `[projects.*]`と`[hooks.state.*]`はローカル状態として保持します。TUIの`/statusline`で変えた`[tui]`は`~/.codex/config.toml`に直接書き込まれるため、dotfilesへ取り込むときは手動コピーします |
 | Codex グローバル指示 | `claude/CLAUDE.md` | なし | `~/.codex/AGENTS.md`へシンボリックリンクを張ります |
 | グローバル指示 | `claude/CLAUDE.md` | なし | あわせて`cursor/rules/global-instructions.mdc`も更新します（近い内容ですが、同一ではありません） |
