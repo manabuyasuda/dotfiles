@@ -2,10 +2,6 @@
 
 Claude Codeから呼び出せるカスタムスキルの一覧です。
 
-## Planning（着手前の計画）
-
-- [x-decompose](./x-decompose/SKILL.md) — 大きな計画や実装タスクを、依存関係順に並んだ最小単位のステップに分解します。
-
 ## Implementing（実装）
 
 - [x-figma-extract](./x-figma-extract/SKILL.md) — Figma MCPから実装に必要なデータを取得し、プロジェクトのCSSフレームワークに合わせてトークンを引き当て、マッピングファイルに記録します。
@@ -27,5 +23,4 @@ Claude Codeから呼び出せるカスタムスキルの一覧です。
 ## Meta（スキルや計画への横断作用）
 
 - [x-grill-me](./x-grill-me/SKILL.md) — 計画や設計について、共通認識に至り意思決定ツリーのすべての分岐が解消されるまで、ユーザーを徹底的に問い詰めます。
-- [x-pre-mortem](./x-pre-mortem/SKILL.md) — 計画や設計の着手前に、失敗した未来を想定して原因を逆算で洗い出し、対策を提案します。
 - [x-teach-me](./x-teach-me/SKILL.md) — ドキュメント・実装・アーキテクチャを段階的に解説し、その過程と結論をMarkdownドキュメントとして書き出します。
