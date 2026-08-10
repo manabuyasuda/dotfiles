@@ -147,29 +147,6 @@
     ],
     "disableBypassPermissionsMode": "disable"
   },
-  "skillOverrides": {
-    "x-check-me": "user-invocable-only",
-    "x-cleanup-merged-branches": "user-invocable-only",
-    "x-commit": "user-invocable-only",
-    "x-decompose": "user-invocable-only",
-    "x-designing-testcases": "user-invocable-only",
-    "x-designing-usecases": "user-invocable-only",
-    "x-figma-extract": "user-invocable-only",
-    "x-figma-implement": "user-invocable-only",
-    "x-grill-me": "user-invocable-only",
-    "x-hotspot-refactoring": "user-invocable-only",
-    "x-implementing-plan": "user-invocable-only",
-    "x-iterate": "user-invocable-only",
-    "x-keep": "user-invocable-only",
-    "x-planning-implementation": "user-invocable-only",
-    "x-pre-mortem": "user-invocable-only",
-    "x-rebasing-feature-branch": "user-invocable-only",
-    "x-report-it": "user-invocable-only",
-    "x-retrospective": "user-invocable-only",
-    "x-teach-me": "user-invocable-only",
-    "x-test-review": "user-invocable-only",
-    "x-thorough-code-review": "user-invocable-only"
-  },
   "hooks": {
     "SessionStart": [
       {
