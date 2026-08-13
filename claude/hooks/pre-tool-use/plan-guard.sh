@@ -84,6 +84,6 @@ if [ -n "$(find "$ROOT/plan" -type f ! -empty 2>/dev/null | head -n1)" ]; then
 fi
 
 # 計画なし → ハードブロック（解除は記録しない＝計画を書くまで止め続ける）
-jq -n --arg msg "ERROR: この作業の計画が plan/ にありません。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: plan/<task>.md に今回の計画を書いてから実装系の編集を再実行してください。explore/・plan/・retrospective/ への書き込みは対象外です。" \
+jq -n --arg msg "ERROR: この作業の計画が plan/ にありません。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: Task tool で plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/・retrospective/ への書き込みは対象外です。" \
   '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
 exit 2

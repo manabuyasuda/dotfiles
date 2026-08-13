@@ -1,4 +1,4 @@
-<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline -->
+<!-- textlint-disable @textlint-ja/ai-writing/ai-tech-writing-guideline, ja-technical-writing/ja-no-redundant-expression, prh -->
 
 # 日本語表現ルール
 
@@ -9,7 +9,7 @@
 - 英数字・記号と日本語の間は詰めて書く。バッククォートで囲まれたインラインコードの前後も詰めて書く
   - 正:「Claude Codeを使う」「`true`の場合」「`config.json`を読み込む」「`true`です」
   - 誤:「Claude Codeを使う」「`true` の場合」「`config.json` を読み込む」「`true` です」
-- 冗長な表現は短く書く（「できます」→「できます」、「最初に」→「まず」、「する必要があります」→「してください」）
+- 冗長な表現は短く書く（「することができます」→「できます」、「最初に」→「まず」、「する必要があります」→「してください」）
 - 文は述語（動詞・形容詞・助動詞）で終える（名詞で文を終えると時制（する／した）や意図（する／できる／したい）が曖昧になるため）
 - 漢語の複合名詞を動詞句で表現する。「未〜」「〜外」「〜値」のような漢語複合名詞は、動詞句に置き換えて自然な日本語にする（「未取得」→「取得できていない」、「定義外」→「対応していない」、「未知値」→「対応していない値」）
 
