@@ -30,7 +30,9 @@ claude/
 
 | スキル | 呼び出し例 | 概要 |
 |---|---|---|
-| `thorough-code-review` | 「PRレビューして」「#123をレビュー」 | GitHub PR またはローカルブランチの変更をレビュー |
+| `x-code-review-judgment` | 「レビューして」「judgment review」 | AIの判断が必要なレビュー（Fowlerスメル・Standards軸・Spec軸の2軸出力） |
+| `x-code-review-static` | 「静的解析して」「static review」 | 静的解析ツールを決定論的に実行（lefthook・CI実行済みはスキップ） |
+| `x-code-review-git-history` | 「git履歴を分析して」「history review」 | ホットスポット・書き換え率・Temporal Couplingを分析 |
 | `hotspot-refactoring` | 「hotspot」「リファクタリング提案して」 | git log の hotspot 分析・循環参照・不安定性メトリクスからリファクタリング優先候補を提案 |
 | `rebasing-feature-branch` | 「リベースして」「mainを取り込んで」 | フィーチャーブランチをベースブランチにリベースするワークフロー |
 | `retrospective` | 「ふりかえりして」 | セッションの KPTA ふりかえりを実施し `retrospective/YYYY-MM-DD.md` に記録 |
