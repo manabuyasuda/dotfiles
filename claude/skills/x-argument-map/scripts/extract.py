@@ -32,6 +32,8 @@ FORMAL_NOUNS = {
     "方", "件", "面",
     "時", "事", "所", "物", "為", "筈", "訳",
 }
+FUNCTIONAL_VERBS = {"する", "なる", "ある", "いる", "できる", "行う", "居る", "為る"}
+REDUNDANT_WINDOW = 5
 SENT_SPLIT = re.compile(r"(?<=[。！？!?])")
 CODE_FENCE = re.compile(r"^(```|~~~)")
 HEADING = re.compile(r"^#{1,6}\s")
@@ -105,6 +107,36 @@ def content_nouns(sent: str) -> list[str]:
     return out
 
 
+def content_words(sent: str) -> list[str]:
+    """名詞・動詞・形容詞・形状詞のlemma一覧。redundant_with_prev の窓内比較に使う。
+
+    名詞は content_nouns と同じ除外規則（形式名詞・数詞・接尾辞可能）を適用する。
+    動詞は非自立可能と機能動詞（する・なる・ある・いる・できる・行う）を除外し、
+    意味を担う実質語だけを残す。
+    """
+    toks = _tok.tokenize(sent, SplitMode.C)
+    out = []
+    for t in toks:
+        pos = t.part_of_speech()
+        surface = t.surface()
+        lemma = t.dictionary_form()
+        if pos[0] == "名詞":
+            if surface in FORMAL_NOUNS:
+                continue
+            if pos[1] in ("非自立可能", "数詞", "接尾辞可能"):
+                continue
+            out.append(lemma)
+        elif pos[0] == "動詞":
+            if pos[1] == "非自立可能":
+                continue
+            if lemma in FUNCTIONAL_VERBS:
+                continue
+            out.append(lemma)
+        elif pos[0] in ("形容詞", "形状詞"):
+            out.append(lemma)
+    return out
+
+
 def sentence_end(sent: str) -> dict:
     """文末の品詞情報。名詞止め・断定・推量の判別材料。"""
     toks = _tok.tokenize(sent, SplitMode.C)
@@ -157,7 +189,10 @@ def has_adversative_particle(sent: str, table: dict) -> str | None:
 
 def analyze(md: str, markers: dict) -> dict:
     out = []
+    heading_window: list[dict] = []
     for line, kind, text in paragraphs(md):
+        if kind == "heading":
+            heading_window = []
         raw_sents = sentences(text)
         sents = [strip_inline(s) for s in raw_sents]
         if not sents:
@@ -171,19 +206,19 @@ def analyze(md: str, markers: dict) -> dict:
             adv_particle = has_adversative_particle(s, markers["conjunction"])
             has_adversative = (lc is not None and lc["kind"] == "adversative") or adv_particle is not None
             cn = content_nouns(s)
+            cw = content_words(s)
             redundant_with_prev = False
-            if idx > 0 and cn:
-                prev_entry = entries[idx - 1]
-                prev_cn = prev_entry["content_nouns"]
-                prev_end_surface = prev_entry["end_surface"]
-                if (
-                    prev_cn
-                    and set(cn).issubset(set(prev_cn))
-                    and end["surface"] is not None
-                    and end["surface"] == prev_end_surface
-                ):
-                    redundant_with_prev = True
-            entries.append({
+            if cw and end["pos"] is not None:
+                for prev in reversed(heading_window[-REDUNDANT_WINDOW:]):
+                    prev_cw = prev["content_words"]
+                    if not prev_cw:
+                        continue
+                    if end["pos"] != prev["end_pos"]:
+                        continue
+                    if set(cw).issubset(set(prev_cw)):
+                        redundant_with_prev = True
+                        break
+            entry = {
                 "index": idx,
                 "text": raw_sents[idx],
                 "length": len(s),
@@ -196,8 +231,12 @@ def analyze(md: str, markers: dict) -> dict:
                 "adversative_particle": adv_particle,
                 "has_adversative": has_adversative,
                 "content_nouns": cn,
+                "content_words": cw,
                 "redundant_with_prev": redundant_with_prev,
-            })
+            }
+            entries.append(entry)
+            if kind != "heading":
+                heading_window.append(entry)
         out.append({
             "line": line,
             "kind": kind,
