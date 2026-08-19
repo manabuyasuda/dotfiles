@@ -85,7 +85,7 @@ description: 日本語文書を段落ごとに分析し、主張・根拠・接�
 - 問い12: 該当する数値がある場合は「単位不明」（該当数値と文番号を付記）、ない場合は「単位あり」とします
 - 問い13: 該当するlist群がある場合は「粒度不揃い」（`list_groups[]`のインデックスを付記）、ない場合は「粒度揃い」とします
 
-判定表を`${TMPDIR:-/tmp}/argument-map-<basename>.md`に、抽出JSONを`${TMPDIR:-/tmp}/argument-map-<basename>.json`に保存します。`${TMPDIR:-/tmp}`はOSの一時ディレクトリです。macOSでは`$TMPDIR`が自動で設定され、それ以外の環境では`/tmp`にフォールバックします。`<basename>`は対象ファイルの拡張子を除いたファイル名です。後の段で参照するため、この段の完了時にWriteで書き出します。
+判定表を`${TMPDIR:-/tmp}/argument-map-<basename>.md`に、抽出JSONを`${TMPDIR:-/tmp}/argument-map-<basename>.json`に保存します。`${TMPDIR:-/tmp}`はOSの一時ディレクトリです。macOSでは`$TMPDIR`が自動で設定され、それ以外の環境では`/tmp`にフォールバックします。`<basename>`は対象ファイルの拡張子を除いたファイル名です。後の段で参照するため、段1の完了時にWriteで書き出します。
 
 ## 4. x-grillingによる質問
 
