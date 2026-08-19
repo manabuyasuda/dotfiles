@@ -14,8 +14,9 @@ Claude Codeから呼び出せるカスタムスキルの一覧です。
 - [x-code-review-static](./x-code-review-static/SKILL.md) — 静的解析ツールを決定論的に実行します。lefthookやCIで実行済みのチェックはスキップします。
 - [x-code-review-git-history](./x-code-review-git-history/SKILL.md) — ホットスポット・書き換え率・Temporal Couplingを分析します。変更規模が最低ラインに満たない場合はスキップします。
 - [x-test-review](./x-test-review/SKILL.md) — 既存のテストファイル（`.test.ts`／`.test.tsx`／`.spec.ts`、テストコードブロックを含む`.md`）を、テスト実装ルールに沿って見直して改善します。
+- [x-argument-map](./x-argument-map/SKILL.md) — 日本語Markdown文書の主張と根拠を段落単位で洗い出し、根拠のない主張や関連の見えない根拠の扱いをユーザーに質問して、完成稿と変更一覧を提示します。ユーザーが明示的に起動したときだけ動作します。
 
-`.md`ファイルの文章品質レビューは `claude/agents/japanese-writing-review/` のサブエージェントが担当します。`format.sh`（PostToolUse hook）から自動起動するほか、「日本語チェック」「writing-review」などの依頼でも起動できます。
+`.md`ファイルの文章品質レビューは `claude/agents/japanese-writing-review/` のサブエージェントが担当します。`format.sh`（PostToolUse hook）から自動起動するほか、「日本語チェック」「writing-review」などの依頼でも起動できます。表記・語彙・文体の床はjapanese-writing-reviewが担い、論の構造の点検はその上にx-argument-mapを重ねて使う想定です。推奨起動順はjapanese-writing-review → x-argument-mapです。
 
 ## Shipping（リモートへの反映）
 
