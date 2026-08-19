@@ -35,6 +35,7 @@ FORMAL_NOUNS = {
 FUNCTIONAL_VERBS = {"する", "なる", "ある", "いる", "できる", "行う", "居る", "為る"}
 REDUNDANT_WINDOW = 5
 SENT_SPLIT = re.compile(r"(?<=[。！？!?])")
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 CODE_FENCE = re.compile(r"^(```|~~~)")
 HEADING = re.compile(r"^#{1,6}\s")
 LIST_ITEM = re.compile(r"^\s*([-*+]|\d+[.)])\s+")
@@ -188,6 +189,7 @@ def has_adversative_particle(sent: str, table: dict) -> str | None:
 
 
 def analyze(md: str, markers: dict) -> dict:
+    md = HTML_COMMENT.sub(lambda m: "\n" * m.group(0).count("\n"), md)
     out = []
     heading_window: list[dict] = []
     for line, kind, text in paragraphs(md):

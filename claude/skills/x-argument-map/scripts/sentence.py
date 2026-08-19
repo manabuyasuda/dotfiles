@@ -33,6 +33,7 @@ import spacy
 import ginza
 
 SENT_SPLIT = re.compile(r"(?<=[。！？!?])")
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 CODE_FENCE = re.compile(r"^(```|~~~)")
 HEADING = re.compile(r"^#{1,6}\s")
 LIST_ITEM = re.compile(r"^\s*([-*+]|\d+[.)])\s+")
@@ -238,26 +239,56 @@ def analyze_sentence(doc_sent) -> dict:
         consecutive.append({"particle": run_particle, "count": run_count, "start_bunsetsu": run_start})
 
     parallel_groups = []
-    conj_children = defaultdict(list)
+    parallel_children = defaultdict(list)
+    doc = doc_sent.doc
+
+    def _is_renyou_chushi(tk):
+        j = tk.i + 1
+        if j < len(doc) and doc[j].orth_ in ("、", ","):
+            return True
+        if j < len(doc) and doc[j].pos_ == "SCONJ" and doc[j].orth_ == "て":
+            k = j + 1
+            if k < len(doc) and doc[k].orth_ in ("、", ","):
+                return True
+        return False
+
     for t in doc_sent:
         if t.dep_ == "conj":
-            conj_children[t.head.i].append(t)
-    for head_i, items in conj_children.items():
+            parallel_children[t.head.i].append(t)
+            continue
+        if t.dep_ == "advcl" and t.pos_ in ("VERB", "ADJ") and t.head.pos_ in PREDICATE_POS and t.head.i != t.i:
+            if _is_renyou_chushi(t):
+                parallel_children[t.head.i].append(t)
+
+    def _item_cases(tk):
+        if tk.pos_ in ("VERB", "ADJ"):
+            cases = set()
+            for ch in tk.children:
+                if ch.dep_ in ("obj", "obl", "nsubj", "nsubj:pass", "iobj"):
+                    for gch in ch.children:
+                        if gch.pos_ == "ADP":
+                            cases.add(gch.orth_)
+            return cases
+        tk_bi = bunsetsu_of.get(tk.i, -1)
+        if tk_bi < 0:
+            return set()
+        cp = case_particle(bspans[tk_bi])
+        return {cp} if cp else set()
+
+    for head_i, items in parallel_children.items():
         head_tok = doc_sent.doc[head_i]
         group = [head_tok] + items
         pos_set = {tk.pos_ for tk in group}
-        case_set = set()
-        for tk in group:
-            tk_bi = bunsetsu_of.get(tk.i, -1)
-            if tk_bi >= 0:
-                cp = case_particle(bspans[tk_bi])
-                case_set.add(cp)
+        cases_per_item = [_item_cases(tk) for tk in group]
+        case_uniform = len({frozenset(c) for c in cases_per_item}) == 1
+        all_cases = sorted({c for s in cases_per_item for c in s})
         parallel_groups.append({
             "head_text": head_tok.orth_,
             "items": [tk.orth_ for tk in group],
             "pos_uniform": len(pos_set) == 1,
-            "case_uniform": len(case_set) == 1,
-            "cases": sorted([c for c in case_set if c is not None]),
+            "case_uniform": case_uniform,
+            "cases": all_cases,
+            "cases_per_item": [sorted(c) for c in cases_per_item],
         })
 
     return {
@@ -273,6 +304,7 @@ def analyze_sentence(doc_sent) -> dict:
 
 
 def analyze(md: str) -> dict:
+    md = HTML_COMMENT.sub(lambda m: "\n" * m.group(0).count("\n"), md)
     out = []
     for line, kind, text in paragraphs(md):
         raw_sents = sentences(text)
