@@ -142,14 +142,20 @@ def content_words(sent: str) -> list[str]:
 
 def predicate_count(sent: str) -> int:
     """文中の述語（動詞・形容詞・形状詞）のlemma数。手順粒度不整合の集計に使う。"""
-    toks = _tok.tokenize(sent, SplitMode.C)
+    toks = list(_tok.tokenize(sent, SplitMode.C))
     n = 0
-    for t in toks:
+    for i, t in enumerate(toks):
         pos = t.part_of_speech()
         if pos[0] == "動詞" and pos[1] != "非自立可能" and t.dictionary_form() not in FUNCTIONAL_VERBS:
             n += 1
         elif pos[0] in ("形容詞", "形状詞"):
             n += 1
+        elif pos[0] == "名詞" and pos[1] == "普通名詞" and pos[2] in ("サ変可能", "サ変形状詞可能"):
+            # Why not: サ変名詞（選択・入力・押下等）は動詞ではなく名詞と判定されるため、
+            # 直後の「する」だけを数えても FUNCTIONAL_VERBS で除外されてしまう。
+            # サ変名詞＋「する」の複合を1述語として数え、連用中止（〜し、〜し、〜する）を正しく集計する。
+            if i + 1 < len(toks) and toks[i + 1].dictionary_form() == "する":
+                n += 1
     return n
 
 
