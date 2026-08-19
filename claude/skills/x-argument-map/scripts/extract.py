@@ -248,7 +248,38 @@ def analyze(md: str, markers: dict) -> dict:
             "hedge_count": sum(len(e["hedges"]) for e in entries),
             "sentences": entries,
         })
-    return {"paragraphs": out}
+    return {"paragraphs": out, "document_kind": _document_kind(out)}
+
+
+def _document_kind(paragraphs_out: list[dict]) -> dict:
+    """全body段落を集計してmanual/essayを推定する。
+
+    - assertive_ratio: body全文数のうち`assertive=true`の比率
+    - hedge_density: body全文数のうち留保表現を含む文の比率
+    - structural_ratio: 全段落のうちheading+listの比率
+
+    assertive_ratio >= 0.9 かつ hedge_density < 0.1 かつ structural_ratio >= 0.4 で
+    `manual`と判定する。evidenceマーカー（「ため」「から」等）は仕様書内の理由説明でも
+    命中してしまい判定材料として信頼できないため使わない。論説文は「〜と考えます」
+    「〜かもしれません」等でhedgeが散在するため、hedge_densityで区別できる。
+    """
+    all_sents = []
+    for p in paragraphs_out:
+        if p["kind"] == "body":
+            all_sents.extend(p["sentences"])
+    n = len(all_sents)
+    assertive_ratio = sum(1 for s in all_sents if s["assertive"]) / n if n else 0.0
+    hedge_density = sum(1 for s in all_sents if s["hedges"]) / n if n else 0.0
+    total_p = len(paragraphs_out)
+    structural_ratio = sum(1 for p in paragraphs_out if p["kind"] in ("heading", "list")) / total_p if total_p else 0.0
+    is_manual = assertive_ratio >= 0.9 and hedge_density < 0.1 and structural_ratio >= 0.4
+    return {
+        "kind": "manual" if is_manual else "essay",
+        "assertive_ratio": round(assertive_ratio, 3),
+        "hedge_density": round(hedge_density, 3),
+        "structural_ratio": round(structural_ratio, 3),
+        "body_sentence_count": n,
+    }
 
 
 def print_outline(result: dict) -> None:
