@@ -1,10 +1,10 @@
 ---
-name: x-argument-map
+name: x-japanese-reasoning-review
 allowed-tools: Read, Write, Bash, Agent
-description: 日本語文書を段落ごとに分析し、主張・根拠・接続・反対の見方を洗い出して、理解しにくい箇所や根拠の薄い主張をユーザーとの対話で書き直します。「何が言いたいのか分からない」「論点を整理して」「主張と根拠を洗い出して」「argument-map」と言われた場合に必ず使います。書き手の意図を推測する用途には使いません。
+description: 日本語文書を段落ごとに分析し、主張・根拠・接続・反対の見方を洗い出して、理解しにくい箇所や根拠の薄い主張をユーザーとの対話で書き直します。「何が言いたいのか分からない」「論点を整理して」「主張と根拠を洗い出して」「reasoning-review」「日本語の推論レビュー」と言われた場合に必ず使います。書き手の意図を推測する用途には使いません。
 ---
 
-表記・語彙・文の書き方はjapanese-writing-reviewが担当し、本スキルは論の構造と文の構造を扱います。段1〜5で論の判定・質問・書き直しを行い、段5の後半で文の指標に該当する箇所も続けて書き直します。推奨する起動順序はjapanese-writing-review → x-argument-mapで、全体の文章が定まってから本スキルを起動してください。
+表記・語彙・文の書き方はjapanese-writing-reviewが担当し、本スキルは論の構造と文の構造を扱います。段1〜5で論の判定・質問・書き直しを行い、段5の後半で文の指標に該当する箇所も続けて書き直します。推奨する起動順序はjapanese-writing-review → x-japanese-reasoning-reviewで、全体の文章が定まってから本スキルを起動してください。
 
 ## 1. 段落と文の構造を抽出する
 
@@ -85,7 +85,7 @@ description: 日本語文書を段落ごとに分析し、主張・根拠・接�
 - 問い12: 該当する数値がある場合は「単位不明」（該当数値と文番号を付記）、ない場合は「単位あり」とします
 - 問い13: 該当するlist群がある場合は「粒度不揃い」（`list_groups[]`のインデックスを付記）、ない場合は「粒度揃い」とします
 
-判定表を`${TMPDIR:-/tmp}/argument-map-<basename>.md`に、抽出JSONを`${TMPDIR:-/tmp}/argument-map-<basename>.json`に保存します。`${TMPDIR:-/tmp}`はOSの一時ディレクトリです。macOSでは`$TMPDIR`が自動で設定され、それ以外の環境では`/tmp`にフォールバックします。`<basename>`は対象ファイルの拡張子を除いたファイル名です。後の段で参照するため、段1の完了時にWriteで書き出します。
+判定表を`${TMPDIR:-/tmp}/japanese-reasoning-<basename>.md`に、抽出JSONを`${TMPDIR:-/tmp}/japanese-reasoning-<basename>.json`に保存します。`${TMPDIR:-/tmp}`はOSの一時ディレクトリです。macOSでは`$TMPDIR`が自動で設定され、それ以外の環境では`/tmp`にフォールバックします。`<basename>`は対象ファイルの拡張子を除いたファイル名です。後の段で参照するため、段1の完了時にWriteで書き出します。
 
 ## 4. x-grillingによる質問
 
