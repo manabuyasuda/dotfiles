@@ -21,6 +21,7 @@ import argparse
 import json
 import re
 import sys
+from collections import deque
 from pathlib import Path
 
 from sudachipy import Dictionary, SplitMode
@@ -34,6 +35,7 @@ FORMAL_NOUNS = {
 }
 FUNCTIONAL_VERBS = {"する", "なる", "ある", "いる", "できる", "行う", "居る", "為る"}
 REDUNDANT_WINDOW = 5
+DEMONSTRATIVE_WINDOW = 3
 SENT_SPLIT = re.compile(r"(?<=[。！？!?])")
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 CODE_FENCE = re.compile(r"^(```|~~~)")
@@ -138,6 +140,19 @@ def content_words(sent: str) -> list[str]:
     return out
 
 
+def predicate_count(sent: str) -> int:
+    """文中の述語（動詞・形容詞・形状詞）のlemma数。手順粒度不整合の集計に使う。"""
+    toks = _tok.tokenize(sent, SplitMode.C)
+    n = 0
+    for t in toks:
+        pos = t.part_of_speech()
+        if pos[0] == "動詞" and pos[1] != "非自立可能" and t.dictionary_form() not in FUNCTIONAL_VERBS:
+            n += 1
+        elif pos[0] in ("形容詞", "形状詞"):
+            n += 1
+    return n
+
+
 def sentence_end(sent: str) -> dict:
     """文末の品詞情報。名詞止め・断定・推量の判別材料。"""
     toks = _tok.tokenize(sent, SplitMode.C)
@@ -188,10 +203,203 @@ def has_adversative_particle(sent: str, table: dict) -> str | None:
     return None
 
 
+def _first_content_noun(text: str) -> str | None:
+    """text の先頭から最初に現れる実質名詞（形式名詞・数詞・接尾辞除外）の表層形。"""
+    toks = _tok.tokenize(text, SplitMode.C)
+    for t in toks:
+        pos = t.part_of_speech()
+        if pos[0] != "名詞":
+            continue
+        surface = t.surface()
+        if surface in FORMAL_NOUNS:
+            continue
+        if pos[1] in ("非自立可能", "数詞", "接尾辞可能"):
+            continue
+        return surface
+    return None
+
+
+def find_demonstratives(sent: str, markers: dict) -> list[dict]:
+    """指示語検出。裸の代名詞（これ・それ等）と連体詞（この・その等）を返す。
+
+    連体詞は直後の実質名詞も抽出する（指示先の候補）。代名詞は常に指示先を
+    要質問扱いにする。前後が文字境界（区切り記号・文頭文末）かで独立判定する。
+    """
+    hits = []
+    boundary = set("、。「」（）()　 \t、,")
+    for w in markers.get("demonstrative_pronoun", []):
+        start = 0
+        while True:
+            pos = sent.find(w, start)
+            if pos < 0:
+                break
+            end = pos + len(w)
+            before_ok = pos == 0 or sent[pos - 1] in boundary
+            after_ok = end >= len(sent) or sent[end] in boundary or sent[end] in "はがをにでとへも・、。"
+            if before_ok and after_ok:
+                hits.append({"surface": w, "kind": "pronoun", "offset": pos, "noun": None})
+            start = pos + 1
+    for w in markers.get("demonstrative_adnominal", []):
+        start = 0
+        while True:
+            pos = sent.find(w, start)
+            if pos < 0:
+                break
+            noun = _first_content_noun(sent[pos + len(w):])
+            if noun:
+                hits.append({"surface": w, "kind": "adnominal", "offset": pos, "noun": noun})
+            start = pos + 1
+    hits.sort(key=lambda h: h["offset"])
+    return hits
+
+
+def is_imperative(sent: str, markers: dict) -> bool:
+    """文末が命令的（〜てください・〜ましょう・〜なさい）かを判定。"""
+    tail = sent.rstrip("。！？!?」）) 　\t")
+    for w in markers.get("imperative_ending", []):
+        if tail.endswith(w):
+            return True
+    return False
+
+
+def has_subject_marker(sent: str) -> bool:
+    """文中に名詞+「は」「が」「こそ」の粗い主格文節があるかを判定する。
+
+    仕様書での主体省略検出に使う。連体修飾内の「が」を除くため、直前トークンが
+    実質名詞（形式名詞除外）である場合のみ真とする。誤検出は許容する（判断は
+    スキル側）。
+    """
+    toks = list(_tok.tokenize(sent, SplitMode.C))
+    for i, t in enumerate(toks):
+        if t.part_of_speech()[0] != "助詞":
+            continue
+        if t.surface() not in ("は", "が", "こそ"):
+            continue
+        if i == 0:
+            continue
+        prev = toks[i - 1]
+        prev_pos = prev.part_of_speech()
+        if prev_pos[0] != "名詞":
+            continue
+        if prev.surface() in FORMAL_NOUNS:
+            continue
+        if prev_pos[1] in ("非自立可能",):
+            continue
+        return True
+    return False
+
+
+def find_conditionals(sent: str, markers: dict) -> list[str]:
+    """条件表現（〜の場合は・〜のときは・〜なら等）のヒット一覧。"""
+    hits = []
+    for w in markers.get("conditional", []):
+        if w in sent:
+            hits.append(w)
+    return hits
+
+
+def has_definition(sent: str, markers: dict) -> bool:
+    """定義パターン（〜とは・〜と呼ぶ・〜を意味する等）を含むか。"""
+    for w in markers.get("definition_pattern", []):
+        if w in sent:
+            return True
+    return False
+
+
+def find_numbers_without_unit(sent: str, markers: dict) -> list[dict]:
+    """数詞トークンで直後トークンが助数詞・接尾辞・単位記号・単位名詞でないものを返す。
+
+    直後が補助記号（句読点・括弧・改行）または文末の場合はラベル・番号扱いとしてスキップする。
+    「問い1」「段5」「L42」のような参照番号は数量表現ではなく、単位不足の検出対象外にする。
+    """
+    toks = list(_tok.tokenize(sent, SplitMode.C))
+    unit_symbols = set("%％°㎏㎜㎝㎞")
+    unit_nouns = set(markers.get("unit_noun", []))
+    hits = []
+    for i, t in enumerate(toks):
+        pos = t.part_of_speech()
+        if not (pos[0] == "名詞" and pos[1] == "数詞"):
+            continue
+        nxt = toks[i + 1] if i + 1 < len(toks) else None
+        if nxt is None:
+            continue
+        npos = nxt.part_of_speech()
+        nsurf = nxt.surface()
+        if npos[0] == "補助記号":
+            continue
+        if npos[0] == "接尾辞":
+            continue
+        if npos[0] == "名詞" and npos[1] in ("助数詞可能", "接尾辞可能"):
+            continue
+        if len(nsurf) == 1 and nsurf in unit_symbols:
+            continue
+        if nsurf in unit_nouns:
+            continue
+        hits.append({"surface": t.surface(), "following": nsurf})
+    return hits
+
+
+def has_conditional_else(text: str, markers: dict) -> bool:
+    """段落全文に対称の分岐（それ以外・そうでない場合等）を含むか。"""
+    for w in markers.get("conditional_else", []):
+        if w in text:
+            return True
+    return False
+
+
+def _first_occurrence(current: list[str], seen: set[str]) -> list[str]:
+    """文書全体で初出の名詞を返す。seenを破壊的に更新する。"""
+    out = []
+    for n in current:
+        if n in seen:
+            continue
+        seen.add(n)
+        out.append(n)
+    return out
+
+
+def _collect_list_groups(out: list[dict]) -> list[dict]:
+    """連続する kind=="list" 段落を束ね、各項目の述語数と分散を返す。"""
+    groups = []
+    i = 0
+    while i < len(out):
+        if out[i]["kind"] != "list":
+            i += 1
+            continue
+        j = i
+        counts = []
+        lines = []
+        items = []
+        while j < len(out) and out[j]["kind"] == "list":
+            for s in out[j]["sentences"]:
+                counts.append(s["predicate_count"])
+                items.append(s["text"])
+            lines.append(out[j]["line"])
+            j += 1
+        if len(counts) >= 2:
+            mx, mn = max(counts), min(counts)
+            dispersion = (mx / mn) if mn > 0 else (float("inf") if mx > 0 else 0.0)
+            groups.append({
+                "line_start": lines[0],
+                "line_end": lines[-1],
+                "item_count": len(counts),
+                "predicate_counts": counts,
+                "max": mx,
+                "min": mn,
+                "dispersion": None if dispersion == float("inf") else round(dispersion, 3),
+                "dispersion_infinite": dispersion == float("inf"),
+                "items": items,
+            })
+        i = j
+    return groups
+
+
 def analyze(md: str, markers: dict) -> dict:
     md = HTML_COMMENT.sub(lambda m: "\n" * m.group(0).count("\n"), md)
     out = []
     heading_window: list[dict] = []
+    recent_content_nouns: deque[list[str]] = deque(maxlen=DEMONSTRATIVE_WINDOW)
+    seen_nouns: set[str] = set()
     for line, kind, text in paragraphs(md):
         if kind == "heading":
             heading_window = []
@@ -209,6 +417,20 @@ def analyze(md: str, markers: dict) -> dict:
             has_adversative = (lc is not None and lc["kind"] == "adversative") or adv_particle is not None
             cn = content_nouns(s)
             cw = content_words(s)
+            pc = predicate_count(s)
+            demos = find_demonstratives(s, markers)
+            recent_flat = [n for nouns in recent_content_nouns for n in nouns]
+            for d in demos:
+                if d["kind"] == "adnominal":
+                    d["resolved"] = d["noun"] in recent_flat
+                else:
+                    d["resolved"] = False
+            imperative = is_imperative(s, markers)
+            subject_marker = has_subject_marker(s)
+            conds = find_conditionals(s, markers)
+            has_def = has_definition(s, markers)
+            nums_wo_unit = find_numbers_without_unit(s, markers)
+            first_occ = _first_occurrence(cn, seen_nouns)
             redundant_with_prev = False
             if cw and end["pos"] is not None:
                 for prev in reversed(heading_window[-REDUNDANT_WINDOW:]):
@@ -234,11 +456,20 @@ def analyze(md: str, markers: dict) -> dict:
                 "has_adversative": has_adversative,
                 "content_nouns": cn,
                 "content_words": cw,
+                "predicate_count": pc,
                 "redundant_with_prev": redundant_with_prev,
+                "demonstratives": demos,
+                "imperative": imperative,
+                "has_subject_marker": subject_marker,
+                "conditionals": conds,
+                "has_definition": has_def,
+                "numbers_without_unit": nums_wo_unit,
+                "first_occurrence_nouns": first_occ,
             }
             entries.append(entry)
             if kind != "heading":
                 heading_window.append(entry)
+            recent_content_nouns.append(cn)
         out.append({
             "line": line,
             "kind": kind,
@@ -246,9 +477,14 @@ def analyze(md: str, markers: dict) -> dict:
             "sentence_count": len(sents),
             "has_evidence_marker": any(e["evidence"] for e in entries),
             "hedge_count": sum(len(e["hedges"]) for e in entries),
+            "has_conditional_else": has_conditional_else(text, markers),
             "sentences": entries,
         })
-    return {"paragraphs": out, "document_kind": _document_kind(out)}
+    return {
+        "paragraphs": out,
+        "document_kind": _document_kind(out),
+        "list_groups": _collect_list_groups(out),
+    }
 
 
 def _document_kind(paragraphs_out: list[dict]) -> dict:
