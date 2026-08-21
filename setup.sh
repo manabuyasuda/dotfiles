@@ -18,6 +18,7 @@ SYMLINKS=(
   "claude/statusline.sh:.claude/statusline.sh"
   "cursor/statusline.sh:.cursor/statusline.sh"
   "claude/skills:.claude/skills"
+  "claude/skills:.cursor/skills"
   "claude/hooks:.claude/hooks"
   "claude/agents:.claude/agents"
   "claude/agents:.cursor/agents"
