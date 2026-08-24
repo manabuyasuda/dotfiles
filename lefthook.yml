@@ -7,3 +7,13 @@ pre-commit:
     check-symlinks:
       glob: "{setup.sh,claude/settings.json}"
       run: bash scripts/check-claude-symlinks.sh
+    codex-agents-drift:
+      glob: "claude/agents/**/SUBAGENT.md"
+      run: |
+        bash scripts/generate-codex-agents.sh >/dev/null
+        if ! git diff --quiet -- codex/agents/ || [ -n "$(git ls-files --others --exclude-standard -- codex/agents/)" ]; then
+          echo "codex/agents/ がSUBAGENT.mdの更新と同期していません。"
+          echo "以下の差分を確認し、git add で同じコミットへ含めてから再実行してください。"
+          git status --short -- codex/agents/
+          exit 1
+        fi
