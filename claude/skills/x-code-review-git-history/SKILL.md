@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-code-review-git-history
 description: git履歴からコードの設計的な不安定さを分析するレビューを実施します。ホットスポットスコア・書き換え率・Temporal Couplingの3つを統合し、変更規模が最低ラインに満たない分析はスキップします。「git履歴を分析して」「ホットスポットを見て」「history review」のように使います。静的解析ツールの実行はx-code-review-static、AIの判断によるレビューはx-code-review-judgmentが担当します。
 context: fork

@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-grill-me
 description: 計画や設計について、共通認識に至り、意思決定ツリーのすべての分岐を解消するまで、ユーザーを徹底的に問い詰める入口スキルです。ユーザーが計画のストレステストを求める場合や、「厳しく問い詰めて（grill me）」と要望した場合に使います。質問の進め方はx-grillingが担います。
 ---

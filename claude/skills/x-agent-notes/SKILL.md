@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-agent-notes
 description: >
   AIエージェントの作業ログをスクリプトで要約し、推奨パターン（次回のエージェントが再利用すると信頼性とトークン効率が上がる手順や事実）を抽出して、ユーザーの承認後にエージェントノートへ記録するスキルです。
