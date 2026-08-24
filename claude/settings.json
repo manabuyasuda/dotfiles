@@ -99,6 +99,7 @@
     "deny": [
       "Read(**/.env*)",
       "Edit(**/.env*)",
+      "Glob(**/.env*)",
       "Bash(cat **/.env*)",
       "Read(~/.ssh/*)",
       "Bash(cat ~/.ssh/*)",
