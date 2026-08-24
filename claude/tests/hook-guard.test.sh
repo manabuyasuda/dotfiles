@@ -54,10 +54,9 @@ _decision() {
   printf '%s' "$out" | jq -r '.hookSpecificOutput.permissionDecision // "none"'
 }
 
-# NETWORK_WRITE 判定の後段（ブランチ判定）まで到達させるため、description に必須項目を入れる。
 _commit_json() {  # $1=cwd
   jq -nc --arg cwd "$1" \
-    '{tool_input:{command:"git commit -m msg",description:"目的:検証 影響:なし 許可:常に 拒否:なし"},cwd:$cwd}'
+    '{tool_input:{command:"git commit -m msg"},cwd:$cwd}'
 }
 _push_json() {    # $1=cwd
   jq -nc --arg cwd "$1" '{tool_input:{command:"git push"},cwd:$cwd}'
@@ -98,31 +97,31 @@ _assert_eq "T3 PR 本文中の git push / main を実コマンドと誤検知し
   "$(_decision "$PUSH_GUARD" "$(jq -nc --arg cwd "$FEATURE_WT" --arg c 'gh pr create --base main --title t --body "see git push to main"' '{tool_input:{command:$c},cwd:$cwd}')")" "none"
 
 # ---------------------------------------------------------------------------
-# T4: 改行を含む command でも後続フィールド（description）がずれない（bash-guard）
-#     bash-guard.sh は command/description/cwd を1回の jq でまとめて取り、NUL 区切り＋
-#     mapfile で分割する。もし read（改行で切れる）で分割すると、改行入り command が1行目で
-#     切れて COMMAND が壊れ（例: "rm foo" が "rm" になり READ へ誤分類）、description も
-#     ずれて読まれる。結果として判定が ask 以外（none や deny）に変わる。
-#     正しく分割できていれば DESTRUCTIVE のまま description も完全に読め、ask になる。
+# T4: 改行を含む command が途中で切れない（bash-guard）
+#     bash-guard.sh は command/cwd を1回の jq でまとめて取り、NUL 区切り＋mapfile で
+#     分割する。もし read（改行で切れる）で分割すると、改行入り command が1行目で
+#     切れて COMMAND が壊れ（例: "rm foo" が "rm" になり READ へ誤分類）、
+#     判定が ask 以外（none）に変わる。
+#     正しく分割できていれば DESTRUCTIVE のまま ask になる。
 #       正: ask / 誤（field-shift）: ask 以外
 # ---------------------------------------------------------------------------
-_multiline_destructive_json() {  # $1=cwd  改行を含む rm（DESTRUCTIVE）+ 完全な description
+_multiline_destructive_json() {  # $1=cwd  改行を含む rm（DESTRUCTIVE）
   jq -nc --arg cwd "$1" --arg c $'rm foo\nrm bar' \
-    '{tool_input:{command:$c,description:"目的:検証 影響:なし 許可:常に 拒否:なし"},cwd:$cwd}'
+    '{tool_input:{command:$c},cwd:$cwd}'
 }
-_assert_eq "T4 改行入り command でも description がずれず ask（field-shift なし）" \
+_assert_eq "T4 改行入り command が切れず ask（field-shift なし）" \
   "$(_decision "$BASH_GUARD" "$(_multiline_destructive_json "$FEATURE_WT")")" "ask"
 
 # ---------------------------------------------------------------------------
-# T5: 改行を含む command でも3番目のフィールド（cwd）がずれない（bash-guard）
+# T5: 改行を含む command でも後続フィールド（cwd）がずれない（bash-guard）
 #     改行入りの git commit を main 作業ツリーで実行。cwd が正しく読めていれば branch=main で
 #     deny になる。もし cwd が field-shift で空になれば pwd（テスト実行ディレクトリ）に
 #     フォールバックし保護判定に入らず deny 以外になってしまう。
 #       正: deny（cwd=main が読めている） / 誤（field-shift）: deny 以外
 # ---------------------------------------------------------------------------
-_multiline_commit_json() {  # $1=cwd  改行を含む git commit + 完全な description
+_multiline_commit_json() {  # $1=cwd  改行を含む git commit
   jq -nc --arg cwd "$1" --arg c $'git commit -m a\ngit commit -m b' \
-    '{tool_input:{command:$c,description:"目的:検証 影響:なし 許可:常に 拒否:なし"},cwd:$cwd}'
+    '{tool_input:{command:$c},cwd:$cwd}'
 }
 _assert_eq "T5 改行入り command でも cwd がずれず main を deny（field-shift なし）" \
   "$(_decision "$BASH_GUARD" "$(_multiline_commit_json "$MAIN_WT")")" "deny"

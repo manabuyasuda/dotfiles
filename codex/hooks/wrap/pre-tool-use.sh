@@ -23,8 +23,4 @@ fi
 
 INPUT=$(cat)
 
-if [[ "$HOOK_NAME" == "bash-guard.sh" ]]; then
-  INPUT=$(cursor_io_shell_inject_description_fallback "$INPUT")
-fi
-
 printf '%s' "$INPUT" | bash "$HOOK" 2>/dev/null || true

@@ -29,6 +29,11 @@
 # =============================================================================
 
 INPUT=$(cat)
+
+# Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
+# shellcheck source=../lib/cursor-compat.sh
+source "$(dirname "$0")/../lib/cursor-compat.sh"
+exit_if_cursor_payload "$INPUT"
 # MultiEdit は file_path、Write は path を使う場合があるため両方を試みる
 file=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // ""')
 

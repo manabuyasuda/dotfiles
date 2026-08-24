@@ -26,6 +26,11 @@ _deny() {
 }
 
 INPUT=$(cat)
+
+# Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
+# shellcheck source=../lib/cursor-compat.sh
+source "$(dirname "$0")/../lib/cursor-compat.sh"
+exit_if_cursor_payload "$INPUT"
 FILE_PATH=$(jq -r '.tool_input.file_path // ""' <<< "$INPUT")
 
 # .md 以外のファイルは Mermaid を含まないのでスキップ

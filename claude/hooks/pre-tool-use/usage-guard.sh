@@ -42,6 +42,11 @@
 command -v jq &>/dev/null || exit 0
 
 input=$(cat)
+
+# Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
+# shellcheck source=../lib/cursor-compat.sh
+source "$(dirname "$0")/../lib/cursor-compat.sh"
+exit_if_cursor_payload "$input"
 session_id=$(printf '%s' "$input" | jq -r '.session_id // empty')
 [ -z "$session_id" ] && exit 0
 

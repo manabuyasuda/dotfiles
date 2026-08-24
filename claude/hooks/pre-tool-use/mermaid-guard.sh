@@ -22,6 +22,11 @@ _deny() {
 }
 
 INPUT=$(cat)
+
+# Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
+# shellcheck source=../lib/cursor-compat.sh
+source "$(dirname "$0")/../lib/cursor-compat.sh"
+exit_if_cursor_payload "$INPUT"
 # tool_name / file_path / new_string / content を1回の jq でまとめて取得する
 # （同一 stdin を最大4回 parse しない）。new_string / content は確実に改行を含むため、
 # read（改行で切れる）ではなく NUL 区切り＋mapfile で分割する。
