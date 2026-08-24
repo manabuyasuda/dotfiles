@@ -148,7 +148,15 @@ Why（なぜ）と判断・トレードオフを書きます。When（タイム�
 
 ## Step 6: Footerを書く
 
-毎コミット`Co-authored-by: Claude <noreply@anthropic.com>`を付けます。GitHub上では共著者として表示されます。
+毎コミット、実行中のツールに応じたCo-authored-byを1行付けます。GitHub上では共著者として表示されます。
+
+| 実行中のツール | Co-authored-by行 |
+|---|---|
+| Claude Code | `Co-authored-by: Claude <noreply@anthropic.com>` |
+| Codex | `Co-authored-by: Codex <noreply@openai.com>` |
+| Cursor | `Co-authored-by: Cursor Agent <noreply@cursor.com>` |
+
+自分がどのツール上で動いているかを判定してから、対応する1行だけを選びます。複数行は入れません。
 
 仕様・RFC・issueなど根拠となる外部情報はURLやissue番号でFooterに記載します。
 
@@ -173,7 +181,7 @@ x-commitスキルがステージングし直す前提で計画を作ります。
 <body>
 
 <任意の Footer 行（Closes #N など）>
-Co-authored-by: Claude <noreply@anthropic.com>
+Co-authored-by: <Step 6の対応表から実行中のツールに応じた1行>
 ```
 
 ### Commit 2（分割がある場合）
@@ -188,7 +196,7 @@ Co-authored-by: Claude <noreply@anthropic.com>
 
 <body>
 
-Co-authored-by: Claude <noreply@anthropic.com>
+Co-authored-by: <Step 6の対応表から実行中のツールに応じた1行>
 ```
 ````
 
@@ -242,7 +250,7 @@ fix(auth): 期限切れリフレッシュトークン時のクラッシュを修
 
 Closes #1234
 
-Co-authored-by: Claude <noreply@anthropic.com>
+Co-authored-by: <Step 6の対応表から実行中のツールに応じた1行>
 ```
 
 typeとscopeで正しく分類しています。Subjectが「何を」を端的に表しています。Bodyが「なぜ」と「判断」を説明しています。diffには現れない情報だけを書いています。
@@ -265,7 +273,7 @@ fix(claude): branch-guardがGit管理外への書き込みを通すように
 
 Closes #120
 
-Co-authored-by: Claude <noreply@anthropic.com>
+Co-authored-by: <Step 6の対応表から実行中のツールに応じた1行>
 ```
 
 Subjectは主目的（Git管理外への書き込みを通す）だけに絞り、副次的な文字化け修正はBody末尾に追記しています。Bodyの主語は内部処理ではなく観察できる動作です。挙動は箇条書きで並列に並べ、通すケース・ブロックするケース・境界ケースが一覧で把握できます。略語（「リポ」など）を使わず、複数の意味に取れる「リポ外」も「Git管理対象外」と一意に書いています。
