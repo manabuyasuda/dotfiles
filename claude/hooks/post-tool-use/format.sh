@@ -42,6 +42,11 @@
 #        $FORMATTER（session-start.sh が設定した環境変数、未設定時は自動検出）
 # =============================================================================
 INPUT=$(cat)
+
+# Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
+# shellcheck source=../lib/cursor-compat.sh
+source "$(dirname "$0")/../lib/cursor-compat.sh"
+exit_if_cursor_payload "$INPUT"
 file=$(jq -r '.tool_input.file_path // ""' <<<"$INPUT")
 agent_id=$(jq -r '.agent_id // ""' <<<"$INPUT")
 

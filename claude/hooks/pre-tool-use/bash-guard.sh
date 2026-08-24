@@ -3,21 +3,19 @@
 # pre-tool-use/bash-guard.sh — Bash ツール実行前の安全確認
 # =============================================================================
 # フック  : PreToolUse（Bash）
-# 役割   : description の記載必須項目をリスクレベル別に検証し、
+# 役割   : コマンドのリスクレベルを classify() で機械判定し、
 #          通過・ユーザー確認（ask）・拒否（deny）を判定する。
-#          リスクレベルは classify() が機械的に判定する。
+#          description は判定に使わない。Cursor CLI の preToolUse ペイロードには
+#          description が存在せず、記載必須にするとエージェントに修正手段のない
+#          恒久 deny になるため（Why not: description プロトコルは除去済み）。
 #
 # リスク階層による判定:
-#   READ         : 状態を変えない（ls/cat/grep/git status/git diff/git log 等）
-#                  → description のみ必須
-#   WRITE        : ローカル状態を変える（mkdir/touch/mv/cp/sed -i/リダイレクト 等）
-#                  → 目的: + 影響: 必須
+#   READ         : 状態を変えない（ls/cat/grep/git status/git diff/git log 等）→ 通過
+#   WRITE        : ローカル状態を変える（mkdir/touch/mv/cp/sed -i/リダイレクト 等）→ 通過
 #   INSTALL      : 依存追加（npm install/pnpm add/pip install/brew install 等）
-#                  → 目的: + 影響: + 許可: + 拒否: 必須 + ユーザー確認（サプライチェーン攻撃のリスク）
-#   NETWORK_WRITE: 外部状態を変える（git push/gh pr merge/gh api 書き込み 等）
-#                  → 目的: + 影響: + 許可: + 拒否: 必須 + ユーザー確認
-#   DESTRUCTIVE  : 取り返しがつかない（rm/git reset --hard/git push --force 等）
-#                  → 目的: + 影響: + 許可: + 拒否: 必須 + ユーザー確認
+#                  → ユーザー確認（サプライチェーン攻撃のリスク）
+#   NETWORK_WRITE: 外部状態を変える（git push/gh pr merge/gh api 書き込み 等）→ ユーザー確認
+#   DESTRUCTIVE  : 取り返しがつかない（rm/git reset --hard/git push --force 等）→ ユーザー確認
 #
 # 個別ルール（階層判定の後に適用）:
 #   - バックスラッシュ改行（継続行）を含むコマンドは deny
@@ -35,7 +33,7 @@
 # 終了コード:
 #   0 → 通過（READ / WRITE）または ask / deny JSON を出力して終了
 #
-# 入力 : stdin の JSON（tool_input.command / tool_input.description）
+# 入力 : stdin の JSON（tool_input.command）
 # 出力 : stdout の JSON（permissionDecision: "ask" または "deny"）
 # =============================================================================
 
@@ -44,20 +42,25 @@ HOOKS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "$HOOKS_DIR/config.sh"
 
 INPUT=$(cat)
-# command / description / cwd を1回の jq でまとめて取得する（同一 stdin を3回 parse しない）。
-# command/description は改行を含み得るため、read（改行で切れる）ではなく NUL 区切り＋mapfile で
+
+# Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
+# shellcheck source=../lib/cursor-compat.sh
+source "$(dirname "$0")/../lib/cursor-compat.sh"
+exit_if_cursor_payload "$INPUT"
+
+# command / cwd を1回の jq でまとめて取得する（同一 stdin を2回 parse しない）。
+# command は改行を含み得るため、read（改行で切れる）ではなく NUL 区切り＋mapfile で
 # 分割する。各フィールドを NUL 終端して連結し（join + 末尾 NUL）、末尾要素のズレを防ぐ。
 # コミット先のブランチは「いま作業しているディレクトリ（worktree）」で判定する。
 # CLAUDE_PROJECT_DIR は worktree 切り替えに追従せず起動時のプロジェクトルートを指したままなので、
 # worktree 上での git commit / git merge を誤って保護ブランチ扱いしてしまう。
 # Claude Code が hook 入力で渡す .cwd（worktree に追従する）を使い、空のときだけ pwd にフォールバックする。
 mapfile -d '' -t _fields < <(
-  jq -j '[.tool_input.command // "", .tool_input.description // "", .cwd // ""]
+  jq -j '[.tool_input.command // "", .cwd // ""]
          | join("\u0000") + "\u0000"' <<<"$INPUT"
 )
 COMMAND="${_fields[0]:-}"
-DESCRIPTION="${_fields[1]:-}"
-CWD="${_fields[2]:-}"
+CWD="${_fields[1]:-}"
 
 # 引用符内の文字列を除去してパターンマッチングの誤検知を防ぐ
 # （例: grep "git push" が git push コマンドとして誤検知されることを防ぐ）
@@ -147,7 +150,7 @@ classify() {
 
 LEVEL=$(classify "$COMMAND_UNQUOTED")
 
-# --- READ は description のみで通過（過剰な要求をしない）---
+# --- READ は通過（過剰な要求をしない）---
 if [ "$LEVEL" = "READ" ]; then
   exit 0
 fi
@@ -155,24 +158,6 @@ fi
 # --- バックスラッシュ改行（継続行）→ deny ---
 if printf '%s' "$COMMAND" | grep -qE '\\$'; then
   _deny "ERROR: バックスラッシュ改行（継続行）が含まれています。WHY: allow パターンの glob は改行文字にマッチしないため、同じような承認プロンプトが何度も発生しやすいです。FIX: コマンドからバックスラッシュを削除して1行に書き直してください。"
-fi
-
-# --- WRITE 以上は「目的:」「影響:」必須 ---
-if ! echo "$DESCRIPTION" | grep -qE '目的[[:space:]]*[:：]'; then
-  _deny "ERROR: [$LEVEL] description に目的が記載されていません。WHY: 状態を変える操作は「なぜ実行する必要があるのか」が必要です。FIX: 「目的:〜のため」を追加してください。"
-fi
-if ! echo "$DESCRIPTION" | grep -qE '影響[[:space:]]*[:：]'; then
-  _deny "ERROR: [$LEVEL] description に影響範囲が記載されていません。WHY: 影響先が不明だとユーザーが Yes/No を判断できません。FIX: 「影響:origin/main の履歴上書き」「影響:node_modules 配下を全追加」のように対象を明記してください。"
-fi
-
-# --- INSTALL / NETWORK_WRITE / DESTRUCTIVE は「許可:」「拒否:」必須 ---
-if [ "$LEVEL" = "INSTALL" ] || [ "$LEVEL" = "NETWORK_WRITE" ] || [ "$LEVEL" = "DESTRUCTIVE" ]; then
-  if ! echo "$DESCRIPTION" | grep -qE '許可[[:space:]]*[:：]'; then
-    _deny "ERROR: [$LEVEL] description に許可条件が記載されていません。WHY: ユーザーが Yes/No を判断するための基準が必要です。FIX: 「許可:〜の場合」を追加してください。"
-  fi
-  if ! echo "$DESCRIPTION" | grep -qE '拒否[[:space:]]*[:：]'; then
-    _deny "ERROR: [$LEVEL] description に拒否条件が記載されていません。WHY: ユーザーが Yes/No を判断するための基準が必要です。FIX: 「拒否:〜の場合」を追加してください。"
-  fi
 fi
 
 # --- 個別ルール: 保護ブランチ上での git commit → deny ---

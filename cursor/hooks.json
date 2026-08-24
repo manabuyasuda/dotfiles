@@ -27,15 +27,14 @@
         "command": "./hooks/adapters/check-gh-account.sh",
         "timeout": 5,
         "failClosed": false
+      },
+      {
+        "command": "./hooks/adapters/bash-guard.sh",
+        "timeout": 10,
+        "failClosed": false
       }
     ],
     "preToolUse": [
-      {
-        "command": "./hooks/adapters/bash-guard.sh",
-        "matcher": "Shell",
-        "timeout": 10,
-        "failClosed": false
-      },
       {
         "command": "./hooks/adapters/branch-guard.sh",
         "matcher": "Write",

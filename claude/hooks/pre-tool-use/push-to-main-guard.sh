@@ -21,6 +21,11 @@ HOOKS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "$HOOKS_DIR/config.sh"
 
 INPUT=$(cat)
+
+# Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
+# shellcheck source=../lib/cursor-compat.sh
+source "$(dirname "$0")/../lib/cursor-compat.sh"
+exit_if_cursor_payload "$INPUT"
 # command / cwd を1回の jq でまとめて取得する（同一 stdin を2回 parse しない）。
 # command は改行を含み得るため、read（改行で切れる）ではなく NUL 区切り＋mapfile で分割する。
 # 各フィールドを NUL 終端して連結し、末尾要素のズレを防ぐ。

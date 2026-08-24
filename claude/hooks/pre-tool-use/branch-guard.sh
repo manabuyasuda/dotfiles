@@ -28,6 +28,11 @@ _deny() {
 }
 
 input="$(cat)"
+
+# Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
+# shellcheck source=../lib/cursor-compat.sh
+source "$(dirname "$0")/../lib/cursor-compat.sh"
+exit_if_cursor_payload "$input"
 file_path="$(echo "$input" | jq -r '.tool_input.file_path // .tool_input.path // empty')"
 
 # file_path が取れない場合は判定対象がないため通過させる。

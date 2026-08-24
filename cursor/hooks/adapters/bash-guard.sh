@@ -2,7 +2,7 @@
 # =============================================================================
 # adapters/bash-guard.sh — bash-guard の Cursor アダプタ
 # =============================================================================
-# イベント : preToolUse（matcher: Shell。description は beforeShellExecution に無い）
+# イベント : preToolUse（matcher: Shell）
 # 本体     : claude/hooks/pre-tool-use/bash-guard.sh
 # =============================================================================
 
@@ -13,9 +13,6 @@ LIB_DIR="$(cd "$(dirname "$0")/../lib" && pwd)"
 source "$LIB_DIR/cursor-io.sh"
 
 INPUT=$(cat)
-
-# Cursor の Shell フックでは description が空で届くことがある。高リスク操作だけ ask へ回す。
-INPUT=$(cursor_io_shell_inject_description_fallback "$INPUT")
 
 CLAUDE_HOOK="$(cursor_io_claude_pre_tool_use_hook bash-guard.sh)"
 
