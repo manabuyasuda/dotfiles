@@ -97,10 +97,8 @@
       "Skill(x-*)"
     ],
     "deny": [
-      "Glob(**/.env*)",
       "Read(**/.env*)",
       "Edit(**/.env*)",
-      "Write(**/.env*)",
       "Bash(cat **/.env*)",
       "Read(~/.ssh/*)",
       "Bash(cat ~/.ssh/*)",
@@ -147,7 +145,7 @@
     ],
     "disableBypassPermissionsMode": "disable"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "fable",
   "hooks": {
     "SessionStart": [
       {
