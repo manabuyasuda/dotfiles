@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-code-review-static
 description: 静的解析ツールによる決定論的なコードレビューを実施します。リポジトリの設定ファイルから使えるツールを検出して実行し、lefthook・CIで実行済みのチェックはスキップします。「静的解析して」「ツールでチェックして」「static review」のように使います。AIの判断によるレビューはx-code-review-judgment、git履歴の分析はx-code-review-git-historyが担当します。
 context: fork

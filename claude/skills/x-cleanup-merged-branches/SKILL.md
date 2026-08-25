@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-cleanup-merged-branches
 description: マージ済みのローカル・リモートブランチを整理するスキル。「ブランチ掃除」「マージ済みブランチを削除」「ブランチ整理」「gh poiを実行」「不要なブランチを片付けて」「リモートのブランチも消したい」「mainだけ残して」のような依頼で必ず使う。gh-poi拡張がインストール済みであることを前提とする。mainなどベースブランチは絶対に削除しない。他のworktreeがチェックアウトしているブランチも削除しない。
 allowed-tools:

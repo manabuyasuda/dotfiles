@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-code-review-judgment
 description: AIの判断が必要なコードレビューを実施します。Fowlerのコードスメル・プロジェクト規約・shallow module検出・テスタビリティのStandards軸と、変更の意図と実装の一致を確認するSpec軸の2軸で評価します。「レビューして」「コードレビューして」「judgment review」のように使います。静的解析ツールの実行はx-code-review-static、git履歴の分析はx-code-review-git-historyが担当します。
 context: fork

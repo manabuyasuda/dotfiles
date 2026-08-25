@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-figma-extract
 description: >
   Figma MCPから実装に必要なデータを取得し、プロジェクトのCSSフレームワークに合わせてトークンを引き当て、マッピングファイルに記録するスキルです。

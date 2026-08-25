@@ -1,248 +1,39 @@
 #!/usr/bin/env bash
 # =============================================================================
-# session-start.sh — セッション開始時の環境検証とコンテキスト提供
+# session-start.sh — セッション開始時の初期化確認
 # =============================================================================
 # フック  : SessionStart（セッション開始時に1回だけ実行）
-# 役割   : エージェントが作業を始める前に現在の環境状態を把握させる。
-#          3つの情報を提供する:
-#            1. 開発ツールの検出（フォーマッター・リンター・テストランナーなど）
-#            2. $CLAUDE_ENV_FILE への環境変数の書き出し（後続フックが参照）
-#            3. git の現在状態（ブランチ・直近コミット・未コミット変更）
+# 役割   : プロジェクトが未初期化（package.json があるのに node_modules がない）の
+#          場合だけ、その事実と git worktree かどうかをエージェントへ伝える。
+#          対応（依存インストール・gitignored ファイルの用意など）は受け取った
+#          エージェント側が判断する。
 #
-# 出力:
-#   stdout   → Claude のコンテキストに注入される（エージェントが読む）
-#   $CLAUDE_ENV_FILE → 後続フック（post-tool-use/format.sh 等）が source して使う環境変数ファイル
+# 出力: stdout → Claude のコンテキストに注入される（未初期化のときだけ出力する）
 #
-# ユーザーへの視覚通知について:
-#   Claude Code は起動時に TUI（raw mode で画面全体を制御）になるため、SessionStart の
-#   stdout/stderr はターミナルに直接表示されない。確定的にユーザーへ知らせる手段は
-#   現状の hook の仕組みにはない（macOS 通知は環境依存のため採用しない）。
-#   ここでの出力はあくまでメインエージェントのコンテキストに注入され、ユーザーが
-#   何か入力した時点でエージェントが判断して案内・サブエージェント起動を行う前提。
+# かつてこの hook が担っていた処理は、以下の理由で削除した（実測で中央値4.5秒・
+# 最大約10秒かかり、timeout 10秒に到達していたため）:
+#   - 開発ツール検出と $CLAUDE_ENV_FILE への書き出し
+#     → 参照していた format.sh / install.sh / test.sh は自力検出フォールバックを
+#       持つため、検出ロジックを読み手側へ一本化した
+#   - git 状態（ブランチ・直近コミット・未コミット変更）の表示
+#     → Claude Code 本体が gitStatus を自動注入するため冗長
+#   - gh 未認証・Node 不在の警告
+#     → gh 未認証は実行時に check-gh-account.sh が検出する
 #
 # 終了コード: 常に 0（ブロックしない。情報提供のみ）
-#
-# ツール検出の優先順位:
-#   ローカル（node_modules/.bin/）→ グローバル（PATH）の順で検索する。
-#   プロジェクトローカルのツールを優先することで、グローバルバージョンとの
-#   食い違いを防ぐ。
 # =============================================================================
 
-# $CLAUDE_ENV_FILE が設定されている場合のみ環境変数を書き出す。
-# 未設定時はスキップ（後続フックに渡す変数がないだけで動作には影響しない）。
-_env() { [ -n "$CLAUDE_ENV_FILE" ] && echo "$1" >> "$CLAUDE_ENV_FILE"; }
-
-
-# ツールをローカル → グローバルの順で検索し、見つかった場所（"local"/"global"）を返す。
-# 見つからない場合は空文字を返す。
-_find_tool() {
-  if [ -x "node_modules/.bin/$1" ]; then echo "local"
-  elif command -v "$1" &>/dev/null; then echo "global"
-  else echo ""
+# 初期化の確認: package.json があるのに node_modules がなければ未初期化と判定する
+if [ -f "package.json" ] && [ ! -d "node_modules" ]; then
+  GIT_DIR=$(git rev-parse --git-dir 2>/dev/null || echo "")
+  if echo "$GIT_DIR" | grep -q "/worktrees/"; then
+    WORKTREE_NOTE="このディレクトリは git worktree です。"
+  else
+    WORKTREE_NOTE=""
   fi
-}
-
-echo "=== 環境・プロジェクト設定 ==="
-
-# Node.js
-if command -v node &>/dev/null; then
-  echo "Node: $(node --version)"
-  _env "export NODE_AVAILABLE=true"
-else
-  echo "WARNING: Node.js が見つかりません"
-  _env "export NODE_AVAILABLE=false"
-fi
-
-# パッケージマネージャー（packageManager フィールド → lock file の優先順で検出）
-pkg_mgr=""
-if command -v node &>/dev/null && [ -f "package.json" ]; then
-  pkg_mgr=$(node -e "try{const p=require('./package.json');console.log((p.packageManager||'').split('@')[0])}catch(e){}" 2>/dev/null)
-fi
-if [ -z "$pkg_mgr" ]; then
-  if   [ -f "pnpm-lock.yaml" ];                   then pkg_mgr="pnpm"
-  elif [ -f "yarn.lock" ];                         then pkg_mgr="yarn"
-  elif [ -f "bun.lockb" ] || [ -f "bun.lock" ];   then pkg_mgr="bun"
-  else pkg_mgr="npm"
-  fi
-fi
-case "$pkg_mgr" in
-  pnpm) echo "Package manager: pnpm $(pnpm --version 2>/dev/null || echo '(unknown)')" ;;
-  yarn) echo "Package manager: yarn $(yarn --version 2>/dev/null || echo '(unknown)')" ;;
-  bun)  echo "Package manager: bun $(bun --version 2>/dev/null || echo '(unknown)')"  ;;
-  *)    echo "Package manager: npm $(npm --version 2>/dev/null || echo '(unknown)')"  ; pkg_mgr="npm" ;;
-esac
-_env "export PKG_MANAGER=$pkg_mgr"
-
-# gh CLI
-if gh auth status &>/dev/null; then
-  _env "export GH_AUTH=true"
-else
-  echo "WARNING: gh CLI が未認証です。gh auth login を実行してください"
-  _env "export GH_AUTH=false"
-fi
-
-# フォーマッター（biome は lint も兼ねるため優先）
-if [ -n "$(_find_tool biome)" ]; then
-  echo "Formatter: biome ($(_find_tool biome))"
-  _env "export FORMATTER=biome"
-elif [ -n "$(_find_tool oxfmt)" ]; then
-  echo "Formatter: oxfmt ($(_find_tool oxfmt))"
-  _env "export FORMATTER=oxfmt"
-elif [ -n "$(_find_tool prettier)" ]; then
-  echo "Formatter: prettier ($(_find_tool prettier))"
-  _env "export FORMATTER=prettier"
-else
-  echo "Formatter: (not found)"
-  _env "export FORMATTER=none"
-fi
-
-# リンター
-if [ -n "$(_find_tool biome)" ]; then
-  echo "Linter: biome ($(_find_tool biome))"
-  _env "export LINTER=biome"
-elif [ -n "$(_find_tool oxlint)" ]; then
-  echo "Linter: oxlint ($(_find_tool oxlint))"
-  _env "export LINTER=oxlint"
-elif [ -n "$(_find_tool eslint)" ]; then
-  echo "Linter: eslint ($(_find_tool eslint))"
-  _env "export LINTER=eslint"
-else
-  echo "Linter: (not found)"
-  _env "export LINTER=none"
-fi
-
-# マークアップ・CSS リンター
-if [ -n "$(_find_tool markuplint)" ]; then
-  echo "Markuplint: yes ($(_find_tool markuplint))"; _env "export MARKUPLINT=true"
-else
-  _env "export MARKUPLINT=false"
-fi
-if [ -n "$(_find_tool stylelint)" ]; then
-  echo "Stylelint: yes ($(_find_tool stylelint))"; _env "export STYLELINT=true"
-else
-  _env "export STYLELINT=false"
-fi
-
-# テストランナー
-if [ -n "$(_find_tool vitest)" ]; then
-  echo "Test runner: vitest ($(_find_tool vitest))"; _env "export TEST_RUNNER=vitest"
-elif [ -n "$(_find_tool jest)" ]; then
-  echo "Test runner: jest ($(_find_tool jest))"; _env "export TEST_RUNNER=jest"
-else
-  echo "Test runner: (not found)"; _env "export TEST_RUNNER=none"
-fi
-
-# テストユーティリティ
-test_tools=""
-if [ -d "node_modules/@testing-library" ];                                        then test_tools="${test_tools} @testing-library"; _env "export TESTING_LIBRARY=true";  else _env "export TESTING_LIBRARY=false"; fi
-if [ -d "node_modules/@playwright/test" ] || [ -x "node_modules/.bin/playwright" ]; then test_tools="${test_tools} playwright";     _env "export PLAYWRIGHT=true";       else _env "export PLAYWRIGHT=false";      fi
-if [ -d "node_modules/msw" ];                                                     then test_tools="${test_tools} msw";             _env "export MSW=true";              else _env "export MSW=false";            fi
-if [ -d "node_modules/@storybook/core" ] || [ -d "node_modules/storybook" ] || [ -d ".storybook" ]; then test_tools="${test_tools} storybook"; _env "export STORYBOOK=true"; else _env "export STORYBOOK=false"; fi
-if [ -d "node_modules/cypress" ] || [ -x "node_modules/.bin/cypress" ];           then test_tools="${test_tools} cypress";         _env "export CYPRESS=true";          else _env "export CYPRESS=false";        fi
-if [ -d "node_modules/axe-core" ] || [ -d "node_modules/jest-axe" ];              then test_tools="${test_tools} axe";             _env "export AXE=true";              else _env "export AXE=false";            fi
-[ -n "$test_tools" ] && echo "Test utilities:${test_tools}"
-
-# TypeScript
-if [ -f "tsconfig.json" ]; then
-  echo "TypeScript: yes"; _env "export TYPESCRIPT=true"
-else
-  echo "TypeScript: no";  _env "export TYPESCRIPT=false"
-fi
-
-# モノレポ
-monorepo="none"
-if   [ -f "pnpm-workspace.yaml" ]; then monorepo="pnpm-workspaces"
-elif [ -f "turbo.json" ];           then monorepo="turborepo"
-elif [ -f "lerna.json" ];           then monorepo="lerna"
-elif command -v node &>/dev/null && [ -f "package.json" ]; then
-  has_ws=$(node -e "try{const p=require('./package.json');console.log(!!p.workspaces)}catch(e){console.log(false)}" 2>/dev/null)
-  [ "$has_ws" = "true" ] && monorepo="yarn-workspaces"
-fi
-[ "$monorepo" != "none" ] && echo "Monorepo: $monorepo"
-_env "export MONOREPO=$monorepo"
-
-# コード品質・解析ツール
-quality_tools=""
-if [ -n "$(_find_tool react-doctor)" ];  then quality_tools="${quality_tools} react-doctor";       _env "export REACT_DOCTOR=true";  else _env "export REACT_DOCTOR=false";  fi
-if [ -n "$(_find_tool depcruise)" ];     then quality_tools="${quality_tools} dependency-cruiser"; _env "export DEPCRUISER=true";    else _env "export DEPCRUISER=false";    fi
-if [ -n "$(_find_tool type-coverage)" ]; then quality_tools="${quality_tools} type-coverage";      _env "export TYPE_COVERAGE=true"; else _env "export TYPE_COVERAGE=false"; fi
-if [ -n "$(_find_tool lhci)" ];          then quality_tools="${quality_tools} lighthouse-ci";      _env "export LIGHTHOUSE_CI=true"; else _env "export LIGHTHOUSE_CI=false"; fi
-if [ -n "$(_find_tool semgrep)" ];       then quality_tools="${quality_tools} semgrep";            _env "export SEMGREP=true";       else _env "export SEMGREP=false";       fi
-if [ -n "$(_find_tool socket)" ];        then quality_tools="${quality_tools} socket";             _env "export SOCKET=true";        else _env "export SOCKET=false";        fi
-[ -n "$quality_tools" ] && echo "Quality tools:${quality_tools}"
-
-# --- セッション復帰コンテキスト ---
-BRANCH=$(git branch --show-current 2>/dev/null) || BRANCH=""
-if [ -z "$BRANCH" ]; then
-  echo "WARNING: detached HEAD 状態です。ブランチを作成してから作業してください"
-else
-  echo ""
-  echo "ブランチ: ${BRANCH}"
-fi
-
-echo ""
-echo "=== 直近のコミット ==="
-git log --oneline -5 2>/dev/null || echo "(git リポジトリではありません)"
-
-UNCOMMITTED=$(git status --porcelain 2>/dev/null | head -5)
-if [ -n "$UNCOMMITTED" ]; then
-  echo ""
-  echo "=== 未コミット変更あり ==="
-  echo "$UNCOMMITTED"
-fi
-
-# --- worktree検出と初期化サブエージェントの起動指示 ---
-# 現在のディレクトリがgit worktree（メインworktreeではない）で、かつ未初期化
-# （node_modules がない等）の場合に worktree-init サブエージェントの起動を促す。
-#
-# 注意: 以下の echo はすべて stdout への出力で、Claude のコンテキストにのみ注入される。
-# ターミナルにはリアルタイムには表示されない。Claude Code は起動時に raw mode で
-# 画面全体を制御する TUI のため、hook の stdout/stderr 出力は上書きされて視認できない。
-# ユーザーへの確定的な視覚通知は現状の hook の仕組みでは難しいため、メインエージェントが
-# 初期化対応を判断する目的でのみコンテキスト注入を行う（ユーザーがプロンプトに何か
-# 打った時点で Claude がコンテキストを参照し、必要なら通知や worktree-init 起動を行う）。
-GIT_DIR=$(git rev-parse --git-dir 2>/dev/null || echo "")
-if echo "$GIT_DIR" | grep -q "/worktrees/"; then
-  NEEDS_INIT="false"
-  # package.json があるのに node_modules がなければ未初期化と判断
-  if [ -f "package.json" ] && [ ! -d "node_modules" ]; then
-    NEEDS_INIT="true"
-  fi
-  # メインworktreeに .envrc があり、現worktreeにない場合も未初期化扱い
-  MAIN_REPO=$(dirname "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null || echo "")
-  if [ -n "$MAIN_REPO" ] && [ -f "$MAIN_REPO/.envrc" ] && [ ! -f ".envrc" ]; then
-    NEEDS_INIT="true"
-  fi
-
-  if [ "$NEEDS_INIT" = "true" ]; then
-    echo ""
-    echo "=== worktree初期化が必要です ==="
-    echo "現在のディレクトリは git worktree ですが、依存パッケージや gitignored ファイル（.envrc等）がそろっていません。"
-    echo "worktree-init サブエージェントを起動して初期化を任せてください（gitignoredファイルのコピーと依存インストールを実行します）。"
-  fi
-
-  # --- 計画ファイル（plan/<branch>.md）の存在通知 ---
-  # worktree内またはメインworktreeに対応する計画ファイルがあれば、メインエージェントが
-  # 自発的にReadできるようパスを通知する。worktree-initの最終メッセージはメインに要約
-  # されることがあるため、確定的に伝える役目をhookが担う。
-  BRANCH_NAME=$(git branch --show-current 2>/dev/null) || BRANCH_NAME=""
-  if [ -n "$BRANCH_NAME" ]; then
-    STRIPPED_SLASH="${BRANCH_NAME#*/}"
-    STRIPPED_WT="${BRANCH_NAME#worktree-}"
-    PLAN_FILE=""
-    for cand in "plan/${BRANCH_NAME}.md" "plan/${STRIPPED_SLASH}.md" "plan/${STRIPPED_WT}.md"; do
-      if [ -f "$cand" ] || { [ -n "$MAIN_REPO" ] && [ -f "$MAIN_REPO/$cand" ]; }; then
-        PLAN_FILE="$cand"
-        break
-      fi
-    done
-    if [ -n "$PLAN_FILE" ]; then
-      echo ""
-      echo "=== このworktreeの計画ファイル ==="
-      echo "$PLAN_FILE"
-      echo "worktree-init を起動するとこのファイルを worktree 内へコピーします（既にあればそのまま）。初期化が完了したら、このファイルを読んで作業を進めてください。"
-    fi
-  fi
+  echo "=== プロジェクトが未初期化です ==="
+  echo "package.json がありますが node_modules がありません。${WORKTREE_NOTE}"
+  echo "依存パッケージのインストールや gitignored ファイル（.envrc 等）の用意が必要かどうかを判断して対応してください。"
 fi
 
 exit 0

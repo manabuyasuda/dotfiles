@@ -4,6 +4,7 @@
     "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1"
   },
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Bash(gh pr list*)",
       "Bash(gh pr view*)",
@@ -99,6 +100,7 @@
     "deny": [
       "Read(**/.env*)",
       "Edit(**/.env*)",
+      "Glob(**/.env*)",
       "Bash(cat **/.env*)",
       "Read(~/.ssh/*)",
       "Bash(cat ~/.ssh/*)",
@@ -145,7 +147,7 @@
     ],
     "disableBypassPermissionsMode": "disable"
   },
-  "model": "fable",
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "SessionStart": [
       {

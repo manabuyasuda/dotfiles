@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-test-review
 description: 既存テストをレビューして改善するスキル。「テストをレビューして」「テストを改善して」「テスト名を直して」のように頼まれたら使う。新規にテストを書くのではなく、`.claude/docs/test-implementation.md` のルール（テスト名・AAA構造・アサーション設計・テストダブル・非決定性制御・テスト間独立性・Testing Library 等のフロントエンド固有ルールまで全観点）に既存テストが沿っているかを見直す。対象は `.test.ts` / `.test.tsx` / `.spec.ts` ファイルと、テストコードブロックを含む `.md` ドキュメントファイル。
 context: fork

@@ -1,4 +1,5 @@
 ---
+disable-model-invocation: true
 name: x-japanese-reasoning-review
 allowed-tools: Read, Write, Bash, Agent
 description: 日本語文書を段落ごとに分析し、主張・根拠・接続・反対の見方を洗い出して、理解しにくい箇所や根拠の薄い主張をユーザーとの対話で書き直します。「何が言いたいのか分からない」「論点を整理して」「主張と根拠を洗い出して」「reasoning-review」「日本語の推論レビュー」と言われた場合に必ず使います。書き手の意図を推測する用途には使いません。
