@@ -4,6 +4,7 @@
     "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1"
   },
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Bash(gh pr list*)",
       "Bash(gh pr view*)",
