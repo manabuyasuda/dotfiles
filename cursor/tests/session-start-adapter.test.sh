@@ -14,7 +14,6 @@ set -u
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ADAPTER="$SCRIPT_DIR/../hooks/adapters/session-start.sh"
-ROOT="/Users/manabu.yasuda/MY/dotfiles"
 SID="cursor-session-start-test"
 ENV_FILE="$HOME/.cursor/cache/hook-env/${SID}.env"
 
@@ -39,8 +38,13 @@ _run() { # $1=cwd
   jq -nc --arg s "$SID" --arg c "$1" '{session_id:$s, cwd:$c}' | bash "$ADAPTER"
 }
 
-# --- T1: 初期化済みプロジェクト（dotfiles 本体）では何も出力しない ---
-OUT=$(_run "$ROOT")
+# --- T1: 初期化済みプロジェクト（package.json と node_modules がそろっている）では何も出力しない ---
+# ローカルの絶対パスに依存すると CI（別パスに checkout・npm install なし）で再現しないため、
+# 一時ディレクトリに初期化済みの状態を作って検証する。
+INIT="$TEST_TMP/init"
+mkdir -p "$INIT/node_modules"
+echo '{}' > "$INIT/package.json"
+OUT=$(_run "$INIT")
 _assert "T1 初期化済みでは出力なし" '[ -z "$OUT" ]'
 _assert "T2 環境変数ファイルが作成される" '[ -f "$ENV_FILE" ]'
 _assert "T3 環境変数ファイルは空（ツール検出の書き出しは廃止済み）" '[ ! -s "$ENV_FILE" ]'
