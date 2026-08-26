@@ -17,3 +17,13 @@ pre-commit:
           git status --short -- codex/agents/
           exit 1
         fi
+    cursor-rules-drift:
+      glob: "claude/CLAUDE.md"
+      run: |
+        bash scripts/generate-cursor-rules.sh >/dev/null
+        if ! git diff --quiet -- cursor/rules/global-instructions.mdc; then
+          echo "cursor/rules/global-instructions.mdc がCLAUDE.mdの更新と同期していません。"
+          echo "以下の差分を確認し、git add で同じコミットへ含めてから再実行してください。"
+          git status --short -- cursor/rules/global-instructions.mdc
+          exit 1
+        fi
