@@ -312,20 +312,14 @@ Bash 実行前
   └─ PreToolUse ──────────── pre-tool-use/dangerous-guard.sh
 
 ファイル編集後（Edit / MultiEdit / Write）
-  ├─ PostToolUse ─────────── post-tool-use/format.sh
+  ├─ PostToolUse ─────────── post-tool-use/track-edited-files.sh
   ├─ PostToolUse ─────────── post-tool-use/install.sh
-  ├─ PostToolUse ─────────── post-tool-use/test.sh
-  ├─ PostToolUse ─────────── post-tool-use/typecheck.sh
   └─ PostToolUse ─────────── post-tool-use/mermaid-guard.sh
 
-Claude の応答完了時
-  └─ Stop ─────────────────── notification/notify.sh
-
-通知イベント（permission_prompt / idle_prompt / elicitation_dialog）
-  └─ Notification ─────────── notification/notify.sh
-
-権限拒否時（オートモードの分類器が拒否）
-  └─ PermissionDenied ─────── permission-denied/log-denial.sh
+ターン終了時（Stop）
+  ├─ Stop ────────────────── stop/format-edited-files.sh
+  ├─ Stop ────────────────── stop/textlint-edited-files.sh
+  └─ Stop ────────────────── stop/typecheck-edited-files.sh
 
 Worktree 操作
   ├─ WorktreeCreate ────────── worktree/create.sh
@@ -338,14 +332,9 @@ Worktree 操作
 
 #### `session-start/session-start.sh` — SessionStart
 
-セッション開始時に1回だけ実行。エージェントに作業環境のコンテキストを提供する。
+セッション開始時に1回だけ実行。プロジェクトが未初期化（`package.json` があるのに `node_modules` がない）のときだけ、その事実とgit worktreeかどうかをエージェントへ伝える。
 
-- Node.jsバージョン・パッケージマネージャーの検出
-- フォーマッター（biome / prettier）・リンター（biome / eslint）の検出
-- テストランナー（vitest / jest）・テストユーティリティの検出
-- TypeScript・モノレポ構成の検出
-- `$CLAUDE_ENV_FILE` に環境変数を書き出し（後続のpost-tool-useフックが参照）
-- 現在ブランチ・直近コミット・未コミット変更を表示
+かつて担っていた開発ツール検出・`$CLAUDE_ENV_FILE` への書き出し・git状態の表示は削除した。実測で中央値4.5秒・最大約10秒かかりtimeoutに到達していたうえ、ツール検出は読み手のpost-tool-useフックが自力で行い、git状態はClaude Code本体が自動注入するためである。
 
 ---
 
@@ -419,12 +408,31 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 ---
 
-#### `post-tool-use/format.sh` — PostToolUse（Edit / MultiEdit / Write）
+#### `post-tool-use/track-edited-files.sh` — PostToolUse（Edit / MultiEdit / Write）
 
-ファイル編集後に自動フォーマットを実行する。
+編集した `*.js / *.jsx / *.ts / *.tsx / *.md` のパスをセッション単位の目印ファイル（`~/.claude/cache/edited-files/<session_id>/files`）に追記する。ツールは起動せず、出力もしない（0トークン）。整形・textlint・型検査はStopの `*-edited-files.sh` が1ターン1回まとめて行う。7日以上前のセッション分は追記時に片付ける。
 
-- `*.js / *.jsx / *.ts / *.tsx` → biomeまたはprettier
-- `*.md` → textlint（textlintがある場合のみ）
+---
+
+#### `stop/format-edited-files.sh` — Stop
+
+このターンで編集した `*.js / *.jsx / *.ts / *.tsx` を、実体が見つかったフォーマッターで整形する（biome → oxfmt → prettierの順。無ければ無言で通過し、`npx` によるレジストリ取得はしない）。成功時は何も出さない。整形に失敗したときだけ `decision: block` で出力を返し、エージェントに原因の解消を求める。
+
+---
+
+#### `stop/textlint-edited-files.sh` — Stop
+
+このターンで編集した `*.md` にtextlint `--fix` を適用する（ローカルにtextlintがある場合のみ）。自動修正できずに残ったエラーは `decision: block` でエージェントに渡す。作業記録ファイル（`config.sh` の `WORK_RECORD_*`）と `.gitignore` 対象は `--fix` だけ適用し、残エラーは渡さない。
+
+日本語の校正は自動起動しない。必要なときにユーザーが `x-japanese-writing-review` スキルを明示的に起動する。
+
+---
+
+#### `stop/typecheck-edited-files.sh` — Stop
+
+このターンで `*.ts / *.tsx` を編集していれば、ローカルの `tsc --noEmit` を実行し、編集したファイルに関するエラー行だけを `decision: block` で渡す。tscはファイル単位で動かないため、実行はプロジェクト全体、報告は編集した範囲に絞る。プロジェクト全体の検査はlefthook / CIに任せる。`--incremental` は付けない（リポジトリのtsconfigの設定に従う）。
+
+各Stop hookは自分の読み出し位置（`cursor.<name>`）を持ち、同じイベントのhookが並列に走っても処理漏れが起きない。`stop_hook_active`（block直後の2回目のStop）のときは差し戻さず、往復は1回に限る。
 
 ---
 
@@ -434,46 +442,9 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 ---
 
-#### `post-tool-use/test.sh` — PostToolUse（Edit / MultiEdit / Write）
-
-`*.test.js / *.test.ts` 等のテストファイルを編集したとき、関連テストのみを自動実行する。  
-（vitestまたはjest）
-
----
-
-#### `post-tool-use/typecheck.sh` — PostToolUse（Edit / MultiEdit / Write）
-
-`*.ts / *.tsx` を編集したとき、`tsc --noEmit` で型チェックを実行する。  
-型エラーがあってもexit 0（非ブロッキング）。エラー内容はfeedbackとしてClaudeに渡す。
-
----
-
 #### `post-tool-use/mermaid-guard.sh` — PostToolUse（Edit / MultiEdit / Write）
 
 `.md` ファイル編集後に `mmdc` でMermaidブロックを検証する。エラーがあればClaudeに通知。
-
----
-
-#### `notification/notify.sh` — Notification / Stop
-
-| イベント | 条件 | 通知内容 |
-|---|---|---|
-| `Notification` | `permission_prompt` | Claude の `message` フィールドをそのまま表示 |
-| `Notification` | `idle_prompt` | 同上 |
-| `Notification` | `elicitation_dialog` | 同上（MCP サーバーからの質問文） |
-| `Stop` | — | Claudeの応答テキスト（`message` フィールド）をそのまま表示 |
-
-通知音: Glass（terminal-notifier）
-
----
-
-#### `permission-denied/log-denial.sh` — PermissionDenied
-
-オートモードの分類器がツール呼び出しを拒否したとき、内容を `~/.claude/logs/auto-mode-denials.log` に1行JSONで記録する（記録専用。拒否はすでに発生済みのためブロックはしない）。`denial_reason` が `auto_mode_classifier` の拒否だけを対象にする。
-
-- 記録項目: 時刻・セッション・権限モード・プロジェクト・ツール名・入力の要約・拒否理由
-- 用途: 集計して `autoMode.environment` や `permissions` の改善（誤検知・偽陰性の反映）に使う（[設定の改善タイミング](#オートモードで誤検知偽陰性が出た) を参照）
-- 集計例: `jq -r '[.ts,.project,.tool,.summary]|@tsv' ~/.claude/logs/auto-mode-denials.log`
 
 ---
 
@@ -527,11 +498,11 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 #### オートモードで誤検知・偽陰性が出た
 
-`PermissionDenied` フック（`hooks/permission-denied/log-denial.sh`）がオートモードの拒否を `~/.claude/logs/auto-mode-denials.log` に記録する。集計して次の観点で設定に反映する。
+`/permissions` の最近の拒否を見て、次の観点で設定に反映する。
 
 | 観点 | 何を見る | 反映先 |
 |---|---|---|
-| 誤検知（安全なのに拒否） | 同じ宛先が2〜3回出るか（ログ・`/permissions` の最近拒否） | `autoMode.environment` に宛先を追加（共通=`settings.json` / 案件=案件の `settings.local.json`） |
+| 誤検知（安全なのに拒否） | 同じ宛先が2〜3回出るか（`/permissions` の最近拒否） | `autoMode.environment` に宛先を追加（共通=`settings.json` / 案件=案件の `settings.local.json`） |
 | フォールバック頻発 | 3回連続・20回でプロンプトに戻った作業 | `environment` 追加で減るか試す。減らなければ手動運用に残す |
 | 偽陰性（止まるべき操作が通った） | `git diff`・ログで事後確認 | `permissions.deny`（確実）または `$defaults` 付きの `soft_deny` / `hard_deny` |
 | 広げすぎ | `environment` を緩めて偽陰性が増えていないか | 原本リポジトリのみ・fork / 外部は除外を維持し、追加後に `claude auto-mode critique` |
@@ -570,7 +541,7 @@ Opus 4.8以降ではlean system prompt（軽量なシステムプロンプト）
 `settings.json` のallow/denyにコマンドを追加し、`hooks/session-start/session-start.sh` に検出ロジックを追加する。新たな認証情報ストア（パスワードマネージャー・クラウドサービス等）を追加した場合は `settings.json` のdenyにも追記する。プロジェクトで外部への通信先を制限したい場合はsandboxの `allowedDomains` 設定を検討する（[SECURITY.md](SECURITY.md#sandbox-によるネットワーク制御プロジェクト設定で検討) 参照）。
 
 #### フィードバックが遅い・チェックが CI のみになっている
-`hooks/post-tool-use/` に移す。編集後すぐに走るほど速いフィードバックが得られる。
+編集した範囲だけを対象にできるものは `hooks/stop/` へ移す（編集ファイルは `lib/edited-files.sh` で読み出す）。編集のたびに走らせる必要があるものだけ `hooks/post-tool-use/` に置く。
 
 #### Claude Code のバージョンが古い場合
 `claude doctor` で自動更新が `enabled` になっているか確認する。バージョン差異があれば `claude update` で更新する。CVE-2025-59536（CVSS 8.7、RCE）のような脆弱性はバージョンアップで修正されるため、常に最新版を維持する。
@@ -593,6 +564,7 @@ Opus 4.8以降ではlean system prompt（軽量なシステムプロンプト）
 | `keybindings.json` | キーバインドを変更・追加するとき |
 | `hooks/pre-tool-use/` | 「このミスを二度とさせない」とき |
 | `hooks/post-tool-use/` | 「編集後に自動で走らせたいチェック」が増えたとき |
+| `hooks/stop/` | 「ターン終了時に編集した範囲へまとめて走らせたいチェック」が増えたとき |
 | `hooks/session-start/` | 検出すべきツールやコンテキストが変わったとき |
 | `hooks/config.sh` | 保護ブランチ・作業記録ファイルの構成が変わったとき |
 | `skills/` | 定型ワークフローを切り出すとき |

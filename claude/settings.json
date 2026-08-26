@@ -4,7 +4,6 @@
     "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1"
   },
   "permissions": {
-    "defaultMode": "auto",
     "allow": [
       "Bash(gh pr list*)",
       "Bash(gh pr view*)",
@@ -145,6 +144,7 @@
       "Bash(firebase functions:config:set*)",
       "Bash(supabase secrets set*)"
     ],
+    "defaultMode": "auto",
     "disableBypassPermissionsMode": "disable"
   },
   "model": "claude-fable-5[1m]",
@@ -232,23 +232,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/post-tool-use/format.sh",
-            "timeout": 30
+            "command": "$HOME/.claude/hooks/post-tool-use/track-edited-files.sh",
+            "timeout": 5
           },
           {
             "type": "command",
             "command": "$HOME/.claude/hooks/post-tool-use/install.sh",
             "timeout": 60
-          },
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/post-tool-use/test.sh",
-            "timeout": 90
-          },
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/post-tool-use/typecheck.sh",
-            "timeout": 30
           },
           {
             "type": "command",
@@ -258,34 +248,23 @@
         ]
       }
     ],
-    "Notification": [
-      {
-        "matcher": "permission_prompt|idle_prompt|elicitation_dialog",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.claude/hooks/notification/notify.sh"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/notification/notify.sh"
-          }
-        ]
-      }
-    ],
-    "PermissionDenied": [
-      {
-        "hooks": [
+            "command": "$HOME/.claude/hooks/stop/format-edited-files.sh",
+            "timeout": 60
+          },
           {
             "type": "command",
-            "command": "$HOME/.claude/hooks/permission-denied/log-denial.sh",
-            "timeout": 5
+            "command": "$HOME/.claude/hooks/stop/textlint-edited-files.sh",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/stop/typecheck-edited-files.sh",
+            "timeout": 120
           }
         ]
       }
