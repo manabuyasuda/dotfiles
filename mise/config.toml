@@ -1,3 +1,10 @@
+# node/pnpm/yarn は、リポジトリ側の指定があればそれを優先し、無いときだけ下の
+# [tools] の既定値を使う。node は .nvmrc・.node-version・package.json の
+# engines/devEngines を、pnpm と yarn は package.json の packageManager を読む。
+# 個別バージョンをここへ固定しないことで、リポジトリ側を唯一の情報源に保つ。
+[settings]
+idiomatic_version_file_enable_tools = ["node", "pnpm", "yarn"]
+
 [tools]
 node = "lts"
 pnpm = "latest"
