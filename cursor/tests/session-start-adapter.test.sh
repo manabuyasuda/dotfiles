@@ -7,8 +7,8 @@
 #   2. 未初期化（package.json があるのに node_modules がない）プロジェクトでは
 #      additional_context で未初期化を伝える。
 #   3. git worktree の場合は、その事実も additional_context に含める。
-#   4. 環境変数ファイルは作成されるが空のまま（ツール検出の書き出しは廃止済み。
-#      復活したらここで検出する）。
+#   4. 環境変数ファイルを作成しない（ツール検出の書き出しは廃止済み。復活したら
+#      ここで検出する）。
 
 set -u
 
@@ -46,8 +46,7 @@ mkdir -p "$INIT/node_modules"
 echo '{}' > "$INIT/package.json"
 OUT=$(_run "$INIT")
 _assert "T1 初期化済みでは出力なし" '[ -z "$OUT" ]'
-_assert "T2 環境変数ファイルが作成される" '[ -f "$ENV_FILE" ]'
-_assert "T3 環境変数ファイルは空（ツール検出の書き出しは廃止済み）" '[ ! -s "$ENV_FILE" ]'
+_assert "T2 環境変数ファイルを作成しない（ツール検出の書き出しは廃止済み）" '[ ! -e "$ENV_FILE" ]'
 
 # --- T4: 未初期化プロジェクトでは additional_context で伝える ---
 UNINIT="$TEST_TMP/uninit"
