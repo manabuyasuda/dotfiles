@@ -22,12 +22,10 @@
 WORK_RECORD_FILES=(
   explore.md
   plan.md
-  retrospective.md
 )
 WORK_RECORD_DIRS=(
   explore
   plan
-  retrospective
 )
 
 # 保護ブランチ（直接編集・ローカルマージを禁止）（glob パターン可）

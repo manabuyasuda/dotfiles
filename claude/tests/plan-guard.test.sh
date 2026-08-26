@@ -2,9 +2,9 @@
 # plan-guard.sh の回帰テスト
 #
 # 守りたい不変条件:
-#   1. 実装系編集（explore/plan/retrospective 以外への Edit/MultiEdit/Write）は、plan/ に
+#   1. 実装系編集（explore/plan 以外への Edit/MultiEdit/Write）は、plan/ に
 #      非空ファイルが無ければ deny する（計画を書かせる）。*.md も対象。
-#   2. plan/・explore/・retrospective/ 配下への書き込みは常に対象外（計画ファイル自体を
+#   2. plan/・explore/ 配下への書き込みは常に対象外（計画ファイル自体を
 #      作れないと無限ロックになるため）。
 #   3. 発火モデルは fire-once: 一度通過するとセッション内では以後止めない。通過時に解除
 #      フラグ（state ファイル）を書き、deny 時は書かない（計画を書くまで止め続ける）。
@@ -23,7 +23,7 @@ FAIL=0
 
 # 疑似プロジェクトルート（git 管理外 → hook は cwd フォールバックを使う）
 ROOT=$(mktemp -d)
-mkdir -p "$ROOT/explore" "$ROOT/plan" "$ROOT/retrospective" "$ROOT/src"
+mkdir -p "$ROOT/explore" "$ROOT/plan" "$ROOT/src"
 export TMPDIR="$ROOT/tmpstate"
 mkdir -p "$TMPDIR"
 trap 'rm -rf "$ROOT"' EXIT
@@ -95,14 +95,11 @@ _assert_eq "T4b 対象外パスは state を作らない（ゲート未解除の
   "$(_state_exists)" "no"
 
 # ---------------------------------------------------------------------------
-# T5/T6: explore/・retrospective/ も対象外 → 通過
+# T5: explore/ も対象外 → 通過
 # ---------------------------------------------------------------------------
 _reset_state; _empty_plan
 _assert_eq "T5 explore/ は対象外 → 通過" \
   "$(_decision "$(_input Write "$ROOT/explore/scan.md")")" "none"
-_reset_state; _empty_plan
-_assert_eq "T6 retrospective/ は対象外 → 通過" \
-  "$(_decision "$(_input Edit "$ROOT/retrospective/2026-06-17.md")")" "none"
 
 # ---------------------------------------------------------------------------
 # T7: 作業記録外の *.md も対象（ユーザー選択「作業記録以外すべて」）→ deny

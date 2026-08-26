@@ -46,7 +46,9 @@ dotfiles/
 │   ├── merge-cursor-cli-config.sh
 │   ├── merge-codex-config.sh
 │   ├── generate-codex-agents.sh
-│   └── generate-codex-agents.py
+│   ├── generate-codex-agents.py
+│   ├── generate-cursor-rules.sh
+│   └── generate-cursor-rules.py
 └── docs/
     └── tools/            # 開発ツールのドキュメント
 ```
@@ -406,6 +408,7 @@ Claude Code・Cursor・Codexで、同じガード・permissions・ルール・�
 | 1. シンボリックリンク | Codex 指示・フック・rules・agents | `CLAUDE.md`→`~/.codex/AGENTS.md`。hooks・agentsはディレクトリ単位、Git管理するrulesはファイル単位で`~/.codex/`へリンク |
 | 2. 別ファイル（手動で同期） | フック、ルール、statusLine | 本体は`claude/`に置きます。Cursorは`cursor/hooks.json`とアダプター、Codexは`codex/hooks/wrap/`で呼び出します |
 | 2. 生成物 | Codex サブエージェント TOML | `claude/agents/*/SUBAGENT.md`から`scripts/generate-codex-agents.sh`で`codex/agents/*.toml`を生成します |
+| 2. 生成物 | Cursor グローバル指示 | `claude/CLAUDE.md`から`scripts/generate-cursor-rules.sh`で`cursor/rules/global-instructions.mdc`を生成します。Cursorは`.mdc`のfrontmatterが必要でシンボリックリンクにできないため、frontmatterを付けたコピーを生成します |
 | 3. スクリプト同期 | permissions, Codex config | `claude/settings.json`の`permissions`（Cursor CLI）。`codex/config.toml`は`merge-codex-config.sh`で反映します |
 
 ### Codex のファイル配置
@@ -448,7 +451,7 @@ Codex CLIでは次も踏まえます。
 | Codex rules | `codex/rules/*.rules` | `npm run test:codex-rules` | `~/.codex/rules`は実ディレクトリにし、Git管理するルールだけをファイル単位でリンクします。Codexが生成する`default.rules`はホーム側に残します |
 | Codex config.toml | `codex/config.toml` | `./scripts/merge-codex-config.sh` | `[projects.*]`と`[hooks.state.*]`はローカル状態として保持します。TUIの`/statusline`で変えた`[tui]`は`~/.codex/config.toml`に直接書き込まれるため、dotfilesへ取り込むときは手動コピーします |
 | Codex グローバル指示 | `claude/CLAUDE.md` | なし | `~/.codex/AGENTS.md`へシンボリックリンクを張ります |
-| グローバル指示 | `claude/CLAUDE.md` | なし | あわせて`cursor/rules/global-instructions.mdc`も更新します（近い内容ですが、同一ではありません） |
+| グローバル指示 | `claude/CLAUDE.md` | `./scripts/generate-cursor-rules.sh` → `git add cursor/rules/global-instructions.mdc` | 生成物は`cursor/rules/global-instructions.mdc`。再生成を忘れた場合はlefthookの`cursor-rules-drift`がpre-commitで検出します |
 | パス別ルール | `claude/rules/*.md` | なし | あわせて`cursor/rules/*.mdc`も更新します（`paths:`と`globs:`で書式が違います） |
 | Cursor専用ルール | `cursor/rules/*.mdc` | なし | — |
 | statusline | `cursor/statusline.sh`, `cursor/cli-statusline.json` | `./scripts/merge-cursor-cli-config.sh` | Cursor CLIでのみ表示されます（IDE Agentでは表示されません） |

@@ -36,7 +36,6 @@ claude/
 | `x-japanese-reasoning-review` | 「何が言いたいのか分からない」「論点を整理して」「reasoning-review」「日本語の推論レビュー」 | 日本語のMarkdown文書の主張・根拠を段落単位で洗い出し、扱いをユーザーに質問して完成稿と変更一覧を提示（ユーザーが明示的に起動した場合のみ動作） |
 | `hotspot-refactoring` | 「hotspot」「リファクタリング提案して」 | git log の hotspot 分析・循環参照・不安定性メトリクスからリファクタリング優先候補を提案 |
 | `rebasing-feature-branch` | 「リベースして」「mainを取り込んで」 | フィーチャーブランチをベースブランチにリベースするワークフロー |
-| `retrospective` | 「ふりかえりして」 | セッションの KPTA ふりかえりを実施し `retrospective/YYYY-MM-DD.md` に記録 |
 
 ### 3rd party スキル
 
@@ -131,6 +130,20 @@ v2.1.153以降、`/model`で選んだモデルは新規セッションの既定�
 全セッションで`medium`を指定します。Opus 4.8の既定はhigh effortですが、日常タスクではコストとレスポンス速度のバランスを優先して1段下げます。重い設計議論やデバッグでは`/effort high`または`/effort xhigh`でそのつど引き上げる運用にします。
 
 `/model`でOpus 4.6・4.7に切り替えた場合、`/effort xhigh`はOpus 4.8専用のため利用できません。`high`までを使います。
+
+### outputStyle
+
+```json
+{ "outputStyle": "Concise" }
+```
+
+全セッションで組み込みの`Concise`スタイルを使います。結論を先に述べ、前置きと実況を省き、応答を短く保つ指示がシステムプロンプトへ加わります。エンジニアリング作業の丁寧さは`Default`と変わらず、説明や詳細を求めたときは省略されません。エラー報告・セキュリティ警告・破壊的操作の確認は全文が保たれます。
+
+応答が短くなる分、1セッションあたりのコンテキスト消費を抑えられます。`Concise`はClaude Code v2.1.237以降で使えます。
+
+出力スタイルはセッション開始時に読み込まれるため、変更は`/clear`または次のセッションから反映されます。切り替えは`/config`の**Output style**から行えますが、その場合の保存先はプロジェクトの`.claude/settings.local.json`です。全プロジェクトへ効かせるためここでは`settings.json`に書きます。
+
+サブエージェントは自分のシステムプロンプトで動くため、出力スタイルは適用されません。
 
 ### showThinkingSummaries
 
@@ -465,8 +478,8 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 | 変数 | 内容 |
 |---|---|
 | `PROTECTED_BRANCHES` | 直接編集・ローカルマージを禁止するブランチ（デフォルト: `main`, `release/*`, `production` 等） |
-| `WORK_RECORD_FILES` | コミット禁止の作業記録ファイル（`explore.md`, `plan.md`, `retrospective.md`） |
-| `WORK_RECORD_DIRS` | コミット禁止の作業記録ディレクトリ（配下のファイルすべて禁止: `explore/`, `plan/`, `retrospective/`） |
+| `WORK_RECORD_FILES` | コミット禁止の作業記録ファイル（`explore.md`, `plan.md`） |
+| `WORK_RECORD_DIRS` | コミット禁止の作業記録ディレクトリ（配下のファイルすべて禁止: `explore/`, `plan/`） |
 
 ---
 
@@ -478,8 +491,8 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 ## 設定の改善タイミング
 
-セッション中に気づいた改善点は `retrospective/YYYY-MM-DD.md` にK/Pとして記録する。
-振り返るときは `/retrospective` を呼ぶ。
+セッション中に気づいた改善点は、作業したリポジトリの `wiki/agent-notes/` へ推奨パターンとして記録する。
+記録するときは `x-agent-notes` スキルを呼ぶ。
 
 ### トリガーと対応ファイル
 

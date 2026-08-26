@@ -7,7 +7,7 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ADAPTER="$SCRIPT_DIR/../hooks/adapters/plan-guard.sh"
 
 ROOT=$(mktemp -d)
-mkdir -p "$ROOT/explore" "$ROOT/plan" "$ROOT/retrospective" "$ROOT/src"
+mkdir -p "$ROOT/explore" "$ROOT/plan" "$ROOT/src"
 export TMPDIR="$ROOT/tmpstate"
 mkdir -p "$TMPDIR"
 SID="cursor-test-session"

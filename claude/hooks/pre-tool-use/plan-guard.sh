@@ -14,7 +14,7 @@
 #            （計画を書かせるため）。計画を書いて一度通れば、その後は黙る。
 #          記録は ${TMPDIR:-/tmp}/plan-guard-<session_id>。
 #
-# 対象範囲: プロジェクトルート外・作業記録ディレクトリ（explore/ plan/ retrospective/）
+# 対象範囲: プロジェクトルート外・作業記録ディレクトリ（explore/ plan/）
 #          配下への書き込みは常に対象外。ルート内のそれ以外（*.md を含む）が対象。
 #
 # プロジェクトルート: hook 入力の .cwd を起点に git rev-parse --show-toplevel で求める
@@ -73,7 +73,7 @@ esac
 
 # 作業記録ディレクトリ配下は常に対象外（計画ファイル自体の作成をブロックしないため）
 case "$FILE_PATH" in
-  "$ROOT"/explore/*|"$ROOT"/plan/*|"$ROOT"/retrospective/*) exit 0;;
+  "$ROOT"/explore/*|"$ROOT"/plan/*) exit 0;;
 esac
 
 STATE_FILE="${TMPDIR:-/tmp}/plan-guard-${SESSION_ID}"
@@ -89,6 +89,6 @@ if [ -n "$(find "$ROOT/plan" -type f ! -empty 2>/dev/null | head -n1)" ]; then
 fi
 
 # 計画なし → ハードブロック（解除は記録しない＝計画を書くまで止め続ける）
-jq -n --arg msg "ERROR: この作業の計画が plan/ にありません。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: Task tool で plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/・retrospective/ への書き込みは対象外です。" \
+jq -n --arg msg "ERROR: この作業の計画が plan/ にありません。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: Task tool で plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/ への書き込みは対象外です。" \
   '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
 exit 2
