@@ -36,7 +36,6 @@ claude/
 | `x-japanese-reasoning-review` | 「何が言いたいのか分からない」「論点を整理して」「reasoning-review」「日本語の推論レビュー」 | 日本語のMarkdown文書の主張・根拠を段落単位で洗い出し、扱いをユーザーに質問して完成稿と変更一覧を提示（ユーザーが明示的に起動した場合のみ動作） |
 | `hotspot-refactoring` | 「hotspot」「リファクタリング提案して」 | git log の hotspot 分析・循環参照・不安定性メトリクスからリファクタリング優先候補を提案 |
 | `rebasing-feature-branch` | 「リベースして」「mainを取り込んで」 | フィーチャーブランチをベースブランチにリベースするワークフロー |
-| `retrospective` | 「ふりかえりして」 | セッションの KPTA ふりかえりを実施し `retrospective/YYYY-MM-DD.md` に記録 |
 
 ### 3rd party スキル
 
@@ -494,8 +493,8 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 | 変数 | 内容 |
 |---|---|
 | `PROTECTED_BRANCHES` | 直接編集・ローカルマージを禁止するブランチ（デフォルト: `main`, `release/*`, `production` 等） |
-| `WORK_RECORD_FILES` | コミット禁止の作業記録ファイル（`explore.md`, `plan.md`, `retrospective.md`） |
-| `WORK_RECORD_DIRS` | コミット禁止の作業記録ディレクトリ（配下のファイルすべて禁止: `explore/`, `plan/`, `retrospective/`） |
+| `WORK_RECORD_FILES` | コミット禁止の作業記録ファイル（`explore.md`, `plan.md`） |
+| `WORK_RECORD_DIRS` | コミット禁止の作業記録ディレクトリ（配下のファイルすべて禁止: `explore/`, `plan/`） |
 
 ---
 
@@ -507,8 +506,8 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 ## 設定の改善タイミング
 
-セッション中に気づいた改善点は `retrospective/YYYY-MM-DD.md` にK/Pとして記録する。
-振り返るときは `/retrospective` を呼ぶ。
+セッション中に気づいた改善点は、作業したリポジトリの `wiki/agent-notes/` へ推奨パターンとして記録する。
+記録するときは `x-agent-notes` スキルを呼ぶ。
 
 ### トリガーと対応ファイル
 
