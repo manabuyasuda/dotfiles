@@ -76,23 +76,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" format.sh",
-            "timeout": 60
+            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" track-edited-files.sh",
+            "timeout": 5
           },
           {
             "type": "command",
             "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" install.sh",
             "timeout": 120
-          },
-          {
-            "type": "command",
-            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" test.sh",
-            "timeout": 120
-          },
-          {
-            "type": "command",
-            "command": "bash \"$HOME/.codex/hooks/wrap/post-tool-use.sh\" typecheck.sh",
-            "timeout": 60
           },
           {
             "type": "command",
@@ -107,8 +97,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$HOME/.codex/hooks/wrap/notify.sh\"",
-            "timeout": 5
+            "command": "bash \"$HOME/.codex/hooks/wrap/stop.sh\" format-edited-files.sh",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/stop.sh\" textlint-edited-files.sh",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.codex/hooks/wrap/stop.sh\" typecheck-edited-files.sh",
+            "timeout": 120
           }
         ]
       }

@@ -517,7 +517,7 @@ IssueやPRで `@claude` とメンションすると、Claude Codeが文脈を分
 
 1. ローカルの`git commit`時（lefthookによるpre-commit）
 2. CI（`.github/workflows/textlint.yml`、PR時）
-3. Claude Codeの編集時（PostToolUseフックで実行される`format.sh`）
+3. Claude Codeのターン終了時（Stopフックで実行される`textlint-edited-files.sh`）
 
 #### 初回セットアップ
 

@@ -77,9 +77,10 @@ _assert_eq "T4 main 作業ツリーの git commit は deny" \
 _assert_eq "T5 feature worktree（CLAUDE_PROJECT_DIR=main）の commit は ask" \
   "$(_permission "$(_shell_json "$FEATURE_WT" "git commit -m msg")")" "ask"
 
-# WRITE 以上 + バックスラッシュ改行は deny（READ の echo では検査前に通過する）
-_assert_eq "T6 バックスラッシュ改行（mkdir）は deny" \
-  "$(_permission "$(_shell_json "$FEATURE_WT" $'mkdir foo\\\nbar')")" "deny"
+# バックスラッシュ改行（継続行）は判定材料にしない（deny を廃止済み。
+# WRITE として通過する。復活したらここで検出する）
+_assert_eq "T6 バックスラッシュ改行（mkdir）は通過" \
+  "$(_permission "$(_shell_json "$FEATURE_WT" $'mkdir foo\\\nbar')")" "allow"
 
 # 改行入り command でも field-shift しない（DESTRUCTIVE → ask）
 _assert_eq "T7 改行入り rm は ask（field-shift なし）" \

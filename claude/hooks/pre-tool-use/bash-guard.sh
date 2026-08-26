@@ -18,7 +18,6 @@
 #   DESTRUCTIVE  : 取り返しがつかない（rm/git reset --hard/git push --force 等）→ ユーザー確認
 #
 # 個別ルール（階層判定の後に適用）:
-#   - バックスラッシュ改行（継続行）を含むコマンドは deny
 #   - 保護ブランチ上での git commit / git merge は deny（PR 経由を強制）
 #   - WORK_RECORD_FILES がステージ済みで git commit しようとした場合は deny
 #   - npm install（パッケージ名なし）と pip install -r は deny
@@ -153,11 +152,6 @@ LEVEL=$(classify "$COMMAND_UNQUOTED")
 # --- READ は通過（過剰な要求をしない）---
 if [ "$LEVEL" = "READ" ]; then
   exit 0
-fi
-
-# --- バックスラッシュ改行（継続行）→ deny ---
-if printf '%s' "$COMMAND" | grep -qE '\\$'; then
-  _deny "ERROR: バックスラッシュ改行（継続行）が含まれています。WHY: allow パターンの glob は改行文字にマッチしないため、同じような承認プロンプトが何度も発生しやすいです。FIX: コマンドからバックスラッシュを削除して1行に書き直してください。"
 fi
 
 # --- 個別ルール: 保護ブランチ上での git commit → deny ---

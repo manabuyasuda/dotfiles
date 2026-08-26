@@ -62,27 +62,15 @@
     ],
     "postToolUse": [
       {
-        "command": "./hooks/adapters/format.sh",
+        "command": "./hooks/adapters/track-edited-files.sh",
         "matcher": "Write",
-        "timeout": 60,
+        "timeout": 5,
         "failClosed": false
       },
       {
         "command": "./hooks/adapters/install.sh",
         "matcher": "Write",
         "timeout": 120,
-        "failClosed": false
-      },
-      {
-        "command": "./hooks/adapters/test.sh",
-        "matcher": "Write",
-        "timeout": 120,
-        "failClosed": false
-      },
-      {
-        "command": "./hooks/adapters/typecheck.sh",
-        "matcher": "Write",
-        "timeout": 60,
         "failClosed": false
       },
       {
@@ -94,8 +82,19 @@
     ],
     "stop": [
       {
-        "command": "./hooks/adapters/notify.sh",
-        "timeout": 5
+        "command": "./hooks/adapters/format-edited-files.sh",
+        "timeout": 60,
+        "failClosed": false
+      },
+      {
+        "command": "./hooks/adapters/textlint-edited-files.sh",
+        "timeout": 60,
+        "failClosed": false
+      },
+      {
+        "command": "./hooks/adapters/typecheck-edited-files.sh",
+        "timeout": 120,
+        "failClosed": false
       }
     ]
   }

@@ -11,10 +11,15 @@
 # 対象ファイル: package.json のみ（それ以外は即 exit 0）
 #
 # パッケージマネージャーの解決順:
-#   1. $PKG_MANAGER（session-start.sh が $CLAUDE_ENV_FILE に保存した値）
-#   2. package.json の packageManager フィールド
-#   3. lock file の存在（pnpm-lock.yaml / yarn.lock / bun.lock）
-#   4. npm（フォールバック）
+#   1. package.json の packageManager フィールド
+#   2. lock file の存在（pnpm-lock.yaml / yarn.lock / bun.lock）
+#   3. npm（フォールバック）
+#
+# ツール実在ゲート:
+#   解決したパッケージマネージャーが PATH 上に無ければ無言で通過する（exit 0）。
+#   Why not: 実体が無いまま実行するとコマンド不在のエラーを install 失敗として
+#            additionalContext へ注入し、原因を指さないメッセージが編集のたびに
+#            出るため。実体の有無で決めれば構造的に起こらない。
 #
 # 注意:
 #   scripts のみ変更した場合も install が走るが、
@@ -32,7 +37,6 @@
 #         "additionalContext": "ERROR: ..."}} を stdout、exit 0
 #
 # 入力 : stdin の JSON（tool_input.file_path）
-#        $PKG_MANAGER（session-start.sh が設定した環境変数、未設定時は自動検出）
 # =============================================================================
 INPUT=$(cat)
 
@@ -44,9 +48,8 @@ file=$(jq -r '.tool_input.file_path // ""' <<<"$INPUT")
 
 [[ "$file" =~ package\.json$ ]] || exit 0
 
-# $PKG_MANAGER → packageManager フィールド → lock file → npm の順で解決する
+# packageManager フィールド → lock file → npm の順で解決する
 _resolve_pkg() {
-  if [ -n "${PKG_MANAGER:-}" ]; then echo "$PKG_MANAGER"; return; fi
   if command -v node &>/dev/null && [ -f "package.json" ]; then
     local detected
     detected=$(node -e "try{const p=require('./package.json');console.log((p.packageManager||'').split('@')[0])}catch(e){}" 2>/dev/null)
@@ -59,7 +62,15 @@ _resolve_pkg() {
   echo "npm"
 }
 
-cmd="$(_resolve_pkg) install"
+pkg="$(_resolve_pkg)"
+
+# 解決したパッケージマネージャーが環境に無ければ無言で通過する
+if ! command -v "$pkg" &>/dev/null; then
+  echo '{"suppressOutput": true}'
+  exit 0
+fi
+
+cmd="$pkg install"
 output=$($cmd 2>&1)
 exit_code=$?
 if [ $exit_code -eq 0 ]; then

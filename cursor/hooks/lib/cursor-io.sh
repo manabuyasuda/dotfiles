@@ -58,32 +58,55 @@ cursor_io_write_to_claude_json() {
       )
     },
     cwd: (.cwd // .workspace.current_dir // ""),
-    session_id: (.session_id // "")
+    session_id: (.session_id // .conversation_id // "")
   }'
 }
 
-# session-start が書き出す環境変数ファイル（CLAUDE_ENV_FILE の Cursor 版）
-cursor_io_session_env_file() {
-  local session_id="$1"
-  echo "${HOME}/.cursor/cache/hook-env/${session_id}.env"
+# claude/hooks/stop/<name> の絶対パス
+cursor_io_claude_stop_hook() {
+  local name="$1"
+  echo "$(cursor_io_dotfiles_dir)/claude/hooks/stop/$name"
 }
 
-# post-tool-use フック実行前にセッション環境を読み込み、プロジェクト cwd へ移動
-cursor_io_prepare_post_hook() {
-  local input="$1"
-  local session_id cwd env_file
+# Cursor stop JSON → Claude Stop JSON
+#   session_id       := conversation_id（Cursor は session_id を渡さない）
+#   cwd              := workspace_roots[0]
+#   stop_hook_active := loop_count > 0（followup_message で再開した 2 回目以降の stop）
+cursor_io_stop_to_claude_json() {
+  jq '{
+    session_id: (.session_id // .conversation_id // ""),
+    cwd: (.cwd // .workspace_roots[0] // ""),
+    stop_hook_active: ((.stop_hook_active // false) or ((.loop_count // 0) > 0))
+  }'
+}
 
-  session_id=$(printf '%s' "$input" | jq -r '.session_id // empty')
-  if [[ -n "$session_id" ]]; then
-    env_file="$(cursor_io_session_env_file "$session_id")"
-    if [[ -f "$env_file" ]]; then
-      set -a
-      # shellcheck disable=SC1090
-      source "$env_file"
-      set +a
-      export CLAUDE_ENV_FILE="$env_file"
+# Claude Stop の stdout を Cursor stop 出力に変換
+#   decision: block の reason は followup_message として次のユーザーメッセージになる。
+#   それ以外（無出力・suppressOutput）は何も出さない。
+cursor_io_emit_claude_stop() {
+  local claude_output="$1"
+  local decision reason
+
+  if [ -z "$claude_output" ]; then
+    exit 0
+  fi
+  decision=$(printf '%s' "$claude_output" | jq -r '.decision // empty')
+  if [ "$decision" = "block" ]; then
+    reason=$(printf '%s' "$claude_output" | jq -r '.reason // empty')
+    if [ -n "$reason" ]; then
+      jq -n --arg msg "$reason" '{followup_message: $msg}'
     fi
   fi
+  exit 0
+}
+
+# post-tool-use フック実行前にプロジェクト cwd へ移動する
+# Why not: かつてはセッション環境ファイル（CLAUDE_ENV_FILE）も読み込んでいたが、
+#          session-start が書き出しをやめ、読み手の post-tool-use フックは
+#          ツールを自力検出するようになったため、読み込みごと削除した。
+cursor_io_prepare_post_hook() {
+  local input="$1"
+  local cwd
 
   cwd=$(printf '%s' "$input" | jq -r '.cwd // .workspace.current_dir // empty')
   if [[ -n "$cwd" && -d "$cwd" ]]; then

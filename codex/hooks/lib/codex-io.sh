@@ -3,7 +3,7 @@
 # codex-io.sh — Claude Code フック I/O と Codex フック I/O の変換ヘルパ
 # =============================================================================
 # Codex の wrap スクリプトから source する。判定ロジックは claude/hooks/ に置き、
-# ここでは入出力形式の変換と Codex 用のセッション環境ファイルのパスだけを担う。
+# ここでは入出力形式の変換だけを担う。
 # =============================================================================
 
 _CODEX_IO_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -15,26 +15,11 @@ codex_io_load_settings_env() {
   cursor_io_load_settings_env
 }
 
-codex_io_session_env_file() {
-  local session_id="$1"
-  echo "${HOME}/.codex/cache/hook-env/${session_id}.env"
-}
-
+# post-tool-use フック実行前にプロジェクト cwd へ移動する
+# Why not: セッション環境ファイルの読み込みは cursor-io.sh と同じ理由で削除した。
 codex_io_prepare_post_hook() {
   local input="$1"
-  local session_id cwd env_file
-
-  session_id=$(printf '%s' "$input" | jq -r '.session_id // empty')
-  if [[ -n "$session_id" ]]; then
-    env_file="$(codex_io_session_env_file "$session_id")"
-    if [[ -f "$env_file" ]]; then
-      set -a
-      # shellcheck disable=SC1090
-      source "$env_file"
-      set +a
-      export CLAUDE_ENV_FILE="$env_file"
-    fi
-  fi
+  local cwd
 
   cwd=$(printf '%s' "$input" | jq -r '.cwd // empty')
   if [[ -n "$cwd" && -d "$cwd" ]]; then
