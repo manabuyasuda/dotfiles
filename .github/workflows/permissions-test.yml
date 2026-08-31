@@ -1,0 +1,45 @@
+name: permissions-test
+
+# deny ルールの唯一の情報源（permissions/deny-rules.json）と生成物のずれ、
+# および bash-guard.sh がそのルールを適用しているかを CI で検証する。
+# 生成物を手で書き換えて保護が静かに外れる事故を機械的に止める。
+
+on:
+  pull_request:
+    paths:
+      - 'permissions/deny-rules.json'
+      - 'claude/settings.json'
+      - 'claude/hooks/pre-tool-use/deny-rules.txt'
+      - 'claude/hooks/pre-tool-use/bash-guard.sh'
+      - 'scripts/generate-permissions.py'
+      - 'scripts/generate-permissions.sh'
+      - 'claude/tests/deny-rules.test.sh'
+      - '.github/workflows/permissions-test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'permissions/deny-rules.json'
+      - 'claude/settings.json'
+      - 'claude/hooks/pre-tool-use/deny-rules.txt'
+      - 'claude/hooks/pre-tool-use/bash-guard.sh'
+      - 'scripts/generate-permissions.py'
+      - 'scripts/generate-permissions.sh'
+      - 'claude/tests/deny-rules.test.sh'
+      - '.github/workflows/permissions-test.yml'
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Syntax check (bash -n)
+        run: bash -n claude/hooks/pre-tool-use/bash-guard.sh
+      - name: Run deny rules tests
+        run: bash claude/tests/deny-rules.test.sh

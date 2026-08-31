@@ -27,3 +27,24 @@ pre-commit:
           git status --short -- cursor/rules/global-instructions.mdc
           exit 1
         fi
+    permissions-drift:
+      glob: "{permissions/deny-rules.json,claude/settings.json,claude/hooks/pre-tool-use/deny-rules.txt}"
+      run: |
+        bash scripts/generate-permissions.sh >/dev/null
+        if ! git diff --quiet -- claude/settings.json claude/hooks/pre-tool-use/deny-rules.txt; then
+          echo "denyの生成物がpermissions/deny-rules.jsonと同期していません。"
+          echo "以下の差分を確認し、git add で同じコミットへ含めてから再実行してください。"
+          git status --short -- claude/settings.json claude/hooks/pre-tool-use/deny-rules.txt
+          exit 1
+        fi
+        bash claude/tests/deny-rules.test.sh >/dev/null
+    cursor-permissions-drift:
+      glob: "{claude/settings.json,cursor/cli-permissions.json}"
+      run: |
+        bash scripts/sync-cursor-cli-permissions.sh >/dev/null
+        if ! git diff --quiet -- cursor/cli-permissions.json; then
+          echo "cursor/cli-permissions.json がclaude/settings.jsonの更新と同期していません。"
+          echo "以下の差分を確認し、git add で同じコミットへ含めてから再実行してください。"
+          git status --short -- cursor/cli-permissions.json
+          exit 1
+        fi
