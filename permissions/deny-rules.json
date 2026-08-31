@@ -1,0 +1,40 @@
+{
+  "description": "Claude Code / Codex CLI / Cursor CLI で拒否する操作の唯一の情報源。scripts/generate-permissions.py が claude/settings.json の permissions.deny と claude/hooks/pre-tool-use/deny-rules.txt を生成する。直接 claude/settings.json を編集しない。dotfilesは公開リポジトリのため、個人ごとに異なる値（鍵のファイル名など）を書かない。",
+  "secretPaths": [
+    { "pattern": "**/.env*", "claudeTools": ["Read", "Edit", "Glob"], "label": ".env ファイル（APIキー・接続文字列）" },
+    { "pattern": "~/.ssh/*", "claudeTools": ["Read"], "label": "SSHの秘密鍵と設定" },
+    { "pattern": "~/.aws/*", "claudeTools": ["Read"], "label": "AWSの認証情報" },
+    { "pattern": "~/.gcloud/*", "claudeTools": ["Read"], "label": "Google Cloudの認証情報" },
+    { "pattern": "~/.config/gcloud/*", "claudeTools": ["Read"], "label": "Google Cloudの認証情報" },
+    { "pattern": "~/.azure/*", "claudeTools": ["Read"], "label": "Azureの認証情報" },
+    { "pattern": "~/.kube/config", "claudeTools": ["Read"], "label": "Kubernetesのクラスタ接続情報" },
+    { "pattern": "~/.docker/config.json", "claudeTools": ["Read"], "label": "Dockerレジストリの認証情報" },
+    { "pattern": "~/.npmrc", "claudeTools": ["Read"], "label": "npmレジストリのアクセストークン" },
+    { "pattern": "~/.netrc", "claudeTools": ["Read"], "label": "ホスト別のログイン情報" },
+    { "pattern": "~/.config/gh/*", "claudeTools": ["Read"], "label": "GitHub CLIの認証設定" }
+  ],
+  "deniedCommands": [
+    { "tokens": ["security", "find-generic-password"], "label": "macOSキーチェーンからのパスワード取り出し" },
+    { "tokens": ["gh", "repo", "delete"], "label": "GitHubリポジトリの削除" },
+    { "tokens": ["gh", "secret", "set"], "label": "GitHub Actionsのシークレット設定" },
+    { "tokens": ["gh", "secret", "delete"], "label": "GitHub Actionsのシークレット削除" },
+    { "tokens": ["gh", "secret", "remove"], "label": "GitHub Actionsのシークレット削除" },
+    { "tokens": ["gh", "api", "--method", "DELETE"], "label": "GitHub APIでの削除" },
+    { "tokens": ["gh", "api", "-X", "DELETE"], "label": "GitHub APIでの削除" },
+    { "tokens": ["npm", "publish"], "label": "npmへのパッケージ公開" },
+    { "tokens": ["pnpm", "publish"], "label": "npmへのパッケージ公開" },
+    { "tokens": ["yarn", "publish"], "label": "npmへのパッケージ公開" },
+    { "tokens": ["bun", "publish"], "label": "npmへのパッケージ公開" },
+    { "tokens": ["op", "item", "edit"], "label": "1Passwordの項目編集" },
+    { "tokens": ["bw", "item", "edit"], "label": "Bitwardenの項目編集" },
+    { "tokens": ["aws", "secretsmanager", "put-secret-value"], "label": "AWS Secrets Managerへの書き込み" },
+    { "tokens": ["gcloud", "secrets", "versions", "add"], "label": "Google Cloud Secret Managerへの書き込み" },
+    { "tokens": ["vault", "kv", "put"], "label": "HashiCorp Vaultへの書き込み" },
+    { "tokens": ["doppler", "secrets", "set"], "label": "Dopplerへの書き込み" },
+    { "tokens": ["infisical", "secrets", "set"], "label": "Infisicalへの書き込み" },
+    { "tokens": ["vercel", "env", "add"], "label": "Vercelの環境変数追加" },
+    { "tokens": ["netlify", "env:set"], "label": "Netlifyの環境変数設定" },
+    { "tokens": ["firebase", "functions:config:set"], "label": "Firebase Functionsの設定変更" },
+    { "tokens": ["supabase", "secrets", "set"], "label": "Supabaseのシークレット設定" }
+  ]
+}

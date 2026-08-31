@@ -1,0 +1,36 @@
+# このファイルは scripts/generate-permissions.py が permissions/deny-rules.json から生成します。
+# 直接編集せず、permissions/deny-rules.json を編集してください。
+# 形式: <種別>\t<ERE>\t<説明>   種別 PATH=秘密ファイルのパス / CMD=拒否する命令
+PATH	\.env	.env ファイル（APIキー・接続文字列）
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.ssh/	SSHの秘密鍵と設定
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.aws/	AWSの認証情報
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.gcloud/	Google Cloudの認証情報
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.config/gcloud/	Google Cloudの認証情報
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.azure/	Azureの認証情報
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.kube/config	Kubernetesのクラスタ接続情報
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.docker/config\.json	Dockerレジストリの認証情報
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.npmrc	npmレジストリのアクセストークン
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.netrc	ホスト別のログイン情報
+PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.config/gh/	GitHub CLIの認証設定
+CMD	(^|[|;&(]|[[:space:]])security[[:space:]]+find-generic-password	macOSキーチェーンからのパスワード取り出し
+CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+repo[[:space:]]+delete	GitHubリポジトリの削除
+CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+secret[[:space:]]+set	GitHub Actionsのシークレット設定
+CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+secret[[:space:]]+delete	GitHub Actionsのシークレット削除
+CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+secret[[:space:]]+remove	GitHub Actionsのシークレット削除
+CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+api([^|;&]*[[:space:]]+)?--method[[:space:]]+DELETE	GitHub APIでの削除
+CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+api([^|;&]*[[:space:]]+)?-X[[:space:]]+DELETE	GitHub APIでの削除
+CMD	(^|[|;&(]|[[:space:]])npm[[:space:]]+publish	npmへのパッケージ公開
+CMD	(^|[|;&(]|[[:space:]])pnpm[[:space:]]+publish	npmへのパッケージ公開
+CMD	(^|[|;&(]|[[:space:]])yarn[[:space:]]+publish	npmへのパッケージ公開
+CMD	(^|[|;&(]|[[:space:]])bun[[:space:]]+publish	npmへのパッケージ公開
+CMD	(^|[|;&(]|[[:space:]])op[[:space:]]+item[[:space:]]+edit	1Passwordの項目編集
+CMD	(^|[|;&(]|[[:space:]])bw[[:space:]]+item[[:space:]]+edit	Bitwardenの項目編集
+CMD	(^|[|;&(]|[[:space:]])aws[[:space:]]+secretsmanager[[:space:]]+put-secret-value	AWS Secrets Managerへの書き込み
+CMD	(^|[|;&(]|[[:space:]])gcloud[[:space:]]+secrets[[:space:]]+versions[[:space:]]+add	Google Cloud Secret Managerへの書き込み
+CMD	(^|[|;&(]|[[:space:]])vault[[:space:]]+kv[[:space:]]+put	HashiCorp Vaultへの書き込み
+CMD	(^|[|;&(]|[[:space:]])doppler[[:space:]]+secrets[[:space:]]+set	Dopplerへの書き込み
+CMD	(^|[|;&(]|[[:space:]])infisical[[:space:]]+secrets[[:space:]]+set	Infisicalへの書き込み
+CMD	(^|[|;&(]|[[:space:]])vercel[[:space:]]+env[[:space:]]+add	Vercelの環境変数追加
+CMD	(^|[|;&(]|[[:space:]])netlify[[:space:]]+env:set	Netlifyの環境変数設定
+CMD	(^|[|;&(]|[[:space:]])firebase[[:space:]]+functions:config:set	Firebase Functionsの設定変更
+CMD	(^|[|;&(]|[[:space:]])supabase[[:space:]]+secrets[[:space:]]+set	Supabaseのシークレット設定

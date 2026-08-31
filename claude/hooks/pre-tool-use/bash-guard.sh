@@ -17,6 +17,10 @@
 #   NETWORK_WRITE: 外部状態を変える（git push/gh pr merge/gh api 書き込み 等）→ ユーザー確認
 #   DESTRUCTIVE  : 取り返しがつかない（rm/git reset --hard/git push --force 等）→ ユーザー確認
 #
+# 階層判定より前に適用するルール:
+#   - permissions/deny-rules.json から生成した deny-rules.txt に一致したら deny
+#     （秘密ファイルへの操作と、秘密情報の書き換え・公開・削除を伴う命令）
+#
 # 個別ルール（階層判定の後に適用）:
 #   - 保護ブランチ上での git commit / git merge は deny（PR 経由を強制）
 #   - WORK_RECORD_FILES がステージ済みで git commit しようとした場合は deny
@@ -76,6 +80,35 @@ _ask() {
     '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":$msg}}'
   exit 0
 }
+
+# --- 秘密ファイルの読み書きと、拒否する命令を deny ---
+# permissions/deny-rules.json から生成した deny-rules.txt と照合する。
+# WHY: claude/settings.json の permissions.deny は Claude Code しか読まない。Codex CLI には
+#      許可・拒否の設定がなく、gh secret set / vault kv put / security find-generic-password は
+#      classify() のどのパターンにも一致せず無警告で通っていた。シェル層で止めて3つのCLIで揃える。
+# WHY: コマンド名（cat）ではなくパス名で判定する。head / sed / awk / python -c 経由の読み取りも
+#      同じ1行で捕まえられる。誤検知（無害な命令が止まる）は、見逃しより害が小さいので許容する。
+# Why not: COMMAND_UNQUOTED（引用符の中を除去した文字列）を使わない。cat "$HOME/.ssh/..." のように
+#          引用符で囲めば素通りしてしまうため。代わりに、秘密パスを引用符付きで書いただけの
+#          grep や echo も止まる。理由が表示されるので回避できる。
+# Why not: 変数を `$label` と裸で書かない。ロケールがCのとき bash 5.3 は全角括弧のバイト列を
+#          変数名の一部として読み、展開結果が壊れる（実際に `（$label）` が `（??` になった）。
+#          日本語が直後に続く展開は必ず `${label}` の形で書く。
+DENY_RULES="$(dirname "$0")/deny-rules.txt"
+if [ -f "$DENY_RULES" ]; then
+  while IFS=$'\t' read -r kind regex label; do
+    case "$kind" in ''|'#'*) continue;; esac
+    printf '%s' "$COMMAND" | grep -qE "$regex" || continue
+    case "$kind" in
+      PATH)
+        _deny "ERROR: 秘密情報を含むファイルへの操作は禁止されています（${label}）。WHY: 認証情報がコマンド出力やログに残ると、会話履歴や画面共有から漏れます。FIX: 値が必要な場合は環境変数の名前だけを扱うか、ユーザー自身に確認してください。コマンド: $COMMAND"
+        ;;
+      CMD)
+        _deny "ERROR: この命令の実行は禁止されています（${label}）。WHY: 秘密情報の書き換えや外部への公開・削除は取り消せず、影響がこの端末の外へ及びます。FIX: 必要な場合はユーザー自身が実行してください。コマンド: $COMMAND"
+        ;;
+    esac
+  done < "$DENY_RULES"
+fi
 
 # --- リスク階層を機械判定 ---
 classify() {

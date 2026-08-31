@@ -5,6 +5,8 @@
     "lint": "textlint 'docs/**/*.md' 'claude/**/*.md' README.md",
     "lint:fix": "textlint --fix 'docs/**/*.md' 'claude/**/*.md' README.md",
     "check:symlinks": "bash scripts/check-claude-symlinks.sh",
+    "generate:permissions": "bash scripts/generate-permissions.sh",
+    "test:deny-rules": "bash claude/tests/deny-rules.test.sh",
     "test:codex-rules": "bash codex/tests/setup-codex-rules.test.sh",
     "prepare": "lefthook install"
   },
