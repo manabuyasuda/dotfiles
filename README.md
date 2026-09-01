@@ -413,7 +413,7 @@ Claude Code・Cursor・Codexで、同じガード・permissions・ルール・�
 | 2. 別ファイル（手動で同期） | フック、ルール、statusLine | 本体は`claude/`に置きます。Cursorは`cursor/hooks.json`とアダプター、Codexは`codex/hooks/wrap/`で呼び出します |
 | 2. 生成物 | Codex サブエージェント TOML | `claude/agents/*/SUBAGENT.md`から`scripts/generate-codex-agents.sh`で`codex/agents/*.toml`を生成します |
 | 2. 生成物 | Cursor グローバル指示 | `claude/CLAUDE.md`から`scripts/generate-cursor-rules.sh`で`cursor/rules/global-instructions.mdc`を生成します。Cursorは`.mdc`のfrontmatterが必要でシンボリックリンクにできないため、frontmatterを付けたコピーを生成します |
-| 2. 生成物 | deny ルール | `permissions/deny-rules.json`から`scripts/generate-permissions.sh`で`claude/settings.json`の`permissions.deny`と`claude/hooks/pre-tool-use/deny-rules.txt`を生成します。前者はClaude Codeが直接読み、後者は`bash-guard.sh`がシェル層で照合します（Codex CLIには許可・拒否の設定がないため） |
+| 2. 生成物 | deny ルール | `permissions/deny-rules.json`から`scripts/generate-permissions.sh`で`claude/settings.json`の`permissions.deny`と`claude/hooks/pre-tool-use/deny-rules.txt`を生成します。前者はClaude Codeが直接読み、後者は`bash-guard.sh`がシェル層で照合します（Codex CLIには許可・拒否の設定がないため）。シェル層の照合はdenyとaskの2段です。globが表す範囲に一致した命令はdeny、範囲の外で秘密ファイルの名前だけが一致した命令はaskになり、ユーザーが内容を見て判断します |
 | 2. 生成物 | Cursor CLI permissions | `claude/settings.json`の`permissions`から`scripts/sync-cursor-cli-permissions.sh`で`cursor/cli-permissions.json`を生成します（`Bash()`→`Shell()`、`Edit()`→`Write()`へ変換）。`setup.sh`が`merge-cursor-cli-config.sh`で`~/.cursor/cli-config.json`の`permissions`へ反映します |
 | 3. スクリプト同期 | Codex config | `codex/config.toml`は`merge-codex-config.sh`で反映します |
 

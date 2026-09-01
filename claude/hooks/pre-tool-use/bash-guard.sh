@@ -17,6 +17,13 @@
 #   NETWORK_WRITE: 外部状態を変える（git push/gh pr merge/gh api 書き込み 等）→ ユーザー確認
 #   DESTRUCTIVE  : 取り返しがつかない（rm/git reset --hard/git push --force 等）→ ユーザー確認
 #
+# ask の理由文の先頭タグ:
+#   `[DESTRUCTIVE]` `[SECRET_NAME]` は、確認を出せない環境で deny へ落とす対象の目印です。
+#   codex/hooks/wrap/pre-tool-use.sh がこの2つのタグを見て変換します（Codex CLI は ask を
+#   無視して実行するため。2026-08-31 実測、plan/codex-ask-decision-check.md）。
+#   タグを消したり文言の先頭から動かしたりすると変換が止まるため、
+#   codex/tests/ask-fallback.test.sh がタグの存在を検査します。
+#
 # 階層判定より前に適用するルール:
 #   - permissions/deny-rules.json から生成した deny-rules.txt に一致したら deny
 #     （秘密ファイルへの操作と、秘密情報の書き換え・公開・削除を伴う命令）
@@ -88,20 +95,37 @@ _ask() {
 #      classify() のどのパターンにも一致せず無警告で通っていた。シェル層で止めて3つのCLIで揃える。
 # WHY: コマンド名（cat）ではなくパス名で判定する。head / sed / awk / python -c 経由の読み取りも
 #      同じ1行で捕まえられる。誤検知（無害な命令が止まる）は、見逃しより害が小さいので許容する。
+# WHY: deny と ask を分ける。deny は情報源のglobが表す範囲に忠実な一致（cat .env.local など）。
+#      ask はその範囲外だが名前が一致するもの（grep "process.env" など）。検知の網は狭めず、
+#      判断が要るものはユーザーへ回す。過去891セッション1918件の実測では ask 相当が6件（0.3%）。
 # Why not: COMMAND_UNQUOTED（引用符の中を除去した文字列）を使わない。cat "$HOME/.ssh/..." のように
 #          引用符で囲めば素通りしてしまうため。代わりに、秘密パスを引用符付きで書いただけの
 #          grep や echo も止まる。理由が表示されるので回避できる。
 # Why not: 変数を `$label` と裸で書かない。ロケールがCのとき bash 5.3 は全角括弧のバイト列を
 #          変数名の一部として読み、展開結果が壊れる（実際に `（$label）` が `（??` になった）。
 #          日本語が直後に続く展開は必ず `${label}` の形で書く。
+# Why not: シェル層の照合には原理的な取りこぼしがある。この層はコマンドの「文字列」しか見えず、
+#          実行時に何のパスへ届くかを知らないため、次の2つは通過する。
+#            1. `cd ~/.ssh && cat id_ed25519` — 連結後のパスは文字列に現れない
+#            2. `"npm" publish` — 引用符でトークンが割れる（COMMAND_UNQUOTED は前述の理由で使えない）
+#          これらは claude/settings.json の permissions.deny が実パスとツール引数で判定して塞ぐ。
+#          ツール層とシェル層は互いの穴を埋める関係で、シェル層だけで完結させようとすると
+#          正規表現が際限なく増えて誤検知が実害になる。塞ぐならツール層のルールを足す。
+# Why not: `grep -qE` を使わない。ルール1行ごとにプロセスを起動するため、Bashを1回呼ぶたびに
+#          約200ms増えた（46行で実測）。bash の `=~` はEREを同じ構文で解釈し、起動が要らない。
+#          `^` の扱いだけが異なる（grepは行頭、`=~` は文字列の先頭）が、行頭の直前は改行であり、
+#          どのルールも直前に改行を許す文字クラスを持つため判定は変わらない（T7で検証する）。
 DENY_RULES="$(dirname "$0")/deny-rules.txt"
 if [ -f "$DENY_RULES" ]; then
   while IFS=$'\t' read -r kind regex label; do
     case "$kind" in ''|'#'*) continue;; esac
-    printf '%s' "$COMMAND" | grep -qE "$regex" || continue
+    [[ $COMMAND =~ $regex ]] || continue
     case "$kind" in
       PATH)
         _deny "ERROR: 秘密情報を含むファイルへの操作は禁止されています（${label}）。WHY: 認証情報がコマンド出力やログに残ると、会話履歴や画面共有から漏れます。FIX: 値が必要な場合は環境変数の名前だけを扱うか、ユーザー自身に確認してください。コマンド: $COMMAND"
+        ;;
+      PATHASK)
+        _ask "[SECRET_NAME] 確認: 秘密情報を含むファイルの名前が含まれています（${label}）。WHY: 拒否ルールが表す範囲の外ですが、名前が一致するため事故の可能性が残ります。FIX: 内容を確認し、問題なければ承認してください。読み取りが必要な場合はユーザー自身が実行してください。コマンド: $COMMAND"
         ;;
       CMD)
         _deny "ERROR: この命令の実行は禁止されています（${label}）。WHY: 秘密情報の書き換えや外部への公開・削除は取り消せず、影響がこの端末の外へ及びます。FIX: 必要な場合はユーザー自身が実行してください。コマンド: $COMMAND"
@@ -121,12 +145,18 @@ classify() {
     *"yarn install --immutable"*)
       echo "READ"; return;;
 
+    # --force-with-lease は DESTRUCTIVE より前に評価する。
+    # WHY: リモートが自分の知る状態と違えば失敗するため、他人のコミットを消せない。
+    #      無条件で上書きする --force とは危険度が違う。
+    #      パターンの順序を変えると `*"git push --force"*` に先に一致して DESTRUCTIVE になる。
+    *"git push --force-with-lease"*)
+      echo "NETWORK_WRITE"; return;;
+
     # DESTRUCTIVE: 取り返しがつかない操作
     # ※ git push --force / git reset --hard は NETWORK_WRITE より前に評価する必要がある
     *"git reset --hard"* |\
     *"git push --force"* |\
     *"git push -f "* |\
-    *"git push --force-with-lease"* |\
     *"git commit"*"--amend"* |\
     *"rm "* |\
     *"unlink "* |\

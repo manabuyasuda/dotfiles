@@ -1,24 +1,26 @@
 # このファイルは scripts/generate-permissions.py が permissions/deny-rules.json から生成します。
 # 直接編集せず、permissions/deny-rules.json を編集してください。
-# 形式: <種別>\t<ERE>\t<説明>   種別 PATH=秘密ファイルのパス / CMD=拒否する命令
-PATH	\.env	.env ファイル（APIキー・接続文字列）
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.ssh/	SSHの秘密鍵と設定
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.aws/	AWSの認証情報
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.gcloud/	Google Cloudの認証情報
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.config/gcloud/	Google Cloudの認証情報
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.azure/	Azureの認証情報
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.kube/config	Kubernetesのクラスタ接続情報
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.docker/config\.json	Dockerレジストリの認証情報
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.npmrc	npmレジストリのアクセストークン
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.netrc	ホスト別のログイン情報
-PATH	(~|\$HOME|/Users/[^/[:space:]]+)/\.config/gh/	GitHub CLIの認証設定
+# 形式: <種別>\t<ERE>\t<説明>
+# 種別 PATH=秘密ファイルのパス（deny） / CMD=拒否する命令（deny） / PATHASK=範囲外の一致（ask）
+# 上から順に照合し、最初に一致した行で判定する。denyの行を先に並べる。
+PATH	(^|[^[:alnum:]_.-])\.env	.env ファイル（APIキー・接続文字列）
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.ssh/	SSHの秘密鍵と設定
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.aws/	AWSの認証情報
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.gcloud/	Google Cloudの認証情報
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.config/gcloud/	Google Cloudの認証情報
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.azure/	Azureの認証情報
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.kube/config	Kubernetesのクラスタ接続情報
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.docker/config\.json	Dockerレジストリの認証情報
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.npmrc	npmレジストリのアクセストークン
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.netrc	ホスト別のログイン情報
+PATH	(~|\$HOME|\$\{HOME\}|/Users/[^/[:space:]]+)/\.config/gh/	GitHub CLIの認証設定
 CMD	(^|[|;&(]|[[:space:]])security[[:space:]]+find-generic-password	macOSキーチェーンからのパスワード取り出し
 CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+repo[[:space:]]+delete	GitHubリポジトリの削除
 CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+secret[[:space:]]+set	GitHub Actionsのシークレット設定
 CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+secret[[:space:]]+delete	GitHub Actionsのシークレット削除
 CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+secret[[:space:]]+remove	GitHub Actionsのシークレット削除
-CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+api([^|;&]*[[:space:]]+)?--method[[:space:]]+DELETE	GitHub APIでの削除
-CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+api([^|;&]*[[:space:]]+)?-X[[:space:]]+DELETE	GitHub APIでの削除
+CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+api([^|;&]*[[:space:]]+)?--method[[:space:]]*=?[[:space:]]*DELETE	GitHub APIでの削除
+CMD	(^|[|;&(]|[[:space:]])gh[[:space:]]+api([^|;&]*[[:space:]]+)?-X[[:space:]]*=?[[:space:]]*DELETE	GitHub APIでの削除
 CMD	(^|[|;&(]|[[:space:]])npm[[:space:]]+publish	npmへのパッケージ公開
 CMD	(^|[|;&(]|[[:space:]])pnpm[[:space:]]+publish	npmへのパッケージ公開
 CMD	(^|[|;&(]|[[:space:]])yarn[[:space:]]+publish	npmへのパッケージ公開
@@ -34,3 +36,14 @@ CMD	(^|[|;&(]|[[:space:]])vercel[[:space:]]+env[[:space:]]+add	Vercelの環境�
 CMD	(^|[|;&(]|[[:space:]])netlify[[:space:]]+env:set	Netlifyの環境変数設定
 CMD	(^|[|;&(]|[[:space:]])firebase[[:space:]]+functions:config:set	Firebase Functionsの設定変更
 CMD	(^|[|;&(]|[[:space:]])supabase[[:space:]]+secrets[[:space:]]+set	Supabaseのシークレット設定
+PATHASK	\.env	.env ファイル（APIキー・接続文字列）
+PATHASK	(^|[^[:alnum:]_.-])\.ssh/	SSHの秘密鍵と設定
+PATHASK	(^|[^[:alnum:]_.-])\.aws/	AWSの認証情報
+PATHASK	(^|[^[:alnum:]_.-])\.gcloud/	Google Cloudの認証情報
+PATHASK	(^|[^[:alnum:]_.-])\.config/gcloud/	Google Cloudの認証情報
+PATHASK	(^|[^[:alnum:]_.-])\.azure/	Azureの認証情報
+PATHASK	(^|[^[:alnum:]_.-])\.kube/config	Kubernetesのクラスタ接続情報
+PATHASK	(^|[^[:alnum:]_.-])\.docker/config\.json	Dockerレジストリの認証情報
+PATHASK	(^|[^[:alnum:]_.-])\.npmrc	npmレジストリのアクセストークン
+PATHASK	(^|[^[:alnum:]_.-])\.netrc	ホスト別のログイン情報
+PATHASK	(^|[^[:alnum:]_.-])\.config/gh/	GitHub CLIの認証設定

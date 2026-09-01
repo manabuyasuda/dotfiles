@@ -74,6 +74,24 @@ _expect 'git status' none
 _expect 'gh pr view 1' none
 _expect 'npm ci' none
 
+echo "T6: 情報源のglobの範囲外だが秘密ファイルの名前を含む命令は ask"
+# deny は claude/settings.json の glob（例 **/.env*）が表す範囲に忠実な一致だけに限る。
+# 範囲外は検知を落とさず ask にして、ユーザーが内容を見て判断できるようにする。
+_expect 'grep -rn "process.env" src/' ask
+_expect 'node -e "console.log(process.env.PATH)"' ask
+_expect 'cat .npmrc' ask
+_expect 'cat prod.env' ask
+
+echo "T7: 書き方の揺れで素通りしない"
+# フラグと値の区切り（空白 / = / 連結）とホームの書き方（~ / $HOME / ${HOME} / 絶対パス）は
+# どれも同じ命令を表す。1つでも漏れると、そこだけ保護が外れる。
+_expect 'gh api /repos/o/r/x --method=DELETE' deny
+_expect 'gh api /repos/o/r/x -XDELETE' deny
+_expect 'cat ${HOME}/.aws/credentials' deny
+# 複数行のコマンド。行頭の一致を bash の =~ でも取りこぼさないことを確かめる。
+_expect 'cd /tmp
+vault kv put secret/foo bar=baz' deny
+
 echo "T5: deny の理由に、何を止めたかを示す説明が壊れずに入る"
 # ロケールがCのとき bash 5.3 は全角括弧のバイト列を変数名の一部として読む。
 # `（$label）` と裸で書くと説明が消え、ユーザーは何を止められたか分からなくなる。
