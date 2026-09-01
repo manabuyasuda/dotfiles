@@ -28,7 +28,7 @@ pre-commit:
           exit 1
         fi
     permissions-drift:
-      glob: "{permissions/deny-rules.json,claude/settings.json,claude/hooks/pre-tool-use/deny-rules.txt}"
+      glob: "{permissions/deny-rules.json,claude/settings.json,claude/hooks/pre-tool-use/deny-rules.txt,claude/hooks/pre-tool-use/bash-guard.sh,codex/hooks/wrap/pre-tool-use.sh}"
       run: |
         bash scripts/generate-permissions.sh >/dev/null
         if ! git diff --quiet -- claude/settings.json claude/hooks/pre-tool-use/deny-rules.txt; then
@@ -37,7 +37,17 @@ pre-commit:
           git status --short -- claude/settings.json claude/hooks/pre-tool-use/deny-rules.txt
           exit 1
         fi
-        bash claude/tests/deny-rules.test.sh >/dev/null
+        # 出力を捨てると、テストが落ちたとき終了コードしか残らず何が壊れたか分からない。
+        if ! out=$(bash claude/tests/deny-rules.test.sh 2>&1); then
+          echo "$out"
+          exit 1
+        fi
+        # Codex は ask を無視して実行するため、wrap が deny へ落とす。
+        # 変換はメッセージ先頭のタグに依存するので、文言が変わったらここで落とす。
+        if ! out=$(bash codex/tests/ask-fallback.test.sh 2>&1); then
+          echo "$out"
+          exit 1
+        fi
     cursor-permissions-drift:
       glob: "{claude/settings.json,cursor/cli-permissions.json}"
       run: |

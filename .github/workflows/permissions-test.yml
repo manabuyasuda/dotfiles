@@ -3,6 +3,11 @@ name: permissions-test
 # deny ルールの唯一の情報源（permissions/deny-rules.json）と生成物のずれ、
 # および bash-guard.sh がそのルールを適用しているかを CI で検証する。
 # 生成物を手で書き換えて保護が静かに外れる事故を機械的に止める。
+#
+# Why not: pull_request と push の paths をまとめない。GitHub Actions は
+#          ワークフローファイルで YAML のアンカー・エイリアスを解釈しないため、
+#          同じ一覧を2回書くしかない。片方だけ足すと検証が走らなくなるので、
+#          追加するときは両方へ入れる。
 
 on:
   pull_request:
@@ -14,6 +19,8 @@ on:
       - 'scripts/generate-permissions.py'
       - 'scripts/generate-permissions.sh'
       - 'claude/tests/deny-rules.test.sh'
+      - 'codex/hooks/wrap/pre-tool-use.sh'
+      - 'codex/tests/ask-fallback.test.sh'
       - '.github/workflows/permissions-test.yml'
   push:
     branches:
@@ -26,6 +33,8 @@ on:
       - 'scripts/generate-permissions.py'
       - 'scripts/generate-permissions.sh'
       - 'claude/tests/deny-rules.test.sh'
+      - 'codex/hooks/wrap/pre-tool-use.sh'
+      - 'codex/tests/ask-fallback.test.sh'
       - '.github/workflows/permissions-test.yml'
 
 permissions: {}
@@ -40,6 +49,10 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
       - name: Syntax check (bash -n)
-        run: bash -n claude/hooks/pre-tool-use/bash-guard.sh
+        run: |
+          bash -n claude/hooks/pre-tool-use/bash-guard.sh
+          bash -n codex/hooks/wrap/pre-tool-use.sh
       - name: Run deny rules tests
         run: bash claude/tests/deny-rules.test.sh
+      - name: Run Codex ask fallback tests
+        run: bash codex/tests/ask-fallback.test.sh
