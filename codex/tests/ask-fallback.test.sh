@@ -2,10 +2,10 @@
 # Codex ラッパが ask を deny へ落とす変換の回帰テスト
 #
 # 守りたい不変条件は3つ。
-#   1. 取り消せない操作（[DESTRUCTIVE]）と秘密ファイル名の一致（[SECRET_NAME]）は、
+#   1. 取り消せない操作（[DESTRUCTIVE]）とホームの認証情報ファイルへの一致（[SECRET_PATH]）は、
 #      Codex では deny になる。Codex は ask を無視して実行するため、変換しないと素通りする。
-#   2. git push / npm install（NETWORK_WRITE / INSTALL）は deny にならない。
-#      これらを止めると Codex で日常の作業ができなくなる。
+#   2. git push / npm install（NETWORK_WRITE / INSTALL）と、どこにでもある名前への一致
+#      （[SECRET_NAME]）は deny にならない。これらを止めると Codex で日常の作業ができなくなる。
 #   3. 通過するコマンドは何も出力しない。空行を書くと Codex が JSON として読む。
 #
 # タグは bash-guard.sh の理由文の先頭にある文字列に依存する。文言を変えると
@@ -50,9 +50,21 @@ echo "C1: 取り消せない操作は Codex では deny"
 _expect 'rm foo.txt' deny
 _expect 'git reset --hard HEAD~1' deny
 
-echo "C2: 秘密ファイル名の一致は Codex では deny"
-_expect 'grep -rn "process.env" src/' deny
-_expect 'cat prod.env' deny
+echo "C2: ホームの認証情報ファイルへの一致は Codex では deny"
+# ホームを作業ディレクトリにすると相対パスで書ける。Claude Code では ask だが、
+# Codex は ask を実行するため、ここで deny へ落とさないと秘密鍵がそのまま読まれる。
+# 文字列を変数から組み立てるのは、このファイルを扱うコマンド自体が hook に止められないようにするため。
+_S=".ssh"; _A=".aws"; _N=".netrc"
+_expect "cat ${_S}/id_ed25519" deny
+_expect "cat ${_A}/credentials" deny
+_expect "cat ${_N}" deny
+
+echo "C2b: どこにでもある名前への一致は Codex では deny にしない"
+# `.env` は識別子の一部としても書かれる。deny にすると Codex では承認で覆せず、
+# ソースコードの検索やコミットメッセージの作成が恒久的にできなくなる。
+_E=".env"
+_expect "rg -n 'import.meta${_E}' src/" ask
+_expect "ls -la ${_E}.example" ask
 
 echo "C3: 確認して通していた作業は deny にしない"
 # git push を止めると PR が作れず、npm install を止めると依存を追加できない。

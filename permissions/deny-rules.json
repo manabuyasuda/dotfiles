@@ -1,7 +1,9 @@
 {
   "description": "Claude Code / Codex CLI / Cursor CLI で拒否する操作の唯一の情報源。scripts/generate-permissions.py が claude/settings.json の permissions.deny と claude/hooks/pre-tool-use/deny-rules.txt を生成する。直接 claude/settings.json を編集しない。dotfilesは公開リポジトリのため、個人ごとに異なる値（鍵のファイル名など）を書かない。",
+  "_claudeTools": "claudeTools には、そのパターンに対して deny するツールを書く。ファイルの中身を返すツール（Read / Edit）だけを対象にし、名前しか返さないツール（Glob）は入れない。WHY: deny の目的は認証情報がモデルの文脈や画面に残るのを防ぐことで、ファイルが存在するかどうかは秘密ではない。Glob を deny にすると .env.example の有無すら調べられず、止める理由に見合わない。",
+  "_envExample": "**/.env* の deny から .env.example を除く書き方はない（permissions.deny のグロブは否定を表現できない）。除くなら **/.env* ごと外すことになり、defaultMode が auto のため .env.local まで無確認で読める。ask へ移す案も、.env.local が承認1つで読める状態になり、シェル層（bash-guard.sh が deny）より弱くなる。.env.example の中身は Bash の cat で承認付きに読めるため、読めない状態ではなく手段が1つ減るだけ。この釣り合いで Read / Edit の deny を残すと判断した（2026-09-02）。",
   "secretPaths": [
-    { "pattern": "**/.env*", "claudeTools": ["Read", "Edit", "Glob"], "label": ".env ファイル（APIキー・接続文字列）" },
+    { "pattern": "**/.env*", "claudeTools": ["Read", "Edit"], "label": ".env ファイル（APIキー・接続文字列）" },
     { "pattern": "~/.ssh/*", "claudeTools": ["Read"], "label": "SSHの秘密鍵と設定" },
     { "pattern": "~/.aws/*", "claudeTools": ["Read"], "label": "AWSの認証情報" },
     { "pattern": "~/.gcloud/*", "claudeTools": ["Read"], "label": "Google Cloudの認証情報" },

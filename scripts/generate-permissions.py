@@ -46,6 +46,23 @@ def ere_quote(text: str) -> str:
     return "".join(chr(92) + ch if ch in _ERE_META else ch for ch in text)
 
 
+def ere_anycase(text: str) -> str:
+    """英字を大文字・小文字のどちらでも一致する文字クラスにする。
+
+    WHY: `gh api -X DELETE` を大文字だけで照合していたため `gh api -X delete` が
+    素通りしていた。`gh api -X get user` が実際に成功することを確認済み
+    （2026-09-02 実測）。HTTPメソッドは gh と GitHub のどちらかが大文字へ揃えるため、
+    小文字で書いても同じ命令が実行される。
+    """
+    out = []
+    for ch in text:
+        if ch.isascii() and ch.isalpha():
+            out.append(f"[{ch.upper()}{ch.lower()}]")
+        else:
+            out.append(ere_quote(ch))
+    return "".join(out)
+
+
 def path_to_ere(pattern: str, *, strict: bool = True) -> str:
     """パスのglobパターンを、コマンド文字列の中を探すERE（拡張正規表現）へ変換する。
 
@@ -55,6 +72,14 @@ def path_to_ere(pattern: str, *, strict: bool = True) -> str:
     strict=True はglobが表す範囲に忠実な照合を作る（deny 用）。
     strict=False はホームの指定を外した広い照合を作る（ask 用）。
     どちらも直前が識別子の文字でないことを要求する。
+
+    ディレクトリを表すglob（`~/.ssh/*`）は、末尾のスラッシュを任意にする。
+    WHY: `cd ~/.ssh && cat id_ed25519` は文字列に `~/.ssh/` が現れず素通りしていた
+    （2026-09-02 実測。`cd ~/.ssh/` とスラッシュを付けた場合だけ止まっていた）。
+    同じ操作の別の書き方で保護が外れるのは、`--method=DELETE` と `-XDELETE` を
+    両方拾うのと同じ種類の取りこぼしなので塞ぐ。
+    代わりに `cd ~/.ssh` `ls ~/.aws` のようにディレクトリ名を書いただけの命令も一致するが、
+    中身を読み書きする命令ではないため bash-guard.sh 側で ask になり、denyにはならない。
     """
     body = pattern
     prefix = ""
@@ -64,12 +89,49 @@ def path_to_ere(pattern: str, *, strict: bool = True) -> str:
     elif body.startswith("~/"):
         body = body[2:]
         prefix = HOME_ERE if strict else BOUNDARY
-    if body.endswith("*"):
+    suffix = ""
+    if body.endswith("/*"):
+        # 末尾のスラッシュを任意にする。直後が識別子の文字だと別のパス（.sshfoo、.ssh.bak）
+        # に当たるため、それ以外の文字か文字列の終わりであることを要求する。
+        # `/` `;` `&` `|` 空白 引用符がここに入る（`cd ~/.ssh; cat ...` を取りこぼさない）。
+        body = body[:-2]
+        suffix = r"([^[:alnum:]_.-]|$)"
+    elif body.endswith("*"):
         body = body[:-1]
     escaped = "".join(
         r"[^/[:space:]]*" if ch == "*" else ere_quote(ch) for ch in body
     )
-    return prefix + escaped
+    return prefix + escaped + suffix
+
+
+def secret_tag(pattern: str) -> str:
+    """秘密ファイルのルールを、確認を出せない環境での扱いで2つに分ける。
+
+    Codex CLI は permissionDecision: "ask" を無視してコマンドを実行する
+    （2026-08-31 実測、explore/codex-ask-decision-check.md）。そのため
+    codex/hooks/wrap/pre-tool-use.sh が ask を deny へ落として補っている。
+    ただし全部を落とすと、名前が一致しただけの無害な命令（`rg 'import.meta.env' src/`）
+    まで Codex で実行できなくなる。落とす対象をここで決める。
+
+    分け方は glob の先頭だけで決める。
+      `~/` 始まり → SECRET_PATH。ホームにある特定の認証情報ファイルを指す。
+                    `.ssh/id_ed25519` `.netrc` `.npmrc` は他の意味で書かれることがなく、
+                    名前が出た時点で実物を触っている可能性が高い。確認を出せない環境では
+                    deny へ落とす。
+      `**/` 始まり → SECRET_NAME。どこにでも現れ得る名前を指す。`.env` は
+                    `process.env` `import.meta.env` のように識別子の一部としても書かれる。
+                    落とすと無害な命令まで実行できなくなるため、落とさない。
+
+    Why not: 生成した正規表現にパス区切りが含まれるかで分けない。`~/.netrc` `~/.npmrc` は
+             区切りを含まないのに実物の認証情報ファイルで、SECRET_NAME 側へ落ちてしまう。
+             分ける根拠は「ホームの特定ファイルか、どこにでもある名前か」であり、
+             それは変換後の正規表現ではなく情報源の glob が持っている。
+    Why not: この分類を permissions/deny-rules.json へ人が書かない。SECRET_PATH にすべき
+             ルールを SECRET_NAME と書いた瞬間、Codex で認証情報の読み取りが無言で通る。
+             エラーも出ず誰も気づかないため、人の判断が入る余地を作らない。
+             分岐が消えたことは codex/tests/ask-fallback.test.sh が検出する。
+    """
+    return "SECRET_NAME" if pattern.startswith("**/") else "SECRET_PATH"
 
 
 def command_to_ere(tokens: list[str]) -> str:
@@ -92,7 +154,10 @@ def command_to_ere(tokens: list[str]) -> str:
             gap = r"[[:space:]]*=?[[:space:]]*"
         else:
             gap = r"[[:space:]]+"
-        parts.append(gap + ere_quote(token))
+        # 全部が英大文字のトークンは HTTP メソッドのような値で、小文字でも同じ命令になる。
+        # コマンド名やサブコマンド（gh / api / secret）は小文字なのでここに入らない。
+        quoted = ere_anycase(token) if token.isupper() and token.isalpha() else ere_quote(token)
+        parts.append(gap + quoted)
         prev = token
     return "".join(parts)
 
@@ -113,8 +178,10 @@ def build_rules_txt(rules: dict) -> str:
     lines = [
         "# このファイルは scripts/generate-permissions.py が permissions/deny-rules.json から生成します。",
         "# 直接編集せず、permissions/deny-rules.json を編集してください。",
-        "# 形式: <種別>\\t<ERE>\\t<説明>",
-        "# 種別 PATH=秘密ファイルのパス（deny） / CMD=拒否する命令（deny） / PATHASK=範囲外の一致（ask）",
+        "# 形式: <種別>\\t<ERE>\\t<説明>\\t<タグ>",
+        "# 種別 PATH=秘密ファイルのパス / CMD=拒否する命令（deny） / PATHASK=範囲外の一致（ask）",
+        "# タグ SECRET_PATH=ホームの特定ファイル（~/ 始まり） / SECRET_NAME=どこにでもある名前（**/ 始まり）",
+        "#      確認を出せない環境（Codex CLI）で ask を deny へ落とす対象を選ぶために使う。",
         "# 上から順に照合し、最初に一致した行で判定する。denyの行を先に並べる。",
     ]
     # PATHASK は「globの範囲外だが秘密ファイルの名前を含む」命令を拾う。
@@ -124,11 +191,12 @@ def build_rules_txt(rules: dict) -> str:
     for entry in rules["secretPaths"]:
         strict = path_to_ere(entry["pattern"], strict=True)
         loose = path_to_ere(entry["pattern"], strict=False)
-        lines.append(f"PATH\t{strict}\t{entry['label']}")
+        tag = secret_tag(entry["pattern"])
+        lines.append(f"PATH\t{strict}\t{entry['label']}\t{tag}")
         if loose != strict:
-            ask_lines.append(f"PATHASK\t{loose}\t{entry['label']}")
+            ask_lines.append(f"PATHASK\t{loose}\t{entry['label']}\t{tag}")
     for entry in rules["deniedCommands"]:
-        lines.append(f"CMD\t{command_to_ere(entry['tokens'])}\t{entry['label']}")
+        lines.append(f"CMD\t{command_to_ere(entry['tokens'])}\t{entry['label']}\t")
     return "\n".join(lines + ask_lines) + "\n"
 
 

@@ -82,12 +82,52 @@ _expect 'node -e "console.log(process.env.PATH)"' ask
 _expect 'cat .npmrc' ask
 _expect 'cat prod.env' ask
 
+echo "T8: 名前が一致しても、中身を読み書きしない命令は deny にしない"
+# deny はユーザーの承認で覆せない。名前が現れただけで deny にしていたため、
+# コミットメッセージや検索語に秘密ファイルの名前を書くことが恒久的にできなかった。
+# 止めたいのは中身が外へ出ることで、名前が文字列として現れること自体ではない。
+_expect 'git commit -m "docs: .env の読み方を書く"' ask
+_expect 'git log --oneline --grep=.env' ask
+_expect 'ls -la .env.example' ask
+# 中身を読む命令であれば、これまでどおり deny のまま。
+_expect 'cat .env.example .env.local' deny
+
+echo "T9: 確認を出せない環境で deny へ落とす対象のタグが理由文の先頭に付く"
+# タグは deny-rules.txt の4列目が持ち、生成器が情報源の glob から機械的に決める。
+# ホームの認証情報ファイル（~/ 始まり）は SECRET_PATH、どこにでもある名前（**/ 始まり）は
+# SECRET_NAME。取り違えると Codex で認証情報の読み取りが無言で通る。
+_reason() {
+  jq -nc --arg c "$1" '{tool_input:{command:$c},cwd:"/tmp"}' \
+    | bash "$ROOT/claude/hooks/pre-tool-use/bash-guard.sh" \
+    | jq -r '.hookSpecificOutput.permissionDecisionReason // ""'
+}
+_expect_tag() {  # $1=コマンド $2=期待するタグ
+  local got
+  got=$(_reason "$1" | sed -n 's/^\[\([A-Z_]*\)\].*/\1/p')
+  if [ "$got" = "$2" ]; then _ok "$1 -> [$2]"; else _ng "$1 -> 期待 [$2] だが [$got]"; fi
+}
+_expect_tag 'cat .ssh/id_ed25519' SECRET_PATH
+_expect_tag 'cat .netrc' SECRET_PATH
+_expect_tag 'cat .npmrc' SECRET_PATH
+_expect_tag 'ls -la .env.example' SECRET_NAME
+_expect_tag 'grep -rn "process.env" src/' SECRET_NAME
+
 echo "T7: 書き方の揺れで素通りしない"
 # フラグと値の区切り（空白 / = / 連結）とホームの書き方（~ / $HOME / ${HOME} / 絶対パス）は
 # どれも同じ命令を表す。1つでも漏れると、そこだけ保護が外れる。
 _expect 'gh api /repos/o/r/x --method=DELETE' deny
 _expect 'gh api /repos/o/r/x -XDELETE' deny
+# HTTPメソッドは小文字でも同じ命令が実行される（gh api -X get user が成功する。2026-09-02 実測）。
+_expect 'gh api /repos/o/r/x --method delete' deny
+_expect 'gh api /repos/o/r/x -Xdelete' deny
 _expect 'cat ${HOME}/.aws/credentials' deny
+# ディレクトリへ移動してからファイル名だけで読む書き方。末尾のスラッシュが付かないため、
+# `~/.ssh/` を探すルールでは素通りしていた（2026-09-02 実測）。
+_expect 'cd ~/.ssh && cat id_ed25519' deny
+_expect 'cd ~/.ssh; cat id_ed25519' deny
+_expect 'pushd ~/.aws >/dev/null && cat credentials' deny
+# 似た名前の別ディレクトリまで巻き込まない
+_expect 'cat ~/.sshfoo/notes.txt' none
 # 複数行のコマンド。行頭の一致を bash の =~ でも取りこぼさないことを確かめる。
 _expect 'cd /tmp
 vault kv put secret/foo bar=baz' deny

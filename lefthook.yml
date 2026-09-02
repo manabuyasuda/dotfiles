@@ -28,7 +28,7 @@ pre-commit:
           exit 1
         fi
     permissions-drift:
-      glob: "{permissions/deny-rules.json,claude/settings.json,claude/hooks/pre-tool-use/deny-rules.txt,claude/hooks/pre-tool-use/bash-guard.sh,codex/hooks/wrap/pre-tool-use.sh}"
+      glob: "{permissions/deny-rules.json,scripts/generate-permissions.py,claude/settings.json,claude/hooks/pre-tool-use/deny-rules.txt,claude/hooks/pre-tool-use/bash-guard.sh,codex/hooks/wrap/pre-tool-use.sh}"
       run: |
         bash scripts/generate-permissions.sh >/dev/null
         if ! git diff --quiet -- claude/settings.json claude/hooks/pre-tool-use/deny-rules.txt; then
@@ -45,6 +45,16 @@ pre-commit:
         # Codex は ask を無視して実行するため、wrap が deny へ落とす。
         # 変換はメッセージ先頭のタグに依存するので、文言が変わったらここで落とす。
         if ! out=$(bash codex/tests/ask-fallback.test.sh 2>&1); then
+          echo "$out"
+          exit 1
+        fi
+    hook-decision:
+      # 判定メッセージの長さが判定対象で決まると、長い入力のときに画面が流れて
+      # 直後の承認ダイアログがユーザーの視界の外へ出る。lib/decision.sh を
+      # 迂回する hook が増えると上限を強制できなくなるため、hook を触るたびに落とす。
+      glob: "{claude/hooks/lib/decision.sh,claude/hooks/pre-tool-use/*.sh,claude/hooks/post-tool-use/*.sh,claude/tests/hook-decision.test.sh}"
+      run: |
+        if ! out=$(bash claude/tests/hook-decision.test.sh 2>&1); then
           echo "$out"
           exit 1
         fi

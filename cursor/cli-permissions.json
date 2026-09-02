@@ -93,7 +93,6 @@
       "Skill(x-*)"
     ],
     "deny": [
-      "Glob(**/.env*)",
       "Read(**/.env*)",
       "Read(~/.aws/*)",
       "Read(~/.azure/*)",
