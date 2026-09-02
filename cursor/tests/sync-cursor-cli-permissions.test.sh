@@ -28,7 +28,13 @@ _assert "T3 Bash( が残っていない" '! jq -r ".permissions.allow[], .permis
 _assert "T4 Shell( に変換されている" 'jq -r ".permissions.allow[]" "$PERMS" | grep -q "^Shell("'
 _assert "T5 Mcp(figma: に変換されている" 'jq -r ".permissions.allow[]" "$PERMS" | grep -q "^Mcp(figma:"'
 _assert "T6 deny に重複 Write がない" '[ "$(jq "[.permissions.deny[] | select(. == \"Write(**/.env*)\")] | length" "$PERMS")" -le 1 ]'
-_assert "T7 deny に Glob(**/.env*) がある" '[ "$(jq "[.permissions.deny[] | select(. == \"Glob(**/.env*)\")] | length" "$PERMS")" -eq 1 ]'
+# 環境変数ファイルは中身を返すツール（Read / Edit / Write）だけを deny の対象にする。
+# 名前しか返さない Glob は対象にしない。deny の目的は認証情報がモデルの文脈や画面に
+# 残るのを防ぐことで、ファイルが存在するかどうかは秘密ではないため。
+# Glob を deny にすると .env.example の有無すら調べられなくなる（2026-09-02 に判断。
+# 根拠は permissions/deny-rules.json の _claudeTools キー）。
+_assert "T7 deny に Read(**/.env*) がある" '[ "$(jq "[.permissions.deny[] | select(. == \"Read(**/.env*)\")] | length" "$PERMS")" -eq 1 ]'
+_assert "T8 deny に Glob(**/.env*) がない" '[ "$(jq "[.permissions.deny[] | select(. == \"Glob(**/.env*)\")] | length" "$PERMS")" -eq 0 ]'
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
