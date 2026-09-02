@@ -18,10 +18,9 @@
 LOG_FILE="$HOME/.claude/mermaid-guard.log"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"; }
 
-# jq --arg でメッセージをエスケープ（ERRORS に改行や特殊文字が含まれても JSON が壊れない）
+# メッセージの JSON 化と長さの制限は lib/decision.sh が行う（ERRORS に改行や特殊文字があっても壊れない）
 _deny() {
-  jq -n --arg msg "$1" \
-    '{"hookSpecificOutput":{"hookEventName":"PostToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
+  hook_emit_decision deny PostToolUse "$1"
   exit 2
 }
 
@@ -30,6 +29,8 @@ INPUT=$(cat)
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
 source "$(dirname "$0")/../lib/cursor-compat.sh"
+# shellcheck source=../lib/decision.sh
+source "$(dirname "$0")/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 FILE_PATH=$(jq -r '.tool_input.file_path // ""' <<< "$INPUT")
 
@@ -80,6 +81,9 @@ ${err_msg}
   [[ "$in_block" == true ]] && block_lines+=("$line")
 done < "$FILE_PATH"
 
+# 理由文は lib/decision.sh が1行へ潰し、上限文字数で切り詰める。エラーが複数あると
+# 末尾の詳細は落ちるが、行番号ごとに整形して読ませるより、承認ダイアログが画面から
+# 押し出されないことを優先する。全文は同じファイルを mmdc にかければ再取得できる。
 if [[ -n "$ERRORS" ]]; then
   _deny "ERROR: Mermaid の構文エラーが見つかりました。WHY: 構文エラーはレンダリング失敗の原因になります。FIX: 以下のエラーを修正してください:
 

@@ -46,6 +46,8 @@ input=$(cat)
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
 source "$(dirname "$0")/../lib/cursor-compat.sh"
+# shellcheck source=../lib/decision.sh
+source "$(dirname "$0")/../lib/decision.sh"
 exit_if_cursor_payload "$input"
 session_id=$(printf '%s' "$input" | jq -r '.session_id // empty')
 [ -z "$session_id" ] && exit 0
@@ -94,6 +96,5 @@ jq -n --arg x "$new_ctx_warned" '{"ctx_warned": $x}' > "$STATE_FILE" 2>/dev/null
 [ -z "$msg" ] && exit 0
 
 # branch-guard.sh と同じ deny 形式で Claude にフィードバックしつつハードブロック
-jq -n --arg msg "$msg" \
-  '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
+hook_emit_decision deny PreToolUse "$msg"
 exit 2

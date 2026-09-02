@@ -36,6 +36,8 @@ INPUT=$(cat)
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
 source "$(dirname "$0")/../lib/cursor-compat.sh"
+# shellcheck source=../lib/decision.sh
+source "$(dirname "$0")/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 
 # file_path / session_id / cwd を1回の jq でまとめて取得する（同一 stdin を複数回 parse
@@ -89,6 +91,5 @@ if [ -n "$(find "$ROOT/plan" -type f ! -empty 2>/dev/null | head -n1)" ]; then
 fi
 
 # 計画なし → ハードブロック（解除は記録しない＝計画を書くまで止め続ける）
-jq -n --arg msg "ERROR: この作業の計画が plan/ にありません。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: Task tool で plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/ への書き込みは対象外です。" \
-  '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
+hook_emit_decision deny PreToolUse "ERROR: この作業の計画が plan/ にありません。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: Task tool で plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/ への書き込みは対象外です。"
 exit 2
