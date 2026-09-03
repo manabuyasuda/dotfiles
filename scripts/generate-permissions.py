@@ -169,6 +169,13 @@ def build_deny_list(rules: dict) -> list[str]:
         for tool in entry["claudeTools"]:
             deny.append(f"{tool}({pattern})")
         deny.append(f"Bash(cat {pattern})")
+    # 書き込みだけを止めるパス。読み取りは許すので Read も Bash(cat ...) も足さない。
+    # Edit と Write の両方を並べるのは、Claude Code が別のツールとして扱うため。
+    # Cursor 形式へは両方が Write(...) へ変換され、sync 側の unique で1つにまとまる。
+    for entry in rules.get("writeProtectedPaths", []):
+        pattern = entry["pattern"]
+        deny.append(f"Edit({pattern})")
+        deny.append(f"Write({pattern})")
     for entry in rules["deniedCommands"]:
         deny.append(f"Bash({' '.join(entry['tokens'])}*)")
     return deny

@@ -137,7 +137,27 @@
       "Shell(vault kv put*)",
       "Shell(vercel env add*)",
       "Shell(yarn publish*)",
-      "Write(**/.env*)"
+      "Write(**/*.cert)",
+      "Write(**/*.crt)",
+      "Write(**/*.key)",
+      "Write(**/*.p12)",
+      "Write(**/*.pem)",
+      "Write(**/*.pfx)",
+      "Write(**/*.tfstate)",
+      "Write(**/*.tfstate.*)",
+      "Write(**/*.tfvars)",
+      "Write(**/.env*)",
+      "Write(**/.git/**)",
+      "Write(**/Cargo.lock)",
+      "Write(**/Gemfile.lock)",
+      "Write(**/Pipfile.lock)",
+      "Write(**/bun.lock*)",
+      "Write(**/composer.lock)",
+      "Write(**/go.sum)",
+      "Write(**/package-lock.json)",
+      "Write(**/pnpm-lock.yaml)",
+      "Write(**/poetry.lock)",
+      "Write(**/yarn.lock)"
     ]
   }
 }
