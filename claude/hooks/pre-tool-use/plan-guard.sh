@@ -10,9 +10,20 @@
 # 発火モデル: セッション内で一度だけゲートする（fire-once）。
 #          - そのセッションで最初に実装系編集が通過した時点で解除フラグを記録し、以後は
 #            plan/ の状態に関わらず止めない（誤ブロックを最小化する）。
-#          - 解除前は、plan/ に非空ファイルが無い限り実装系編集をブロックし続ける
-#            （計画を書かせるため）。計画を書いて一度通れば、その後は黙る。
+#          - 解除前は、このセッションで plan/ へ書き込んでいない限りブロックし続ける。
 #          記録は ${TMPDIR:-/tmp}/plan-guard-<session_id>。
+#
+# 判定条件: 「plan/ に非空ファイルが1つでもあるか」ではなく「session-start.sh が作った
+#          基準時刻ファイル ${TMPDIR:-/tmp}/session-start-<session_id> より新しい
+#          ファイルが plan/ にあるか」を見る。
+#          前者だと plan/ はコミット対象外でローカルに残り続けるため、一度でも計画を
+#          書いた作業環境では以後すべてのセッションで無条件に通過する（実際にこの
+#          リポジトリでは 2026-06-17 以降このゲートが一度も働いていなかった）。
+#          ディレクトリの状態は過去の全作業の蓄積であり、「いまの作業の計画があるか」を
+#          示さない。基準時刻との比較にすることで、セッション単位の判定になる。
+#
+# 既存の計画を引き継ぐ再開作業でも、plan/ の書式にはセッション状態スナップショットが
+# あり再開時に更新すべきなので、書き込みが発生する。誤ブロックにはならない。
 #
 # 対象範囲: プロジェクトルート外・作業記録ディレクトリ（explore/ plan/）
 #          配下への書き込みは常に対象外。ルート内のそれ以外（*.md を含む）が対象。
@@ -83,13 +94,20 @@ STATE_FILE="${TMPDIR:-/tmp}/plan-guard-${SESSION_ID}"
 # 既にこのセッションで一度ゲートを通過済みなら、以後は止めない（fire-once）
 [ -f "$STATE_FILE" ] && exit 0
 
-# plan/ に非空の通常ファイルが1つでもあれば「計画あり」とみなす（空の .gitkeep 等は除外）。
-if [ -n "$(find "$ROOT/plan" -type f ! -empty 2>/dev/null | head -n1)" ]; then
+SESSION_START_FILE="${TMPDIR:-/tmp}/session-start-${SESSION_ID}"
+
+# 基準時刻ファイルが無い＝SessionStart が動かない環境（Cursor CLI 等）。基準が無いまま
+# 止めるとすべての編集をブロックしてしまうのでフェイルオープンする。
+[ -f "$SESSION_START_FILE" ] || exit 0
+
+# このセッションの開始より後に plan/ へ書き込まれた非空ファイルがあれば「計画あり」と
+# みなす（空の .gitkeep 等は除外）。
+if [ -n "$(find "$ROOT/plan" -type f ! -empty -newer "$SESSION_START_FILE" 2>/dev/null | head -n1)" ]; then
   # 計画あり → ゲート解除を記録して通過
   printf 'cleared' > "$STATE_FILE" 2>/dev/null
   exit 0
 fi
 
 # 計画なし → ハードブロック（解除は記録しない＝計画を書くまで止め続ける）
-hook_emit_decision deny PreToolUse "ERROR: この作業の計画が plan/ にありません。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: Task tool で plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/ への書き込みは対象外です。"
+hook_emit_decision deny PreToolUse "ERROR: この作業の計画が plan/ にありません（このセッションで plan/ へ書き込まれたファイルがありません）。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: Task tool で plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/ への書き込みは対象外です。"
 exit 2
