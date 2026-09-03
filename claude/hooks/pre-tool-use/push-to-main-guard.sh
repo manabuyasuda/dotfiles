@@ -25,6 +25,8 @@ INPUT=$(cat)
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
 source "$(dirname "$0")/../lib/cursor-compat.sh"
+# shellcheck source=../lib/decision.sh
+source "$(dirname "$0")/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 # command / cwd を1回の jq でまとめて取得する（同一 stdin を2回 parse しない）。
 # command は改行を含み得るため、read（改行で切れる）ではなく NUL 区切り＋mapfile で分割する。
@@ -48,8 +50,7 @@ echo "$cmd" | grep -qE 'git[[:space:]]+push' || exit 0
 
 # メッセージを関数内に固定することで、2つの呼び出しポイントで同じ文言を保証する
 _deny() {
-  jq -n \
-    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"ERROR: 保護ブランチへの直接 push は禁止されています。WHY: レビューなしに変更が保護ブランチへ反映されるリスクがあります。FIX: フィーチャーブランチから Pull Request を作成してください。"}}'
+  hook_emit_decision deny PreToolUse "ERROR: 保護ブランチへの直接 push は禁止されています。WHY: レビューなしに変更が保護ブランチへ反映されるリスクがあります。FIX: フィーチャーブランチから Pull Request を作成してください。"
   exit 0
 }
 

@@ -63,12 +63,13 @@ INPUT=$(cat)
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
 source "$(dirname "$0")/../lib/cursor-compat.sh"
+# shellcheck source=../lib/decision.sh
+source "$(dirname "$0")/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 COMMAND=$(jq -r '.tool_input.command // ""' <<<"$INPUT")
 
 _deny() {
-  jq -n --arg msg "$1" \
-    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
+  hook_emit_decision deny PreToolUse "$1"
   exit 0
 }
 
@@ -279,15 +280,24 @@ for p in "${UNVERIFIED[@]}"; do
   list+=$'\n  - '"$p"
 done
 
-msg="${PM}パッケージのインストール前にセキュリティ検証が必要です。
-
-未検証のパッケージ:${list}
-
-以下の手順を実施してください:
-  1. 対象パッケージのセキュリティを検証する（CVE・サプライチェーン・メンテナンス状況・ライセンス・peerDependenciesなど）
-  2. 安全に導入できると判断できた場合、\$HOME/.claude/cache/verified-packages/<pkg>@<version> を作成する
-  3. 本コマンドを再実行する
-
-バージョンが未指定の場合は、解決済みバージョンを確定したうえでフラグを作成してください。"
+# パッケージ一覧は hook_excerpt に通してから埋め込む。ここは理由文の中で唯一
+# 長さに上限のない部分で、パッケージが多いか名前が長いと理由文全体が伸びる。
+# WHY: 上限（HOOK_DECISION_MAX_CHARS）に当たると lib/decision.sh は末尾から切る。
+#      一覧は文の最後にあるため、切られるのは「何を検証すればよいか」の部分になり、
+#      定型の手順文だけが残って対象が分からない状態になる。hook_excerpt に通せば
+#      切られるのは一覧の途中で、末尾に「…（全N文字）」が付いて省略が分かる。
+# WHY: 他のhookはコマンドやパスを必ず hook_excerpt に通しており、ここだけが例外だった。
+#      理由文の長さを「定型文（hookごとに固定）＋抜粋の上限」で押さえる設計を揃える。
+# Why not: 一覧をファイルへ書いてパスだけ示す形にしない。パッケージは数個が普通で、
+#          抜粋の上限（120文字）に収まる。読むために別の操作が要る形は割に合わない。
+#
+# 手順を先に置き、識別のための一覧を最後に置く並びは変えない。抜粋の上限とは別に
+# 理由文全体の上限も残っており、そちらに当たったときは末尾から切られるため。
+msg="${PM}パッケージのインストール前にセキュリティ検証が必要です。 \
+以下の手順を実施してください: \
+1. 対象パッケージのセキュリティを検証する（CVE・サプライチェーン・メンテナンス状況・ライセンス・peerDependencies）。\
+2. 安全に導入できると判断できた場合、\$HOME/.claude/cache/verified-packages/<pkg>@<version> を作成する。\
+バージョンが未指定の場合は解決済みバージョンを確定してから作成する。 \
+3. 本コマンドを再実行する。 未検証のパッケージ: $(hook_excerpt "$list")"
 
 _deny "$msg"

@@ -33,55 +33,55 @@ INPUT=$(cat)
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
 source "$(dirname "$0")/../lib/cursor-compat.sh"
+# shellcheck source=../lib/decision.sh
+source "$(dirname "$0")/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 # MultiEdit は file_path、Write は path を使う場合があるため両方を試みる
 file=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // ""')
 
 _deny() {
-  jq -n --arg msg "$1" \
-    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
+  hook_emit_decision deny PreToolUse "$1"
   exit 0
 }
 
 _ask() {
-  jq -n --arg msg "$1" \
-    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":$msg}}'
+  hook_emit_decision ask PreToolUse "$1"
   exit 0
 }
 
 # 環境変数・設定（秘密情報含む）
 if echo "$file" | grep -qE '(^|/)\.env$|(^|/)\.env\.|(^|/)\.npmrc$|(^|/)\.netrc$'; then
-  _deny "ERROR: $file は環境変数・認証情報を含む機密ファイルです。WHY: 直接編集すると秘密情報が漏洩または破損するリスクがあります。FIX: ユーザーにエディタで手動編集するよう案内してください。"
+  _deny "ERROR: $(hook_excerpt "$file") は環境変数・認証情報を含む機密ファイルです。WHY: 直接編集すると秘密情報が漏洩または破損するリスクがあります。FIX: ユーザーにエディタで手動編集するよう案内してください。"
 fi
 
 # 鍵・証明書
 if echo "$file" | grep -qE '\.(pem|key|p12|pfx|cert|crt)$'; then
-  _deny "ERROR: $file は秘密鍵または証明書ファイルです。WHY: 直接編集すると認証が破損します。FIX: ユーザーに手動で管理するよう案内してください。"
+  _deny "ERROR: $(hook_excerpt "$file") は秘密鍵または証明書ファイルです。WHY: 直接編集すると認証が破損します。FIX: ユーザーに手動で管理するよう案内してください。"
 fi
 
 # Git 内部
 if echo "$file" | grep -qE '(^|/)\.git/'; then
-  _deny "ERROR: $file は Git の内部ファイルです。WHY: 直接編集すると git リポジトリが破損します。FIX: git コマンドを使用してください。"
+  _deny "ERROR: $(hook_excerpt "$file") は Git の内部ファイルです。WHY: 直接編集すると git リポジトリが破損します。FIX: git コマンドを使用してください。"
 fi
 
 # lock files（JS/TS）
 if echo "$file" | grep -qE 'package-lock\.json$|yarn\.lock$|pnpm-lock\.yaml$|bun\.lock'; then
-  _deny "ERROR: $file は lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: パッケージマネージャー（npm/yarn/pnpm/bun）経由で更新してください。"
+  _deny "ERROR: $(hook_excerpt "$file") は lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: パッケージマネージャー（npm/yarn/pnpm/bun）経由で更新してください。"
 fi
 
 # lock files（Python）
 if echo "$file" | grep -qE 'Pipfile\.lock$|poetry\.lock$'; then
-  _deny "ERROR: $file は Python の lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: pip/poetry 経由で更新してください。"
+  _deny "ERROR: $(hook_excerpt "$file") は Python の lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: pip/poetry 経由で更新してください。"
 fi
 
 # lock files（Ruby / PHP / Go / Rust）
 if echo "$file" | grep -qE 'Gemfile\.lock$|composer\.lock$|go\.sum$|Cargo\.lock$'; then
-  _deny "ERROR: $file は lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: 各パッケージマネージャー経由で更新してください。"
+  _deny "ERROR: $(hook_excerpt "$file") は lock file です。WHY: 直接編集すると依存関係の整合性が壊れます。FIX: 各パッケージマネージャー経由で更新してください。"
 fi
 
 # Terraform 状態・変数
 if echo "$file" | grep -qE '\.tfstate$|\.tfstate\.|\.tfvars$'; then
-  _deny "ERROR: $file は Terraform の状態ファイルまたは変数ファイルです。WHY: 直接編集するとインフラ状態が破損します。FIX: terraform コマンドを使用してください。"
+  _deny "ERROR: $(hook_excerpt "$file") は Terraform の状態ファイルまたは変数ファイルです。WHY: 直接編集するとインフラ状態が破損します。FIX: terraform コマンドを使用してください。"
 fi
 
 exit 0

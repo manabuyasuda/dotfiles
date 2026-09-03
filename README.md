@@ -6,6 +6,7 @@ macOS環境の設定ファイルを管理するリポジトリです。シンボ
 
 ```
 dotfiles/
+├── AGENT-DIFFERENCES.md  # 3つのAIエージェントCLIの挙動差分（実測結果）
 ├── setup.sh              # セットアップスクリプト（シンボリックリンク作成）
 ├── macos.sh              # macOS設定の自動適用スクリプト
 ├── Brewfile              # Homebrewパッケージ一覧
@@ -48,7 +49,11 @@ dotfiles/
 │   ├── generate-codex-agents.sh
 │   ├── generate-codex-agents.py
 │   ├── generate-cursor-rules.sh
-│   └── generate-cursor-rules.py
+│   ├── generate-cursor-rules.py
+│   ├── generate-permissions.sh
+│   └── generate-permissions.py
+├── permissions/
+│   └── deny-rules.json   # 3つのCLIで拒否する操作の唯一の情報源
 └── docs/
     └── tools/            # 開発ツールのドキュメント
 ```
@@ -397,6 +402,8 @@ brewでインストールしたアプリはFinderから1つずつ起動して設
 
 Claude Code・Cursor・Codexで、同じガード・permissions・ルール・スキルを使う構成です。変更手順は下の表と「運用」を参照し、Codexのフック実装の技術補足は`codex/README.md`を参照してください。
 
+3つのCLIで挙動が変わる箇所は[AGENT-DIFFERENCES.md](AGENT-DIFFERENCES.md)にまとめています。`ask`の解釈やhookの登録形式など、共有設定をそのまま使うと想定と食い違う点を実測結果として記録しています。
+
 `claude/`に本体を置き、`cursor/`と`codex/`に各ツール向けの形式へ合わせた設定を置きます。Codexの`config.toml`は`codex/config.toml`で管理し、`setup.sh`が`~/.codex/config.toml`へマージします。
 
 ### 全体像
@@ -409,7 +416,9 @@ Claude Code・Cursor・Codexで、同じガード・permissions・ルール・�
 | 2. 別ファイル（手動で同期） | フック、ルール、statusLine | 本体は`claude/`に置きます。Cursorは`cursor/hooks.json`とアダプター、Codexは`codex/hooks/wrap/`で呼び出します |
 | 2. 生成物 | Codex サブエージェント TOML | `claude/agents/*/SUBAGENT.md`から`scripts/generate-codex-agents.sh`で`codex/agents/*.toml`を生成します |
 | 2. 生成物 | Cursor グローバル指示 | `claude/CLAUDE.md`から`scripts/generate-cursor-rules.sh`で`cursor/rules/global-instructions.mdc`を生成します。Cursorは`.mdc`のfrontmatterが必要でシンボリックリンクにできないため、frontmatterを付けたコピーを生成します |
-| 3. スクリプト同期 | permissions, Codex config | `claude/settings.json`の`permissions`（Cursor CLI）。`codex/config.toml`は`merge-codex-config.sh`で反映します |
+| 2. 生成物 | deny ルール | `permissions/deny-rules.json`から`scripts/generate-permissions.sh`で`claude/settings.json`の`permissions.deny`と`claude/hooks/pre-tool-use/deny-rules.txt`を生成します。前者はClaude Codeが直接読み、後者は`bash-guard.sh`がシェル層で照合します（Codex CLIには許可・拒否の設定がないため）。シェル層の照合はdenyとaskの2段です。globが表す範囲に一致した命令はdeny、範囲の外で秘密ファイルの名前だけが一致した命令はaskになり、ユーザーが内容を見て判断します |
+| 2. 生成物 | Cursor CLI permissions | `claude/settings.json`の`permissions`から`scripts/sync-cursor-cli-permissions.sh`で`cursor/cli-permissions.json`を生成します（`Bash()`→`Shell()`、`Edit()`→`Write()`へ変換）。`setup.sh`が`merge-cursor-cli-config.sh`で`~/.cursor/cli-config.json`の`permissions`へ反映します |
+| 3. スクリプト同期 | Codex config | `codex/config.toml`は`merge-codex-config.sh`で反映します |
 
 ### Codex のファイル配置
 
@@ -440,7 +449,7 @@ Codex CLIでは次も踏まえます。
 
 | 変更したいもの | 編集するファイル | 実行するコマンド | 注意 |
 |---------------|-----------------|-----------------|------|
-| 共有のpermissions | `claude/settings.json` | `./scripts/sync-cursor-cli-permissions.sh` → `./scripts/merge-cursor-cli-config.sh` | mergeは`cli-config.json`の`permissions`と`statusLine`だけを更新します。承認ダイアログで足したallowはmergeすると消えますので、残す場合は`settings.json`へ移してください |
+| 共有のpermissions | `claude/settings.json` | `./scripts/sync-cursor-cli-permissions.sh` → `./scripts/merge-cursor-cli-config.sh` | `setup.sh`が`cli-config.json`の`permissions`と`statusLine`へ反映します。反映した後、Cursorのセッション中に承認した内容が`cli-config.json`へ個別に追記されます。次に`setup.sh`を実行するとその追記は消えます。恒久的に残す許可は`claude/settings.json`へ書いてください |
 | フックのガード本体 | `claude/hooks/` | なし | 判定ロジックの本体です。Cursor側の登録は`cursor/hooks.json`と`cursor/hooks/adapters/`にあります（`adapters/`はdotfilesでのディレクトリ名です） |
 | フックのCursor側 | `cursor/hooks.json`, `cursor/hooks/adapters/` | `bash cursor/tests/<name>-adapter.test.sh` | 本体を新設したときは`claude/hooks/`も追加します。未移植のものは`worktree/*`、`log-denial`、`usage-guard`などがあります（詳細は`claude/SECURITY.md`を参照してください） |
 | サブエージェント | `claude/agents/` | なし | `claude/agents/`から`~/.claude/agents`と`~/.cursor/agents`へシンボリックリンクを張ります |
@@ -452,6 +461,7 @@ Codex CLIでは次も踏まえます。
 | Codex config.toml | `codex/config.toml` | `./scripts/merge-codex-config.sh` | `[projects.*]`と`[hooks.state.*]`はローカル状態として保持します。TUIの`/statusline`で変えた`[tui]`は`~/.codex/config.toml`に直接書き込まれるため、dotfilesへ取り込むときは手動コピーします |
 | Codex グローバル指示 | `claude/CLAUDE.md` | なし | `~/.codex/AGENTS.md`へシンボリックリンクを張ります |
 | グローバル指示 | `claude/CLAUDE.md` | `./scripts/generate-cursor-rules.sh` → `git add cursor/rules/global-instructions.mdc` | 生成物は`cursor/rules/global-instructions.mdc`。再生成を忘れた場合はlefthookの`cursor-rules-drift`がpre-commitで検出します |
+| denyするパス・命令 | `permissions/deny-rules.json` | `./scripts/generate-permissions.sh` → `git add claude/settings.json claude/hooks/pre-tool-use/deny-rules.txt` | 生成物を直接編集しません。再生成を忘れた場合はlefthookの`permissions-drift`とCIの`permissions-test`が検出します |
 | パス別ルール | `claude/rules/*.md` | なし | あわせて`cursor/rules/*.mdc`も更新します（`paths:`と`globs:`で書式が違います） |
 | Cursor専用ルール | `cursor/rules/*.mdc` | なし | — |
 | statusline | `cursor/statusline.sh`, `cursor/cli-statusline.json` | `./scripts/merge-cursor-cli-config.sh` | Cursor CLIでのみ表示されます（IDE Agentでは表示されません） |

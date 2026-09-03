@@ -22,8 +22,7 @@ source "$HOOKS_DIR/config.sh"
 
 # jq --arg でメッセージをエスケープ（ブランチ名に ' などが含まれても JSON が壊れない）
 _deny() {
-  jq -n --arg msg "$1" \
-    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
+  hook_emit_decision deny PreToolUse "$1"
   exit 2
 }
 
@@ -32,6 +31,8 @@ input="$(cat)"
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
 source "$(dirname "$0")/../lib/cursor-compat.sh"
+# shellcheck source=../lib/decision.sh
+source "$(dirname "$0")/../lib/decision.sh"
 exit_if_cursor_payload "$input"
 file_path="$(echo "$input" | jq -r '.tool_input.file_path // .tool_input.path // empty')"
 

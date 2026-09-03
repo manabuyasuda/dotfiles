@@ -1,0 +1,83 @@
+name: permissions-test
+
+# deny ルールの唯一の情報源（permissions/deny-rules.json）と生成物のずれ、
+# および bash-guard.sh がそのルールを適用しているかを CI で検証する。
+# 生成物を手で書き換えて保護が静かに外れる事故を機械的に止める。
+#
+# Why not: pull_request と push の paths をまとめない。GitHub Actions は
+#          ワークフローファイルで YAML のアンカー・エイリアスを解釈しないため、
+#          同じ一覧を2回書くしかない。片方だけ足すと検証が走らなくなるので、
+#          追加するときは両方へ入れる。
+
+on:
+  pull_request:
+    paths:
+      - 'permissions/deny-rules.json'
+      - 'claude/settings.json'
+      - 'claude/hooks/pre-tool-use/deny-rules.txt'
+      - 'claude/hooks/pre-tool-use/bash-guard.sh'
+      - 'scripts/generate-permissions.py'
+      - 'scripts/generate-permissions.sh'
+      - 'claude/tests/deny-rules.test.sh'
+      - 'codex/hooks/wrap/pre-tool-use.sh'
+      - 'codex/tests/ask-fallback.test.sh'
+      - 'claude/hooks/lib/decision.sh'
+      - 'claude/hooks/pre-tool-use/*.sh'
+      - 'claude/hooks/post-tool-use/*.sh'
+      - 'claude/tests/hook-decision.test.sh'
+      - 'cursor/cli-permissions.json'
+      - 'scripts/sync-cursor-cli-permissions.sh'
+      - '.github/workflows/permissions-test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'permissions/deny-rules.json'
+      - 'claude/settings.json'
+      - 'claude/hooks/pre-tool-use/deny-rules.txt'
+      - 'claude/hooks/pre-tool-use/bash-guard.sh'
+      - 'scripts/generate-permissions.py'
+      - 'scripts/generate-permissions.sh'
+      - 'claude/tests/deny-rules.test.sh'
+      - 'codex/hooks/wrap/pre-tool-use.sh'
+      - 'codex/tests/ask-fallback.test.sh'
+      - 'claude/hooks/lib/decision.sh'
+      - 'claude/hooks/pre-tool-use/*.sh'
+      - 'claude/hooks/post-tool-use/*.sh'
+      - 'claude/tests/hook-decision.test.sh'
+      - 'cursor/cli-permissions.json'
+      - 'scripts/sync-cursor-cli-permissions.sh'
+      - '.github/workflows/permissions-test.yml'
+
+permissions: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Syntax check (bash -n)
+        run: |
+          bash -n claude/hooks/pre-tool-use/bash-guard.sh
+          bash -n codex/hooks/wrap/pre-tool-use.sh
+          bash -n claude/hooks/lib/decision.sh
+      - name: Run deny rules tests
+        run: bash claude/tests/deny-rules.test.sh
+      - name: Run Codex ask fallback tests
+        run: bash codex/tests/ask-fallback.test.sh
+      - name: Run hook decision message tests
+        run: bash claude/tests/hook-decision.test.sh
+      # lefthook の cursor-permissions-drift と同じ検査。ローカルの hook は --no-verify や
+      # 別のマシンで迂回できるため、迂回すると Cursor CLI だけ deny が効かない状態が
+      # 本流へ入る。気づく場所がどこにもなくなるので CI にも置く。
+      - name: Check Cursor CLI permissions are in sync
+        run: |
+          bash scripts/sync-cursor-cli-permissions.sh >/dev/null
+          if ! git diff --quiet -- cursor/cli-permissions.json; then
+            echo "cursor/cli-permissions.json が claude/settings.json と同期していません。"
+            echo "bash scripts/sync-cursor-cli-permissions.sh を実行し、同じコミットへ含めてください。"
+            git --no-pager diff -- cursor/cli-permissions.json
+            exit 1
+          fi

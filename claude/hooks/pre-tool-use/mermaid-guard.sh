@@ -16,8 +16,7 @@
 
 # jq --arg でメッセージをエスケープ（\n リテラルを含む文字列でも JSON が壊れない）
 _deny() {
-  jq -n --arg msg "$1" \
-    '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$msg}}'
+  hook_emit_decision deny PreToolUse "$1"
   exit 2
 }
 
@@ -26,6 +25,8 @@ INPUT=$(cat)
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
 source "$(dirname "$0")/../lib/cursor-compat.sh"
+# shellcheck source=../lib/decision.sh
+source "$(dirname "$0")/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 # tool_name / file_path / new_string / content を1回の jq でまとめて取得する
 # （同一 stdin を最大4回 parse しない）。new_string / content は確実に改行を含むため、
