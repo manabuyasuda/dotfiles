@@ -13,6 +13,10 @@ pre-commit:
       # 通らない。コミットは経路によらず必ず通るため、ここでも同じ検査をする。
       glob: "*.md"
       run: bash scripts/check-mermaid.sh {staged_files}
+    codex-hooks-trust:
+      # glob を付けない。codex/hooks.json をステージしたコミットだけで見ると、
+      # 信頼し直さないまま先へ進んだあと二度と検知できない。判定はスクリプト側。
+      run: bash scripts/check-codex-hooks-trust.sh
     check-symlinks:
       glob: "{setup.sh,claude/settings.json}"
       run: bash scripts/check-claude-symlinks.sh
