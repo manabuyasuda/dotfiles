@@ -268,7 +268,8 @@ CLIで動かないhookは次の10個です。
 | mermaid-guard（前後2個） | 壊れたmermaid記法の混入 | lefthookの`mermaid`が、`*.md`を対象に同じ検査をします |
 | session-start | セッション開始時の情報表示 | ありません |
 | track-edited-files、install | 編集ファイルの記録、依存の再導入 | ありません |
-| format／textlint／typecheck（3個） | 整形と検査の実行 | コミット時のlefthookが最後に止めます |
+| textlint | 日本語の文章検査 | lefthookの`textlint`が、`*.md`を対象に同じ検査をします |
+| format、typecheck（2個） | 整形と型検査の実行 | ありません。lefthookに対応するジョブが無く、CLIでは実行されないまま残ります |
 
 ### 実害と使い分け
 
@@ -284,7 +285,7 @@ CLIで動かないhookは次の10個です。
 | CLIで作業する場合 | 承認を省略する起動オプション（`--force`など）を使いません。ダイアログが唯一の歯止めであるためです |
 | CLIでの一括承認 | ツール単位の恒久承認をしません。承認は`~/.cursor/cli-config.json`へ残り、以後の編集が無言で通ります |
 | 非対話でのCLI実行 | ダイアログが出ないため、ファイル編集の歯止めが`permissions`の拒否とlefthookだけになります |
-| 整形と検査 | CLIでは自動で走りません。コミット時のlefthookで検出します |
+| 整形と検査 | CLIでは自動で走りません。textlintはコミット時のlefthookが検出しますが、整形と型検査は受け皿が無く、実行されないまま残ります |
 
 イベントの種類は公式です。登録の内容と`allow`に`Write()`がないことはこのリポジトリの設定です（`cursor/hooks.json`、`cursor/cli-permissions.json`）。
 
