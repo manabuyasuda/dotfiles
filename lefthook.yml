@@ -1,9 +1,18 @@
 pre-commit:
   parallel: true
   commands:
+    protected-branch:
+      # glob を付けない。保護ブランチ上のコミットは変更内容にかかわらず止めるため。
+      # ブランチ名は claude/hooks/config.sh を参照し、ここには書かない。
+      run: bash scripts/check-protected-branch.sh
     textlint:
       glob: "*.md"
       run: npx textlint {staged_files}
+    mermaid:
+      # Cursor CLI は PostToolUse の hook イベントを送らず、人手の編集は hook を
+      # 通らない。コミットは経路によらず必ず通るため、ここでも同じ検査をする。
+      glob: "*.md"
+      run: bash scripts/check-mermaid.sh {staged_files}
     check-symlinks:
       glob: "{setup.sh,claude/settings.json}"
       run: bash scripts/check-claude-symlinks.sh
