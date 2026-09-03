@@ -6,6 +6,7 @@ macOS環境の設定ファイルを管理するリポジトリです。シンボ
 
 ```
 dotfiles/
+├── AGENT-DIFFERENCES.md  # 3つのAIエージェントCLIの挙動差分（実測結果）
 ├── setup.sh              # セットアップスクリプト（シンボリックリンク作成）
 ├── macos.sh              # macOS設定の自動適用スクリプト
 ├── Brewfile              # Homebrewパッケージ一覧
@@ -400,6 +401,8 @@ brewでインストールしたアプリはFinderから1つずつ起動して設
 ## AIエージェントの共有設定
 
 Claude Code・Cursor・Codexで、同じガード・permissions・ルール・スキルを使う構成です。変更手順は下の表と「運用」を参照し、Codexのフック実装の技術補足は`codex/README.md`を参照してください。
+
+3つのCLIで挙動が変わる箇所は[AGENT-DIFFERENCES.md](AGENT-DIFFERENCES.md)にまとめています。`ask`の解釈やhookの登録形式など、共有設定をそのまま使うと想定と食い違う点を実測結果として記録しています。
 
 `claude/`に本体を置き、`cursor/`と`codex/`に各ツール向けの形式へ合わせた設定を置きます。Codexの`config.toml`は`codex/config.toml`で管理し、`setup.sh`が`~/.codex/config.toml`へマージします。
 
