@@ -142,6 +142,41 @@ _assert_eq "T6 改行入り command でも push 先 main を検出して deny（
   "$(_decision "$PUSH_GUARD" "$(_multiline_push_json "$FEATURE_WT")")" "deny"
 
 # ---------------------------------------------------------------------------
+# T7: push と PR 作成を1つのコマンド列に繋いでも、PR 作成側のベースブランチ指定を
+#     保護ブランチ push と誤検知しない（push-to-main-guard）。
+#     コマンド列の全体を1つの文字列として照合すると、後段の --base main に一致して
+#     フィーチャーブランチの push が deny になる。
+#       正: none / 誤（コマンド列の全体を照合）: deny
+# ---------------------------------------------------------------------------
+_assert_eq "T7 push と PR 作成を && で繋いでもベースブランチ指定を誤検知しない（通過）" \
+  "$(_decision "$PUSH_GUARD" "$(jq -nc --arg cwd "$FEATURE_WT" --arg c 'git push -u origin feature/x && gh pr create --base main --title t' '{tool_input:{command:$c},cwd:$cwd}')")" "none"
+
+# ---------------------------------------------------------------------------
+# T8: 送り先のブランチ名が引用符で囲まれていても保護ブランチ push を検出する
+#     （push-to-main-guard）。引用符の中身ごと削除するとブランチ名が消えて素通しする。
+#       正: deny / 誤（引用符の中身を削除）: none
+# ---------------------------------------------------------------------------
+_assert_eq "T8 引用符で囲んだ main への push を deny（見逃さない）" \
+  "$(_decision "$PUSH_GUARD" "$(jq -nc --arg cwd "$FEATURE_WT" --arg c 'git push origin "main"' '{tool_input:{command:$c},cwd:$cwd}')")" "deny"
+
+# ---------------------------------------------------------------------------
+# T9: refspec で送り先を指定した push を検出する（push-to-main-guard）。
+#     HEAD:main は : の右側が送り先。左側だけを見ると見逃す。
+#       正: deny / 誤（refspec を解釈しない）: none
+# ---------------------------------------------------------------------------
+_assert_eq "T9 refspec HEAD:main への push を deny" \
+  "$(_decision "$PUSH_GUARD" "$(jq -nc --arg cwd "$FEATURE_WT" --arg c 'git push origin HEAD:main' '{tool_input:{command:$c},cwd:$cwd}')")" "deny"
+
+# ---------------------------------------------------------------------------
+# T10: フラグが挟まって送り先を明示しない push は、現在ブランチで判定する
+#      （push-to-main-guard）。正規表現で「push の直後が空かリモート名だけ」を見る実装だと
+#      -u に阻まれて判定に入らず、main 作業ツリーからの push を見逃す。
+#        正: deny / 誤（正規表現で引数を見る）: none
+# ---------------------------------------------------------------------------
+_assert_eq "T10 main 作業ツリーでの git push -u origin を deny" \
+  "$(_decision "$PUSH_GUARD" "$(jq -nc --arg cwd "$MAIN_WT" --arg c 'git push -u origin' '{tool_input:{command:$c},cwd:$cwd}')")" "deny"
+
+# ---------------------------------------------------------------------------
 echo "----"
 printf '成功 %d / 失敗 %d\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
