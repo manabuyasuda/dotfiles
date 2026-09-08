@@ -119,7 +119,15 @@ Codexだけは項目名を並べる形式のため、スクリプトを共有で
 | `Bash(...)` | `Shell(...)` |
 | `Edit(...)` | `Write(...)` |
 | `mcp__<サーバー>__<ツール>` | `Mcp(<サーバー>:<ツール>)` |
-| `Read(...)` / `Glob(...)` / `Write(...)` | そのまま |
+| `Read(...)` / `Glob(...)` | そのまま |
+
+ファイル編集の拒否は、Claude Code側では`Edit(...)`だけで書きます。`Edit`がWriteを含むすべてのファイル編集ツールを覆うため、`Write(...)`を並べても範囲は広がりません。それどころか`Write(...)`はClaude Codeのファイル権限判定で照合されません。起動時に次の警告が出るだけの無効なルールになります（実測2026-09-08）。
+
+```text
+Write(**/*.tfstate) is not matched by file permission checks — only Edit(path) rules are.
+```
+
+Cursor CLIへは上の表のとおり`Edit(...)`が`Write(...)`へ変換されるため、Cursor側の拒否範囲は`Edit(...)`だけを書いても変わりません。
 
 Codexには対応する仕組みがありません（6節）。
 
@@ -264,7 +272,7 @@ CLIで動かないhookは次の10個です。
 |---|---|---|
 | branch-guard | 保護ブランチ上での直接編集 | lefthookの`protected-branch`が、保護ブランチ上のコミットを止めます |
 | plan-guard | 計画を書く前の実装着手 | ありません。SessionStartが作る基準時刻ファイルを前提に判定するため、CLIでは常に通過します |
-| file-protect | 認証情報・秘密鍵・`.git/`・lockfileへの書き込み | `permissions`の`Write()`の拒否21パターンが同じ範囲を止めます |
+| file-protect | 認証情報・秘密鍵・`.git/`・lockfileへの書き込み | `permissions`の`Write()`の拒否21パターンが同じ範囲を止めます（`permissions/deny-rules.json`の`Edit(...)`21件を4節の変換で`Write(...)`にしたものです） |
 | mermaid-guard（前後2個） | 壊れたmermaid記法の混入 | lefthookの`mermaid`が、`*.md`を対象に同じ検査をします |
 | session-start | セッション開始時の情報表示 | ありません |
 | track-edited-files、install | 編集ファイルの記録、依存の再導入 | ありません |

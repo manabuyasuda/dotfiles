@@ -172,7 +172,7 @@ v2.1.154で追加された`claude --bg --exec '<command>'`および`claude agent
 v2.1.154以降、Auto-modeの分類器がリポジトリ全文の一括転送など大量データ持ち出しの検出を強化している。ただし分類器はあくまで補助で、検出は確率的にすり抜けが残る。主軸はLayer 1（permissionsのdenyで秘密ファイルへのReadを止める）とsandbox（`allowedDomains`で通信先を制限する）に置き、Auto-modeの強化を理由に主軸を緩めない。
 
 対策
-- `.env`・秘密鍵・証明書へのRead/Edit/WriteをPermissionsのdenyでブロックする（Readも拒否することでインジェクション経由の漏洩を防ぐ）
+- `.env`・秘密鍵・証明書への読み取りと編集をPermissionsのdenyでブロックする（`Read(path)`と`Edit(path)`で書く。`Edit`はWriteを含む全ファイル編集ツールを覆う。Readも拒否することでインジェクション経由の漏洩を防ぐ）
 - `gh secret set/delete`をdenyでブロックする（読み取ったファイル内容をシークレット値としてGitHubへ送信する経路になる。`delete`は既存のシークレットを削除してCI/CDの認証を壊す）
 - `gh`に限らず、シークレット管理CLIの書き込みサブコマンドも同様にdenyの対象にする
 
@@ -357,7 +357,7 @@ allowを追加するときは、そのパターンが想定外のサブコマン
 
 | コマンド | 理由 |
 |---|---|
-| `Glob(**/.env*)` / `Read(**/.env*)` / `Edit(**/.env*)` / `Write(**/.env*)` | `.env`には秘密情報が含まれる。読み取りも拒否してインジェクション経由の漏洩を防ぐ。`**/`パターンでサブディレクトリ（モノレポの`apps/web/.env`等）もカバー。`Glob`を禁止しないとファイルの存在自体が漏れる |
+| `Glob(**/.env*)` / `Read(**/.env*)` / `Edit(**/.env*)` | `.env`には秘密情報が含まれる。読み取りも拒否してインジェクション経由の漏洩を防ぐ。`**/`パターンでサブディレクトリ（モノレポの`apps/web/.env`等）もカバー。`Glob`を禁止しないとファイルの存在自体が漏れる |
 | `Bash(cat **/.env*)` | BashサブプロセスはRead denyの対象外のため個別にブロックが必要（[§permissions.deny の注意点](#permissionsdeny-の注意点)参照）|
 | `Read(~/.ssh/*)` / `Bash(cat ~/.ssh/*)` | SSH 秘密鍵へのアクセス。インジェクション成功時の窃取経路を断つ |
 | `Read(~/.aws/*)` / `Bash(cat ~/.aws/*)` | AWS クレデンシャルへのアクセス |
@@ -392,6 +392,8 @@ allowを追加するときは、そのパターンが想定外のサブコマン
 
 ### permissions.deny の注意点
 
+ファイル編集の拒否は`Edit(path)`だけで書く。`Write(path)`は書かない。Claude Codeのファイル権限判定は`Edit`のルールだけを見て、`Edit`がWriteを含むすべてのファイル編集ツールを覆う。`Write(path)`は照合されず、起動時に`Write(**/*.tfstate) is not matched by file permission checks — only Edit(path) rules are.`という警告が出るだけの無効なルールになる（2026-09-08実測）。
+
 `permissions.deny`のRead/Editルールは、Claudeの組み込みファイル操作ツールに対してのみ適用される。ReadツールはブロックできるがBashサブプロセス経由（`cat .env`・`grep`等）はブロックできない。公式ドキュメントには次のように明記されている。
 
 > Read and Edit deny rules apply to Claude's built-in file tools, not to Bash subprocesses. A `Read(./.env)` deny rule blocks the Read tool but does not prevent `cat .env` in Bash. For OS-level enforcement that blocks all processes from accessing a path, enable the sandbox.
@@ -424,7 +426,7 @@ allowを追加するときは、そのパターンが想定外のサブコマン
     ],
     "deny": [
       "Glob(**/.env*)",
-      "Read(**/.env*)", "Edit(**/.env*)", "Write(**/.env*)",
+      "Read(**/.env*)", "Edit(**/.env*)",
       "Bash(cat **/.env*)",
       "Read(~/.ssh/*)", "Bash(cat ~/.ssh/*)",
       "Read(~/.aws/*)", "Bash(cat ~/.aws/*)",
@@ -456,7 +458,7 @@ allow
 
 deny
 
-- `Glob(**/.env*)` / `Read(**/.env*)` / `Edit(**/.env*)` / `Write(**/.env*)` — `.env`には秘密情報が含まれる。ReadもdenyしてPRコメント経由の漏洩を防ぐ（[§7 データ持ち出し](#7-データ持ち出しexfiltration)参照）。`**/`パターンでサブディレクトリもカバー。`Glob`禁止でファイルの存在自体の漏洩も防ぐ
+- `Glob(**/.env*)` / `Read(**/.env*)` / `Edit(**/.env*)` — `.env`には秘密情報が含まれる。ReadもdenyしてPRコメント経由の漏洩を防ぐ（[§7 データ持ち出し](#7-データ持ち出しexfiltration)参照）。`**/`パターンでサブディレクトリもカバー。`Glob`禁止でファイルの存在自体の漏洩も防ぐ
 - `Bash(cat **/.env*)` — BashサブプロセスはRead denyの対象外のため個別にブロック
 - `Read(~/.ssh/*)` / `Bash(cat ~/.ssh/*)` — SSHキー。読む正当な理由がない。hooksが破られても守られるべきためpermissions denyに置く
 - `Read(~/.aws/*)` — AWSクレデンシャル。同上

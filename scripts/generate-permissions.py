@@ -166,16 +166,27 @@ def build_deny_list(rules: dict) -> list[str]:
     deny: list[str] = []
     for entry in rules["secretPaths"]:
         pattern = entry["pattern"]
+        if "Write" in entry["claudeTools"]:
+            # 情報源に Write を書いた時点で失敗させる。WHY: Write(path) の deny は
+            # Claude Code のファイル権限判定で照合されず、起動時の警告になるだけで
+            # 何も止めない。生成物を見ても「ルールがあるのに効かない」ことが分からず、
+            # 気づかないまま保護されていない状態になる。Edit(path) が Write を含む
+            # 全ファイル編集ツールを覆うため、Edit だけ書けば範囲は同じ。
+            raise SystemExit(
+                f"Error: {entry['pattern']} の claudeTools に \"Write\" があります。"
+                'Claude Code は Write(path) の deny を照合しません（Edit(path) が '
+                "Write を含む全ファイル編集ツールを覆います）。\"Edit\" に置き換えてください"
+            )
         for tool in entry["claudeTools"]:
             deny.append(f"{tool}({pattern})")
         deny.append(f"Bash(cat {pattern})")
     # 書き込みだけを止めるパス。読み取りは許すので Read も Bash(cat ...) も足さない。
-    # Edit と Write の両方を並べるのは、Claude Code が別のツールとして扱うため。
-    # Cursor 形式へは両方が Write(...) へ変換され、sync 側の unique で1つにまとまる。
+    # 出すのは Edit(...) だけにする。WHY: Claude Code のファイル権限判定は Edit のルールだけを見て、
+    # Edit が Write を含むすべてのファイル編集ツールを覆う。Write(...) は照合されず、
+    # 起動時に「is not matched by file permission checks」と警告が出るだけの無効なルールになる
+    # （2026-09-08 実測）。Cursor 形式へは Edit(...) が Write(...) へ変換されるため拒否範囲は変わらない。
     for entry in rules.get("writeProtectedPaths", []):
-        pattern = entry["pattern"]
-        deny.append(f"Edit({pattern})")
-        deny.append(f"Write({pattern})")
+        deny.append(f"Edit({entry['pattern']})")
     for entry in rules["deniedCommands"]:
         deny.append(f"Bash({' '.join(entry['tokens'])}*)")
     return deny

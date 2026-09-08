@@ -175,7 +175,7 @@ v2.1.153以降、`/model`で選んだモデルは新規セッションの既定�
 
 | コマンド | 理由 |
 |---|---|
-| `Read/Edit/Write(.env*)` | `.env` ファイルの読み取り・編集（シークレット漏洩防止） |
+| `Read/Edit(.env*)` | `.env` ファイルの読み取り・編集（シークレット漏洩防止）。`Edit`はWriteを含む全ファイル編集ツールを覆うため`Write(...)`は書かない |
 | `Read(~/.ssh/*)` / `Bash(cat ~/.ssh/*)` | SSH 秘密鍵（インジェクション経由の窃取を防ぐ） |
 | `Read(~/.aws/*)` / `Bash(cat ~/.aws/*)` | AWS クレデンシャル |
 | `Read(~/.gcloud/*)` / `Read(~/.config/gcloud/*)` | Google Cloud 認証情報 |
