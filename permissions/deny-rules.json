@@ -1,9 +1,9 @@
 {
   "description": "Claude Code / Codex CLI / Cursor CLI で拒否する操作の唯一の情報源。scripts/generate-permissions.py が claude/settings.json の permissions.deny と claude/hooks/pre-tool-use/deny-rules.txt を生成する。直接 claude/settings.json を編集しない。dotfilesは公開リポジトリのため、個人ごとに異なる値（鍵のファイル名など）を書かない。",
-  "_claudeTools": "claudeTools には、そのパターンに対して deny するツールを書く。ファイルの中身を返すツール（Read / Edit）だけを対象にし、名前しか返さないツール（Glob）は入れない。WHY: deny の目的は認証情報がモデルの文脈や画面に残るのを防ぐことで、ファイルが存在するかどうかは秘密ではない。Glob を deny にすると .env.example の有無すら調べられず、止める理由に見合わない。",
+  "_claudeTools": "claudeTools には、そのパターンに対して deny するツールを書く。ファイルの中身を返すツール（Read / Edit）だけを対象にし、名前しか返さないツール（Glob）は入れない。Write は書かない。WHY: Claude Code のファイル権限判定は Edit(path) のルールだけを見て、Edit が Write を含むすべてのファイル編集ツールを覆う。Write(path) は照合されず、起動時に「Write(...) is not matched by file permission checks」と警告が出るだけの無効なルールになる（2026-09-08 実測）。WHY: deny の目的は認証情報がモデルの文脈や画面に残るのを防ぐことで、ファイルが存在するかどうかは秘密ではない。Glob を deny にすると .env.example の有無すら調べられず、止める理由に見合わない。",
   "_envExample": "**/.env* の deny から .env.example を除く書き方はない（permissions.deny のグロブは否定を表現できない）。除くなら **/.env* ごと外すことになり、defaultMode が auto のため .env.local まで無確認で読める。ask へ移す案も、.env.local が承認1つで読める状態になり、シェル層（bash-guard.sh が deny）より弱くなる。.env.example の中身は Bash の cat で承認付きに読めるため、読めない状態ではなく手段が1つ減るだけ。この釣り合いで Read / Edit の deny を残すと判断した（2026-09-02）。",
   "secretPaths": [
-    { "pattern": "**/.env*", "claudeTools": ["Read", "Edit", "Write"], "label": ".env ファイル（APIキー・接続文字列）" },
+    { "pattern": "**/.env*", "claudeTools": ["Read", "Edit"], "label": ".env ファイル（APIキー・接続文字列）" },
     { "pattern": "~/.ssh/*", "claudeTools": ["Read"], "label": "SSHの秘密鍵と設定" },
     { "pattern": "~/.aws/*", "claudeTools": ["Read"], "label": "AWSの認証情報" },
     { "pattern": "~/.gcloud/*", "claudeTools": ["Read"], "label": "Google Cloudの認証情報" },
@@ -16,6 +16,7 @@
     { "pattern": "~/.config/gh/*", "claudeTools": ["Read"], "label": "GitHub CLIの認証設定" }
   ],
   "_writeProtectedPaths": "書き込みだけを拒否するパス。読み取りは許す（lockfile や .git/ の中身を読むのは正常な作業で、壊れるのは書いたときだけ）。WHY: これまで claude/hooks/pre-tool-use/file-protect.sh だけが止めていたが、Cursor CLI は PreToolUse のhookイベントを送らないため、CLIでは1件も働いていなかった（2026-09-03）。ツール層のdenyはhookイベントの有無に依存せず、3つのCLIすべてで働く。",
+  "_writeProtectedOnlyEdit": "このカテゴリは Edit(pattern) だけを出す。Write(pattern) は出さない。理由は _claudeTools と同じで、Claude Code は Edit のルールだけをファイル権限判定に使い、Write のルールは無効として警告になる。Cursor 形式へは scripts/sync-cursor-cli-permissions.sh が Edit(...) を Write(...) へ変換するため、Cursor 側の拒否範囲は変わらない。",
   "_writeProtectedNotInRulesTxt": "このカテゴリは claude/hooks/pre-tool-use/deny-rules.txt へ出さない。deny-rules.txt はシェル層で bash-guard.sh が照合するもので、そこへ入れると git commit（.git/ を書く）や npm install（lockfile を書く）まで止まる。正当な更新経路はコマンド実行なので、止める対象はツールによる直接の書き込みに限る。",
   "writeProtectedPaths": [
     { "pattern": "**/*.pem", "label": "秘密鍵・証明書" },
