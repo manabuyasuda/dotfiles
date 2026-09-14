@@ -166,7 +166,7 @@
     "defaultMode": "auto",
     "disableBypassPermissionsMode": "disable"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "claude-fable-5-1[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -297,9 +297,14 @@
     "skill-creator@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true
   },
+  "outputStyle": "Concise",
   "language": "日本語",
   "effortLevel": "medium",
-  "outputStyle": "Concise",
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "low"
+    }
+  },
   "theme": "dark",
   "agentPushNotifEnabled": true,
   "autoMode": {
