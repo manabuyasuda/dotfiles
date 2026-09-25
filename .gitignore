@@ -3,3 +3,4 @@
 .agents/
 node_modules/
 __pycache__/
+claude/skills/synced/
