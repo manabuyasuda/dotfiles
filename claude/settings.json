@@ -1,7 +1,6 @@
 {
   "env": {
-    "EXPECTED_GH_ACCOUNT": "manabuyasuda",
-    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1"
+    "EXPECTED_GH_ACCOUNT": "manabuyasuda"
   },
   "permissions": {
     "allow": [
@@ -302,6 +301,9 @@
   "effortLevel": "medium",
   "modelSettings": {
     "claude-fable-5-1": {
+      "effortLevel": "low"
+    },
+    "claude-opus-5": {
       "effortLevel": "low"
     }
   },
