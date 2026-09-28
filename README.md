@@ -454,7 +454,7 @@ Codex CLIでは次も踏まえます。
 | フックのCursor側 | `cursor/hooks.json`, `cursor/hooks/adapters/` | `bash cursor/tests/<name>-adapter.test.sh` | 本体を新設したときは`claude/hooks/`も追加します。未移植のものは`worktree/*`、`log-denial`、`usage-guard`などがあります（詳細は`claude/SECURITY.md`を参照してください） |
 | サブエージェント | `claude/agents/` | なし | `claude/agents/`から`~/.claude/agents`と`~/.cursor/agents`へシンボリックリンクを張ります |
 | エージェント向けドキュメント | `claude/docs/` | なし | `claude/docs/`を`~/.claude/docs`へシンボリックリンクでつなぎます。Cursorは`@.claude/docs/...`で参照します（`~/.cursor/docs`は作りません） |
-| スキル | `claude/skills/` | なし | `~/.claude/skills`と`~/.agents/skills`（Codex）へシンボリックリンクを張ります |
+| スキル | `claude/skills/` | なし | `~/.claude/skills`と`~/.agents/skills`（Codex）へシンボリックリンクを張ります。自然言語での自動起動を許すか止めるかは、下の「スキルの自動起動」の2ファイルを対で変えます |
 | Codex サブエージェント | `claude/agents/*/SUBAGENT.md` | `./scripts/generate-codex-agents.sh` → `git add codex/agents/` | 生成物は`codex/agents/*.toml`。`setup.sh`で`~/.codex/agents`へリンクします |
 | Codex フック登録 | `codex/hooks.json`, `codex/hooks/wrap/` | なし | 本体は`claude/hooks/`。SessionStart/PostToolUseはラッパでJSON形式へ変換します。初回および定義変更後はTUIの`/hooks`でtrustが必要です |
 | Codex rules | `codex/rules/*.rules` | `npm run test:codex-rules` | `~/.codex/rules`は実ディレクトリにし、Git管理するルールだけをファイル単位でリンクします。Codexが生成する`default.rules`はホーム側に残します |
@@ -471,6 +471,21 @@ Codex CLIでは次も踏まえます。
 `claude/settings.json`の`hooks`はClaude Code専用です。Cursorは`cursor/hooks.json`、Codexは`codex/hooks.json`を読みます。
 
 `StrReplace`/`Delete`が`preToolUse`で発火するかは、Cursorのバージョンに依存します。
+
+### スキルの自動起動
+
+エージェントが自然言語からスキルを起動できるかは、スキルごとに次の2ファイルで決まります。片方だけを変えると、CLIによって自動起動する・しないが分かれます。
+
+| ファイル | 効くCLI | 自動起動を止める | 自動起動を許す |
+|---|---|---|---|
+| `claude/skills/<skill>/SKILL.md`のfrontmatter | Claude Code、Cursor | `disable-model-invocation: true`を書く | この行を書かない |
+| `claude/skills/<skill>/agents/openai.yaml` | Codex | `policy.allow_implicit_invocation: false`を書く | このファイルを置かない |
+
+Codexは`disable-model-invocation`を解釈しないため、Codexだけは`openai.yaml`で制御します（#200で確認）。手動起動専用にするときは2ファイルを両方書き、自然言語で起動させるときは2ファイルを両方消します。`/スキル名`での手動起動は、どちらの状態でも使えます。
+
+自動起動を許すと、そのスキルのfrontmatter `description`が全セッションの初期コンテキストへ常駐します。#200はこの常駐分を約4,200字から約600字へ減らすために全スキルを手動専用にし、本文からスキル名で連鎖起動される`x-grilling`と`x-figma-implement`だけを例外にしました。自動起動を増やすと初期コンテキストが1スキルあたり200〜300字増えるため、常駐させる価値があるスキルに限ってください。
+
+自動起動の可否を変えたあとは、Claude Codeではセッションを開始してスキル一覧に現れるかを確認し、CursorとCodexでは`description`にある依頼文を入力して起動するかを確認します。CLIごとに結果が違った場合は[AGENT-DIFFERENCES.md](AGENT-DIFFERENCES.md)へ実測として記録します。
 
 ## 運用
 

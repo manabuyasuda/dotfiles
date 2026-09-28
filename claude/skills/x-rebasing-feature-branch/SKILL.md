@@ -1,5 +1,4 @@
 ---
-disable-model-invocation: true
 name: x-rebasing-feature-branch
 description: フィーチャーブランチをベースブランチ（main/master/developなど）にリベースし、リモートに反映するまでを1タスクとして実行するワークフローを提供します。「リベースして」「mainを取り込んで」「mainに追従して」「rebase」といった依頼、またはフィーチャーブランチがベースブランチから乖離している場合に使用します。
 allowed-tools:
