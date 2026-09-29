@@ -34,7 +34,7 @@ git log -n 20 --oneline
 
 diffからは「何を」しか読み取れません。「なぜ」を確定させるため、以下の情報源を順に確認します。
 
-1. transcript JSONL — 前回コミット時刻以降のtranscriptから`text`を抽出し、議論の流れ・ユーザーが明示した目的・制約を確認します（手順は下の「transcriptから背景を拾う」を参照）
+1. 作業ログ — 前回コミット時刻以降のログから発言を抽出し、議論の流れ・ユーザーが明示した目的・制約を確認します（手順は下の「作業ログから背景を拾う」を参照）
 2. 関連するIssue / PR — 番号がブランチ名や直近のコミット、コードのコメントからわかる場合は`gh issue view <N>` / `gh pr view <N>`で本文・コメントを取得します
 3. diff内のコメントやTODO — `TODO:` / `FIXME:`の解消が見えるかを確認します
 4. 過去のコミット — 同領域の`git log -- <path>`で文脈を確認します
@@ -42,29 +42,19 @@ diffからは「何を」しか読み取れません。「なぜ」を確定さ�
 
 これらを総合しても「なぜ」が確定しない場合は、計画返却時に「ユーザーへ確認が必要な項目」として明示します。
 
-### transcriptから背景を拾う
+### 作業ログから背景を拾う
 
-`/compact`をまたいだやり取りや、別セッションでの議論を取りこぼさないために、transcript JSONLから直接拾います。
+`/compact`をまたいだやり取りや、別セッションでの議論を取りこぼさないために、作業ログから拾います。Claude Code・Codex・Cursorでは、ログの置き場所と形式が異なります。そのため探索と抽出を`scripts/log-utterances.sh`にまとめています。3つとも探して、見つかったものを出力するので、自分がどのエージェント上で動いているかを判定する必要はありません。
 
-対象セッションを特定します。
-
-1. cwd（リポジトリのルート）のパスを取得します
-2. transcriptは`~/.claude/projects/<cwd-slug>/`に格納されています。`<cwd-slug>`はcwdのパス区切りを`-`に置換したものです
-3. 前回コミット時刻のepochを`git log -1 --format=%ct`で取得します。コミットがまだない場合はtranscript全体を対象にします
-4. `~/.claude/projects/<cwd-slug>/*.jsonl`のうち、mtimeが上記epochより新しいファイル全件を対象にします
-
-各transcriptから`jq`で`type=="user"`または`type=="assistant"`の`text`だけを取り出します。
+前回コミット時刻のepochを`git log -1 --format=%ct`で取得し、次のように実行します。コミットがまだない場合は`--since`を省き、ログ全体を対象にします。
 
 ```bash
-jq -r --argjson since "$SINCE_EPOCH" '
-  select((.timestamp | fromdateiso8601) >= $since)
-  | select(.type=="user" or .type=="assistant")
-  | .message.content
-  | if type=="string" then . else (.[]? | select(.type=="text") | .text) end
-' "$TRANSCRIPT"
+~/.claude/agents/commit-message-writer/scripts/log-utterances.sh --since "$SINCE_EPOCH"
 ```
 
-抽出した本文をdiffと突き合わせ、該当するコミットに関わる目的・制約・判断だけをBodyの「なぜ」に使います。
+出力は`<エージェント> [user|assistant] <発言>`の1行1発言です。何も出力されない場合は、他の情報源だけで「なぜ」を組み立てます。
+
+抽出した発言をdiffと突き合わせ、該当するコミットに関わる目的・制約・判断だけをBodyの「なぜ」に使います。
 
 ## Step 4: Subjectを書く
 
