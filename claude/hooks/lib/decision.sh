@@ -14,7 +14,7 @@
 #   各 hook が自前で jq を書いていると上限を強制する場所がないため、ここへ集約する。
 #
 # 使い方:
-#   source "$(dirname "$0")/../lib/decision.sh"
+#   source "$_HOOK_DIR/../lib/decision.sh"   # _HOOK_DIR は各 hook が冒頭で定義する
 #   _deny() { hook_emit_decision deny PreToolUse "$1"; exit 0; }
 #   _deny "ERROR: ... FIX: ... コマンド: $(hook_excerpt "$COMMAND")"
 #

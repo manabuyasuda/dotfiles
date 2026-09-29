@@ -16,7 +16,11 @@
 # 入力 : stdin の JSON（tool_input.file_path または tool_input.path）
 # =============================================================================
 
-HOOKS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# WHY NOT: dirname を呼ばない（理由は hooks/README.md「外部コマンドを起動しない」）
+_HOOK_DIR="${0%/*}"
+[ "$_HOOK_DIR" = "$0" ] && _HOOK_DIR="."
+
+HOOKS_DIR="$(cd "$_HOOK_DIR/.." && pwd)"
 # shellcheck source=../config.sh
 source "$HOOKS_DIR/config.sh"
 
@@ -30,9 +34,9 @@ input="$(cat)"
 
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
-source "$(dirname "$0")/../lib/cursor-compat.sh"
+source "$_HOOK_DIR/../lib/cursor-compat.sh"
 # shellcheck source=../lib/decision.sh
-source "$(dirname "$0")/../lib/decision.sh"
+source "$_HOOK_DIR/../lib/decision.sh"
 exit_if_cursor_payload "$input"
 file_path="$(echo "$input" | jq -r '.tool_input.file_path // .tool_input.path // empty')"
 

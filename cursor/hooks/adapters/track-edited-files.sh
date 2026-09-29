@@ -3,7 +3,11 @@
 
 set -euo pipefail
 
-LIB_DIR="$(cd "$(dirname "$0")/../lib" && pwd)"
+# WHY NOT: dirname を呼ばない（理由は hooks/README.md「外部コマンドを起動しない」）
+_HOOK_DIR="${0%/*}"
+[ "$_HOOK_DIR" = "$0" ] && _HOOK_DIR="."
+
+LIB_DIR="$(cd "$_HOOK_DIR/../lib" && pwd)"
 # shellcheck source=../lib/cursor-io.sh
 source "$LIB_DIR/cursor-io.sh"
 
