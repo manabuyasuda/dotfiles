@@ -8,22 +8,27 @@
 
 set -euo pipefail
 
+# WHY NOT: dirname / basename を使わない。statusline は Cursor の描画のたびに
+# 実行されるため、1描画につき3プロセスの起動が積み上がる。プロセス起動は
+# Endpoint Security（Jamf Protect）の検証対象になり、検証が滞るとカーネルが
+# 拡張を強制終了して、その間すべてのアプリの操作が待たされてしまう。
+# パス分解は bash のパラメータ展開で足りる（外部プロセスを起動しない）。
 _resolve_real_path() {
-  local src="$1"
+  local src="$1" dir target
+  dir="${src%/*}"
+  [ "$dir" = "$src" ] && dir="."
   if [[ -L "$src" ]]; then
-    local target
     target=$(readlink "$src")
-    if [[ "$target" != /* ]]; then
-      target="$(cd "$(dirname "$src")" && pwd)/$target"
-    fi
+    [[ "$target" != /* ]] && target="$(cd "$dir" && pwd)/$target"
     printf '%s' "$target"
   else
-    printf '%s' "$(cd "$(dirname "$src")" && pwd)/$(basename "$src")"
+    printf '%s' "$(cd "$dir" && pwd)/${src##*/}"
   fi
 }
 
 REAL=$(_resolve_real_path "${BASH_SOURCE[0]}")
-DOTFILES_DIR=$(cd "$(dirname "$REAL")/.." && pwd)
+REAL_DIR="${REAL%/*}"
+DOTFILES_DIR=$(cd "$REAL_DIR/.." && pwd)
 CLAUDE_STATUSLINE="$DOTFILES_DIR/claude/statusline.sh"
 
 if [[ ! -x "$CLAUDE_STATUSLINE" ]]; then
@@ -36,7 +41,8 @@ if ! command -v jq &>/dev/null; then
   exit 0
 fi
 
-input=$(cat)
+# WHY NOT: $(cat) で受け取らない。cat の起動1回ぶんを、bash のリダイレクトで置き換える。
+input=$(</dev/stdin)
 
 printf '%s' "$input" | jq '{
   session_id: (.session_id // ""),
