@@ -11,14 +11,18 @@
 #          入っていた。記録と実行を分ければ、頻度は構造的に 1 ターン 1 回になる。
 # 入力 : stdin の JSON（session_id, tool_input.file_path）
 # =============================================================================
+# WHY NOT: dirname を呼ばない（理由は hooks/README.md「外部コマンドを起動しない」）
+_HOOK_DIR="${0%/*}"
+[ "$_HOOK_DIR" = "$0" ] && _HOOK_DIR="."
+
 INPUT=$(cat)
 
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で処理済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
-source "$(dirname "$0")/../lib/cursor-compat.sh"
+source "$_HOOK_DIR/../lib/cursor-compat.sh"
 exit_if_cursor_payload "$INPUT"
 # shellcheck source=../lib/edited-files.sh
-source "$(dirname "$0")/../lib/edited-files.sh"
+source "$_HOOK_DIR/../lib/edited-files.sh"
 
 file=$(jq -r '.tool_input.file_path // ""' <<<"$INPUT")
 sid=$(jq -r '.session_id // ""' <<<"$INPUT")

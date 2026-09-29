@@ -17,6 +17,10 @@
 # ログ  : $HOME/.claude/mermaid-guard.log
 # =============================================================================
 
+# WHY NOT: dirname を呼ばない（理由は hooks/README.md「外部コマンドを起動しない」）
+_HOOK_DIR="${0%/*}"
+[ "$_HOOK_DIR" = "$0" ] && _HOOK_DIR="."
+
 LOG_FILE="$HOME/.claude/mermaid-guard.log"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"; }
 
@@ -30,11 +34,11 @@ INPUT=$(cat)
 
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
-source "$(dirname "$0")/../lib/cursor-compat.sh"
+source "$_HOOK_DIR/../lib/cursor-compat.sh"
 # shellcheck source=../lib/decision.sh
-source "$(dirname "$0")/../lib/decision.sh"
+source "$_HOOK_DIR/../lib/decision.sh"
 # shellcheck source=../lib/mermaid-check.sh
-source "$(dirname "$0")/../lib/mermaid-check.sh"
+source "$_HOOK_DIR/../lib/mermaid-check.sh"
 exit_if_cursor_payload "$INPUT"
 FILE_PATH=$(jq -r '.tool_input.file_path // ""' <<< "$INPUT")
 

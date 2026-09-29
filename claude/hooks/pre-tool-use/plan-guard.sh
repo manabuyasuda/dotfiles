@@ -40,15 +40,19 @@
 # =============================================================================
 
 # jq が無ければ判定できないのでフェイルオープン
+# WHY NOT: dirname を呼ばない（理由は hooks/README.md「外部コマンドを起動しない」）
+_HOOK_DIR="${0%/*}"
+[ "$_HOOK_DIR" = "$0" ] && _HOOK_DIR="."
+
 command -v jq &>/dev/null || exit 0
 
 INPUT=$(cat)
 
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
-source "$(dirname "$0")/../lib/cursor-compat.sh"
+source "$_HOOK_DIR/../lib/cursor-compat.sh"
 # shellcheck source=../lib/decision.sh
-source "$(dirname "$0")/../lib/decision.sh"
+source "$_HOOK_DIR/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 
 # file_path / session_id / cwd を1回の jq でまとめて取得する（同一 stdin を複数回 parse

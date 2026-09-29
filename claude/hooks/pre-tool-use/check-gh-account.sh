@@ -26,6 +26,10 @@
 # =============================================================================
 
 # stderr に警告を出して exit 2 する（exit 2 はソフトブロック：メッセージを表示して処理を止める）
+# WHY NOT: dirname を呼ばない（理由は hooks/README.md「外部コマンドを起動しない」）
+_HOOK_DIR="${0%/*}"
+[ "$_HOOK_DIR" = "$0" ] && _HOOK_DIR="."
+
 _warn() {
   echo "$1" >&2
   exit 2
@@ -40,7 +44,7 @@ INPUT=$(cat)
 
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
-source "$(dirname "$0")/../lib/cursor-compat.sh"
+source "$_HOOK_DIR/../lib/cursor-compat.sh"
 exit_if_cursor_payload "$INPUT"
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 

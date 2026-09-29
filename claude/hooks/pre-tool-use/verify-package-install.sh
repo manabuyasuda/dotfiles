@@ -38,9 +38,13 @@
 # 出力 : stdout の JSON（permissionDecision: "deny"）。通過時は何も出力せず exit 0。
 # =============================================================================
 
+# WHY NOT: dirname を呼ばない（理由は hooks/README.md「外部コマンドを起動しない」）
+_HOOK_DIR="${0%/*}"
+[ "$_HOOK_DIR" = "$0" ] && _HOOK_DIR="."
+
 VERIFIED_CACHE_DIR="$HOME/.claude/cache/verified-packages"
 VERIFIED_TTL_SECONDS=$((24 * 60 * 60))
-PARSER_SCRIPT="$(dirname "$0")/verify-package-install-parse.py"
+PARSER_SCRIPT="$_HOOK_DIR/verify-package-install-parse.py"
 # bashlex 専用の venv を優先的に使う。無ければシステム python3 にフォールバック。
 # どちらも bashlex が無ければパーサが exit 2 を返し、bash 経路に落ちる。
 # テスト用に VERIFY_HOOK_PARSER_PYTHON で経路を明示的に指定できる
@@ -62,9 +66,9 @@ INPUT=$(cat)
 
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
-source "$(dirname "$0")/../lib/cursor-compat.sh"
+source "$_HOOK_DIR/../lib/cursor-compat.sh"
 # shellcheck source=../lib/decision.sh
-source "$(dirname "$0")/../lib/decision.sh"
+source "$_HOOK_DIR/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 COMMAND=$(jq -r '.tool_input.command // ""' <<<"$INPUT")
 

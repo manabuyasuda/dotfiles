@@ -23,13 +23,17 @@
 # 出力 : stdout の JSON（permissionDecision: "deny"）
 # =============================================================================
 
+# WHY NOT: dirname を呼ばない（理由は hooks/README.md「外部コマンドを起動しない」）
+_HOOK_DIR="${0%/*}"
+[ "$_HOOK_DIR" = "$0" ] && _HOOK_DIR="."
+
 INPUT=$(cat)
 
 # Cursor 互換実行（cursor_version あり）は cursor/hooks.json のアダプタ側で判定済みのため通過する
 # shellcheck source=../lib/cursor-compat.sh
-source "$(dirname "$0")/../lib/cursor-compat.sh"
+source "$_HOOK_DIR/../lib/cursor-compat.sh"
 # shellcheck source=../lib/decision.sh
-source "$(dirname "$0")/../lib/decision.sh"
+source "$_HOOK_DIR/../lib/decision.sh"
 exit_if_cursor_payload "$INPUT"
 CMD=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 

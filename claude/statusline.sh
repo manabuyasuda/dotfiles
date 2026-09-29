@@ -101,9 +101,9 @@ COST_RED_JPY=3200      # ¥3,200 以上 → 赤（黄色の2倍）
 # を防ぐ）。刻みの数値もここ一箇所だけに置き、フックや本文に散らさない。
 COST_STEP_RATIO="0.5"  # 0.5 → 赤帯, 赤帯*1.5, 赤帯*2.0, … と 0.5 倍刻みで止める
 
-# 円をドルに換算して閾値を作る（bc -l は小数計算のため）
-COST_YELLOW=$(echo "scale=4; $COST_YELLOW_JPY / $JPY_PER_USD" | bc -l)
-COST_RED=$(echo "scale=4; $COST_RED_JPY / $JPY_PER_USD" | bc -l)
+# 円からドルへの換算は、費用ブロックの一括 awk（COST_CALC）の中でまとめて行う。
+# WHY NOT: ここで bc を2回呼ばない。費用行を出さない条件（COST が空か 0）でも
+# 毎回2プロセスを起動することになり、statusline は描画のたびに実行されるため無駄が積み上がる。
 
 # サブスク使用量（5h / 7d）の色分け閾値（%）
 # この値以上で黄色、次の値以上で赤になる。5h と 7d で閾値を分ける。
@@ -160,7 +160,17 @@ RED='\033[31m'
 # 数字に3桁区切りのカンマを入れる（例: 1273 → 1,273）
 # 数字を逆順にして3文字ごとにカンマを挿入し、再度逆順に戻す
 _group_digits() {
-  echo "$1" | rev | sed 's/[0-9]\{3\}/&,/g' | rev | sed 's/^,//'
+  # WHY NOT: rev|sed|rev|sed のパイプで書かない。1回の呼び出しで4プロセス起動し、
+  # statusline は描画のたびに実行されるため、Endpoint Security（Jamf Protect）の
+  # 検証対象イベントを増やして OS 全体の待ち時間を招く。bash の文字列操作なら
+  # プロセスを起動しない。
+  local n="$1" out="" sign=""
+  case "$n" in -*) sign="-"; n="${n#-}";; esac
+  while [ "${#n}" -gt 3 ]; do
+    out=",${n: -3}$out"
+    n="${n:0:${#n}-3}"
+  done
+  printf '%s%s%s' "$sign" "$n" "$out"
 }
 
 # プラン判別: rate_limits があればサブスク（Pro / Max）、なければ従量課金
@@ -243,9 +253,12 @@ if [ -n "$CTX" ]; then
   # 前回の値（PREV_CTX）は冒頭でキャッシュから一括読み込み済み。初回は空で差分を出さない
   CTX_DIFF_STR=""
   if [ -n "$PREV_CTX" ]; then
-    # bc -l で小数第1位まで差分を計算し、符号を付ける（/compact 後はマイナスになる）
-    DIFF=$(printf '%.1f' "$(echo "$CTX - $PREV_CTX" | bc -l)")
-    if (( $(echo "$DIFF >= 0" | bc -l) )); then
+    # 小数第1位まで差分を計算し、符号を付ける（/compact 後はマイナスになる）
+    # WHY NOT: bc を2回呼ばない。bc は計算1回につき1プロセスを起動するため、
+    # 差分と符号判定で2プロセスになる。awk なら整形まで1プロセスで終わり、
+    # 符号は先頭が '-' かどうかの文字列判定（プロセス起動なし）で足りる。
+    DIFF=$(awk -v a="$CTX" -v b="$PREV_CTX" 'BEGIN{printf "%.1f", a - b}')
+    if [ "${DIFF#-}" = "$DIFF" ]; then
       CTX_DIFF_STR=" (+${DIFF})"
     else
       CTX_DIFF_STR=" (${DIFF})"
@@ -384,36 +397,64 @@ fi
 # サブスクではこの費用行が使用量行（5h / 7d）の下に並ぶ（4行表示になる）。
 # =============================================================================
 # COST は冒頭の一括 jq で取得済み
-if [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) )); then
+# COST が正かどうかは、小数を含む文字列から「0 と . 以外の数字があるか」で判定する。
+# WHY NOT: bc で比較しない。判定のためだけに1プロセス起動することになる。
+_cost_is_positive() { case "${1//[0.]/}" in "") return 1;; *) return 0;; esac; }
+if [ -n "$COST" ] && _cost_is_positive "$COST"; then
 
-  # コストの色と段階ガードのレベルを決める（bc -l は小数の比較のために必要）。
-  # cost_level は赤帯で打ち止めにせず COST_STEP_RATIO（=0.5×赤帯）刻みで増やし、
-  # フックが段階的に止める:
-  #   0 = 黄帯未満（止めない） / 1 = 黄帯 / 2 = 赤帯(=COST_RED) /
-  #   3 = 赤帯*1.5 / 4 = 赤帯*2.0 / … と刻みごとに +1 される。
-  if (( $(echo "$COST >= $COST_RED" | bc -l) )); then
-    COST_COLOR=$RED
-    COST_BAND="red"
-    COST_STEP=$(echo "scale=10; $COST_RED * $COST_STEP_RATIO" | bc -l)
-    COST_LEVEL=$(echo "scale=0; 2 + ($COST - $COST_RED) / $COST_STEP" | bc -l)
-  elif (( $(echo "$COST >= $COST_YELLOW" | bc -l) )); then
-    COST_COLOR=$YELLOW
-    COST_BAND="yellow"
-    COST_LEVEL=1
-  else
-    COST_COLOR=$GREEN
-    COST_BAND="green"
-    COST_LEVEL=0
-  fi
+  # 費用に関わる小数計算をここで1回の awk にまとめ、結果を区切り文字で受け取る。
+  # WHY NOT: bc を計算ごとに呼ばない。以前はこのブロックだけで bc を9回、cut を2回
+  # 起動していた。statusline は Claude Code の描画のたびに実行されるため、
+  # 1描画あたり十数プロセスの起動になり、Endpoint Security（Jamf Protect）が
+  # 実行ファイルを検証するイベントを大量に生む。検証が期限内に終わらないと
+  # カーネルが拡張を強制終了し、その間すべてのアプリの操作が待たされてしまう。
+  #
+  # 出力順: COST_BAND / COST_LEVEL / COST_JPY_NUM / DIFF_JPY / ANNUAL_ROUNDED
+  # 数値の切り捨ては int() で行い、bc の scale=0 と同じ「0方向への切り捨て」に揃える。
+  # ANNUAL_ROUNDED は有効作業時間がゲート未満のとき空にして、呼び出し側で分岐する。
+  RATE_MIN_ELAPSED_MS=$(( RATE_MIN_ELAPSED_MIN * 60000 ))
+  IFS=$'\x1f' read -r COST_BAND COST_LEVEL COST_JPY_NUM DIFF_JPY ANNUAL_ROUNDED \
+    <<<"$(awk -v cost="$COST" -v prev="${PREV_COST:-}" -v rate="$JPY_PER_USD" \
+             -v yjpy="$COST_YELLOW_JPY" -v rjpy="$COST_RED_JPY" -v ratio="$COST_STEP_RATIO" \
+             -v eff="${EFFECTIVE_MS:-}" -v gate="$RATE_MIN_ELAPSED_MS" \
+             -v hours="$WORK_HOURS_PER_YEAR" -v factor="$LABOR_COST_FACTOR" '
+      BEGIN {
+        SEP = sprintf("%c", 31)
+        yellow = yjpy / rate
+        red    = rjpy / rate
+        if (cost >= red) {
+          band = "red"
+          step = red * ratio
+          level = int(2 + (cost - red) / step)
+        } else if (cost >= yellow) {
+          band = "yellow"; level = 1
+        } else {
+          band = "green"; level = 0
+        }
+        jpy = int(cost * rate)
+        diff = (prev != "" && prev > 0) ? int((cost - prev) * rate) : ""
+        annual = ""
+        if (eff != "" && eff >= gate) {
+          elapsed_h = eff / 3600000
+          a = cost / elapsed_h * hours / factor * rate
+          annual = int((a + 50000) / 100000) * 100000
+        }
+        printf "%s%s%s%s%s%s%s%s%s", band, SEP, level, SEP, jpy, SEP, diff, SEP, annual
+      }')"
+
+  # 帯（band）から表示色を決める。色は文字列なので awk へ渡さず bash 側に残す。
+  case "$COST_BAND" in
+    red)    COST_COLOR=$RED;;
+    yellow) COST_COLOR=$YELLOW;;
+    *)      COST_COLOR=$GREEN;;
+  esac
 
   # 円表示（3桁区切り、小数切り捨て）
-  COST_JPY_NUM=$(echo "$COST * $JPY_PER_USD" | bc -l | cut -d. -f1)
   COST_JPY="${ICON_JPY} ¥$(_group_digits "$COST_JPY_NUM")"
 
   # 前回値（PREV_COST）は冒頭でキャッシュから一括読み込み済み（通貨記号は付けない）
   COST_JPY_DIFF_STR=""
-  if [ -n "$PREV_COST" ] && (( $(echo "$PREV_COST > 0" | bc -l) )); then
-    DIFF_JPY=$(echo "($COST - $PREV_COST) * $JPY_PER_USD" | bc -l | cut -d. -f1)
+  if [ -n "$DIFF_JPY" ]; then
     # 同一セッション内では増える一方なので符号は常に + になる
     COST_JPY_DIFF_STR=" (+$(_group_digits "$DIFF_JPY"))"
   fi
@@ -428,14 +469,10 @@ if [ -n "$COST" ] && (( $(echo "$COST > 0" | bc -l) )); then
   #
   # rate = 累計コスト / 有効作業時間 は分母が小さいほど発散する。そこで有効作業時間が
   # RATE_MIN_ELAPSED_MIN に達するまでは年収換算を出さない（精度ゲート）。
-  RATE_MIN_ELAPSED_MS=$(( RATE_MIN_ELAPSED_MIN * 60000 ))
-  # 判定はミリ秒の整数比較なので、ちょうど10分などの境界が厳密に通る
-  if [ -n "$EFFECTIVE_MS" ] && (( EFFECTIVE_MS >= RATE_MIN_ELAPSED_MS )); then
-    ELAPSED_H=$(echo "scale=6; $EFFECTIVE_MS / 3600000" | bc -l)
-    # 年収（円） = 累計費用 ÷ 有効作業時間 × 年間労働時間 ÷ 人件費係数 × 為替
-    ANNUAL_JPY=$(echo "scale=6; $COST / $ELAPSED_H * $WORK_HOURS_PER_YEAR / $LABOR_COST_FACTOR * $JPY_PER_USD" | bc -l)
-    # 10万円単位に四捨五入してチラつきを抑える（+50000 してから整数化）
-    ANNUAL_ROUNDED=$(echo "scale=0; ($ANNUAL_JPY + 50000) / 100000 * 100000" | bc -l)
+  # 年収（円） = 累計費用 ÷ 有効作業時間 × 年間労働時間 ÷ 人件費係数 × 為替。
+  # 計算とゲート判定（有効作業時間が RATE_MIN_ELAPSED_MS 未満なら出さない）、および
+  # 10万円単位の丸めは、上の COST_CALC の awk 内で済ませている。ゲート未満なら空文字。
+  if [ -n "$ANNUAL_ROUNDED" ]; then
     ANNUAL_MAN=$(( ANNUAL_ROUNDED / 10000 ))
     cost_line+="   年収換算 約${ANNUAL_MAN}万円"
   fi

@@ -10,27 +10,27 @@
     "beforeShellExecution": [
       {
         "command": "./hooks/adapters/dangerous-guard.sh",
-        "timeout": 5,
+        "timeout": 15,
         "failClosed": true
       },
       {
         "command": "./hooks/adapters/verify-package-install.sh",
-        "timeout": 5,
+        "timeout": 15,
         "failClosed": true
       },
       {
         "command": "./hooks/adapters/push-to-main-guard.sh",
-        "timeout": 5,
+        "timeout": 15,
         "failClosed": true
       },
       {
         "command": "./hooks/adapters/check-gh-account.sh",
-        "timeout": 5,
+        "timeout": 15,
         "failClosed": false
       },
       {
         "command": "./hooks/adapters/bash-guard.sh",
-        "timeout": 10,
+        "timeout": 15,
         "failClosed": false
       }
     ],
@@ -38,25 +38,25 @@
       {
         "command": "./hooks/adapters/branch-guard.sh",
         "matcher": "Write",
-        "timeout": 5,
+        "timeout": 15,
         "failClosed": true
       },
       {
         "command": "./hooks/adapters/plan-guard.sh",
         "matcher": "Write",
-        "timeout": 5,
+        "timeout": 15,
         "failClosed": true
       },
       {
         "command": "./hooks/adapters/file-protect.sh",
         "matcher": "Write",
-        "timeout": 5,
+        "timeout": 15,
         "failClosed": true
       },
       {
         "command": "./hooks/adapters/mermaid-guard-pre.sh",
         "matcher": "Write",
-        "timeout": 10,
+        "timeout": 15,
         "failClosed": true
       }
     ],
@@ -64,7 +64,7 @@
       {
         "command": "./hooks/adapters/track-edited-files.sh",
         "matcher": "Write",
-        "timeout": 5,
+        "timeout": 15,
         "failClosed": false
       },
       {
