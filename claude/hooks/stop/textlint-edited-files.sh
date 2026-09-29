@@ -66,19 +66,122 @@ _is_exempt() {
   return 1
 }
 
+# package.json の scripts から、textlint を呼ぶスクリプトの --config とその glob を集める。
+# WHY: textlint が自力で探す設定ファイル名は .textlintrc / .textlintrc.json /
+#      .textlintrc.js / .textlintrc.yml に限られる。用途ごとに設定を分けるリポジトリ
+#      （例: .textlintrc.docs.json と .textlintrc.ui.json）では見つからず、
+#      `== No rules found ==` を出して終了コード 0 で終わるため、検査が空振りしてしまう。
+#      設定の在り処を知っているのは package.json のスクリプトなので、そこから取る。
+# WHY NOT: `pnpm lint:text:fix` をそのまま実行しない。スクリプトの glob は
+#          リポジトリ全体を対象にするため、このターンで編集していないファイルの指摘まで
+#          エージェントへ渡り、Stop フックを編集ファイルだけに絞った設計が崩れてしまう。
+# 出力: "<設定ファイル>\t<glob> <glob> ..." を1行ずつ。--config が無ければ何も出さない。
+_textlint_configs() {
+  local pkg="$1/package.json" script cfg rest tok globs
+  [ -f "$pkg" ] || return 0
+  while IFS= read -r script; do
+    case "$script" in *textlint*) ;; *) continue;; esac
+    [[ "$script" =~ --config[[:space:]]+([^[:space:]]+) ]] || continue
+    cfg="${BASH_REMATCH[1]}"
+    cfg="${cfg%\"}"; cfg="${cfg#\"}"
+    # --config の後ろに並ぶ引数のうち、オプションでないものを glob とみなす
+    rest="${script#*--config }"
+    rest="${rest#* }"
+    globs=""
+    for tok in $rest; do
+      case "$tok" in -*) continue;; esac
+      tok="${tok%\"}"; tok="${tok#\"}"
+      globs="$globs $tok"
+    done
+    printf '%s\t%s\n' "$cfg" "${globs# }"
+  done < <(jq -r '.scripts // {} | .[]' "$pkg" 2>/dev/null)
+}
+
+# glob がファイルの相対パスに一致するか。
+# WHY NOT: bash の [[ == ]] はブレース展開をせず、`**` も通常の `*` として扱う。
+#          `{md,mdx}` は extglob の `@(md|mdx)` へ、`**/` は `*` へ置き換えて照合する。
+#          `*` は `/` をまたいで一致するため、`components/*.md` は
+#          `components/data-display/avatar.md` に一致する。
+_glob_matches() {
+  local rel="$1" glob="$2" pat
+  pat="${glob//\*\*\//*}"
+  pat="${pat//\*\*/*}"
+  while [[ "$pat" == *\{*\}* ]]; do
+    local head="${pat%%\{*}" body="${pat#*\{}" tail
+    tail="${body#*\}}"; body="${body%%\}*}"
+    pat="${head}@(${body//,/|})${tail}"
+  done
+  shopt -s extglob
+  [[ "$rel" == $pat ]]
+}
+
 remaining_all=""
+# 編集ファイルを textlint の実体（node_modules/.bin/textlint）ごとにまとめる。
+# WHY NOT: ファイルごとに textlint を起動しない。textlint の所要時間はファイル数ではなく
+#          起動回数に比例する（実測: 1ファイル1回で約1.2秒、46ファイルまとめて1回で1.675秒）。
+#          1ファイルにつき --fix と残エラー収集で2回起動すると、24ファイルで Stop フックの
+#          上限60秒に達し、エージェントへ結果を返せないままタイムアウトしてしまう。
+roots=""
+pairs=""
 while IFS= read -r file; do
   [ -n "$file" ] || continue
   # textlint がローカルに無いファイルは何もしない（ツール実在ゲート）
   bin=$(find_local_bin "$file" textlint) || continue
   # textlint は設定ファイルを cwd 基準で解決するため、見つけた node_modules の親で実行する
   textlint_root="${bin%/node_modules/.bin/textlint}"
-  (cd "$textlint_root" && "$bin" --fix "$file" >/dev/null 2>&1)
-  _is_exempt "$file" && continue
-  # --fix で直らなかったエラーを収集する（終了コードではなく出力の有無で判定する）
-  remaining=$(cd "$textlint_root" && "$bin" --format compact "$file" 2>&1 | grep -E 'line [0-9]+' | head -30)
-  [ -n "$remaining" ] && remaining_all="${remaining_all}ファイル: ${file}\n${remaining}\n\n"
+  pairs="${pairs}${textlint_root}	${file}\n"
+  case "$roots" in *"|$textlint_root|"*) ;; *) roots="${roots}|$textlint_root|";; esac
 done <<<"$files"
+
+while IFS= read -r textlint_root; do
+  [ -n "$textlint_root" ] || continue
+  bin="$textlint_root/node_modules/.bin/textlint"
+  root_files=$(printf '%b' "$pairs" | awk -F'\t' -v r="$textlint_root" '$1==r{print $2}')
+  [ -n "$root_files" ] || continue
+
+  # --fix は除外ファイルにも適用する（残エラーの報告だけを除くのが既存の設計）
+  # 残エラーの収集は除外ファイルを外した集合で行う
+  configs=$(_textlint_configs "$textlint_root")
+  # 設定が1つも取れないリポジトリでは --config を付けずに実行する（既存の挙動）
+  [ -n "$configs" ] || configs="	"
+
+  config_count=$(printf '%s' "$configs" | grep -c . || true)
+  while IFS=$'\t' read -r cfg globs; do
+    fix_set=""; check_set=""
+    while IFS= read -r file; do
+      [ -n "$file" ] || continue
+      rel="${file#"${textlint_root}"/}"
+      # glob の指定があるスクリプトは、一致するファイルだけを担当する。
+      # 設定が1つだけのリポジトリでは glob に関係なく全ファイルを対象にする。
+      if [ -n "$globs" ] && [ "$config_count" -gt 1 ]; then
+        matched=1
+        # WHY NOT: `for g in $globs` をそのまま書かない。クォートしない展開は
+        #          パス名展開も行うため、`docs/**/*.md` がカレントディレクトリの
+        #          実ファイル一覧へ置き換わり、照合の対象を取り違えてしまう。
+        set -f
+        # shellcheck disable=SC2086
+        set -- $globs
+        set +f
+        for g in "$@"; do _glob_matches "$rel" "$g" && { matched=0; break; }; done
+        [ $matched -eq 0 ] || continue
+      fi
+      fix_set="${fix_set}${file}\n"
+      _is_exempt "$file" || check_set="${check_set}${file}\n"
+    done <<<"$root_files"
+    [ -n "$fix_set" ] || continue
+
+    # shellcheck disable=SC2046
+    (cd "$textlint_root" && "$bin" ${cfg:+--config "$cfg"} --fix $(printf '%b' "$fix_set") >/dev/null 2>&1)
+    [ -n "$check_set" ] || continue
+    # --fix で直らなかったエラーを収集する（終了コードではなく出力の有無で判定する）
+    # WHY: --fix の出力は「直した指摘」だけを並べ、直せなかった指摘を含まない。
+    #      さらに --fix は専用のフォーマッタを使うため --format compact を受け付けない。
+    #      修正と検知で2回に分けるのは textlint の仕様による。
+    # shellcheck disable=SC2046
+    remaining=$(cd "$textlint_root" && "$bin" ${cfg:+--config "$cfg"} --format compact $(printf '%b' "$check_set") 2>&1 | grep -E 'line [0-9]+' | head -30)
+    [ -n "$remaining" ] && remaining_all="${remaining_all}${remaining}\n\n"
+  done <<<"$configs"
+done <<<"$(printf '%s' "$roots" | tr '|' '\n' | awk 'NF' | awk '!seen[$0]++')"
 
 [ -n "$remaining_all" ] || exit 0
 # block 直後の再 Stop では差し戻さない（--fix の適用だけで終える）
