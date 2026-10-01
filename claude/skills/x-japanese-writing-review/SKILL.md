@@ -8,9 +8,6 @@ allowed-tools:
   - Edit
   - Bash
   - Agent
-  - TaskCreate
-  - TaskUpdate
-  - TaskList
 ---
 
 # x-japanese-writing-review スキル
@@ -32,19 +29,6 @@ allowed-tools:
 | 3 | 読み手が同じ文書内の別の箇所を探しに行く必要が生じるか | `rule-self-contained.md` |
 | 4 | その文または前後の文が複数の意味に解釈できるか | `rule-unambiguous.md` |
 | 5 | 読み手が次の行動や採否を決めるのに必要な情報が欠けているか | `rule-actionable.md` |
-
-## タスク登録（実行開始時に必ず実施）
-
-フローを開始する前に、全ステップを `TaskCreate` で登録します。各ステップを開始するとき `TaskUpdate` で `in_progress` へ、完了したとき `completed` へ更新します。
-
-| # | subject | blockedBy |
-|---|---------|-----------|
-| 1 | 校正対象の.mdファイルを特定 | — |
-| 2 | 5つのルールファイルのサブエージェントへ指摘収集を依頼 | 1 |
-| 3 | 文章校正1/3（指摘を統合してEdit修正） | 2 |
-| 4 | 文章校正2/3（再評価して残違反を修正） | 3 |
-| 5 | 文章校正3/3（最終確認と修正） | 4 |
-| 6 | 校正結果の報告 | 5 |
 
 ## 対象の決定
 
