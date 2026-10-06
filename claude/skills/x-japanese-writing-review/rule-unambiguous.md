@@ -4,6 +4,24 @@
 
 その文または前後の文を読んで、解釈が2つ以上成り立つかどうかで判定します。
 
+次の表のルールに当てはまるかは、表のメソッドを読み、その手順で判定します。表にないルールは、記号や語の形で判定します。
+
+| ルール | 使うメソッド |
+|---|---|
+| 1つの段落では、1つの論点とその根拠や具体例だけを扱います | `methods/split-into-elements.md` |
+| 漢語の複合名詞を動詞句で表現します | `methods/list-interpretations.md` |
+| 1つの文では1つの事柄だけを述べます | `methods/split-into-elements.md`、`methods/list-interpretations.md` |
+| 事実と解釈は別の文に分けます | `methods/classify-statements.md` |
+| 修飾部分が長い文は、文の趣旨を先に述べて文を閉じます | `methods/split-into-elements.md` |
+| 修飾語は被修飾語の直前に置きます | `methods/list-interpretations.md` |
+| 「てにをは」は次の3つの観点で確認します | `methods/list-interpretations.md` |
+| 名詞・動詞・形容詞は、その文だけを読んで意味を1つに特定できる語で書きます | `methods/list-interpretations.md` |
+| 相対的な表現は、絶対的な表現に置き換えます | `methods/list-interpretations.md` |
+| 「など」「等」は、直後に総称を書く場合だけ使います | `methods/list-interpretations.md` |
+| 名詞を別の名詞にかけるときは、助詞または活用形を補って修飾関係を明示します | `methods/list-interpretations.md` |
+| 「場合」と「とき」を使い分けます | `methods/list-interpretations.md` |
+| 接続表現は、前後の文の論理関係に対応する種類のものを選びます | `methods/split-into-elements.md`、`methods/list-interpretations.md` |
+
 ## 太字は、周囲より重要度・重大性・緊急性が高い内容にだけ使います
 
 太字`**`（`strong`要素）は、内容の重要度・重大性・緊急性が高いことを表します。見た目を太くする装飾として使うと、読み手は書き手が意図しない箇所を重要だと受け取ってしまいます。

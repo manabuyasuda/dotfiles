@@ -4,6 +4,21 @@
 
 読み手が次の行動や採否を決めるのに必要な情報が欠けているかどうかで判定します。
 
+次の表のルールに当てはまるかは、表のメソッドを読み、その手順で判定します。表にないルールは、記号や語の形で判定します。
+
+| ルール | 使うメソッド |
+|---|---|
+| 否定文は肯定文に書き換えます | `methods/find-missing-elements.md` |
+| 完了条件は境界を網羅的・具体的に書きます | `methods/classify-statements.md`、`methods/find-missing-elements.md` |
+| 読み手がすべきことは、読み手を主体にした能動態で書きます | `methods/find-missing-elements.md` |
+| 主語を省略せず明示し、主語と述語を対応させます | `methods/find-missing-elements.md` |
+| 動作を述べる文には、動作の対象と条件を書きます | `methods/find-missing-elements.md` |
+| 実害を述べる文は、望ましくない結果だと示す表現を使います | `methods/find-missing-elements.md` |
+| 変化を述べる文は、変わる前と変わった後を対にして書きます | `methods/classify-statements.md`、`methods/find-missing-elements.md` |
+| 権威に言及するときは、読み手が根拠の情報にアクセスできるように書きます | `methods/classify-statements.md` |
+| 外部の事実にもとづく記述には、出典のリンクと引用を添えます | `methods/classify-statements.md` |
+| 動詞と副詞は文字どおりの意味で使います | `methods/list-interpretations.md` |
+
 ## 否定文は肯定文に書き換えます
 
 否定文が示すのは、何をしないかだけです。読み手は取るべき行動を自分で推測することになってしまいます。
