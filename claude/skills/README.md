@@ -14,7 +14,7 @@ Claude Codeから呼び出せるカスタムスキルの一覧です。
 - [x-code-review-static](./x-code-review-static/SKILL.md) — 静的解析ツールを決定論的に実行します。lefthookやCIで実行済みのチェックはスキップします。
 - [x-code-review-git-history](./x-code-review-git-history/SKILL.md) — ホットスポット・書き換え率・Temporal Couplingを分析します。変更規模が最低ラインに満たない場合はスキップします。
 - [x-test-review](./x-test-review/SKILL.md) — 既存のテストファイル（`.test.ts`／`.test.tsx`／`.spec.ts`、テストコードブロックを含む`.md`）を、テスト実装ルールに沿って見直して改善します。
-- [x-japanese-writing-review](./x-japanese-writing-review/SKILL.md) — `.md`ファイルの日本語文章を、フォーマット・文書構造・日本語表現のルールに基づいて3周レビュー・修正します。ユーザーが明示的に起動したときだけ動作します。
+- [x-japanese-writing-review](./x-japanese-writing-review/SKILL.md) — `.md`ファイルの日本語文章を、フォーマット・文書構造・日本語表現のルールに基づいて3周レビュー・修正します。他のスキルやサブエージェントから校正を求められたとき、またはユーザーが文章レビューを依頼したときに起動します。
 - [x-japanese-reasoning-review](./x-japanese-reasoning-review/SKILL.md) — 日本語Markdown文書の主張と根拠を段落単位で洗い出し、根拠のない主張や関連の見えない根拠の扱いをユーザーに質問して、完成稿と変更一覧を提示します。ユーザーが明示的に起動したときだけ動作します。
 - [x-why-so](./x-why-so/SKILL.md) — わかりにくい日本語の文章を、トゥールミン・モデルの6要素（主張・データ・論拠・裏づけ・限定条件・例外）へ分解した箇条書きとして書き出し、欠けを調査と質問で埋めてから書き直し案を示します。構造は対象のファイルと同じディレクトリへ`<拡張子を除いたファイル名>.why-so.md`として保存します。
 

@@ -437,7 +437,7 @@ Bashコマンド実行前の安全確認。以下をチェックする。
 
 このターンで編集した `*.md` にtextlint `--fix` を適用する（ローカルにtextlintがある場合のみ）。自動修正できずに残ったエラーは `decision: block` でエージェントに渡す。作業記録ファイル（`config.sh` の `WORK_RECORD_*`）と `.gitignore` 対象は `--fix` だけ適用し、残エラーは渡さない。
 
-日本語の校正は自動起動しない。必要なときにユーザーが `x-japanese-writing-review` スキルを明示的に起動する。
+日本語の校正はhookからは起動しない。`x-japanese-writing-review` スキルは、`commit-message-writer` のStep 5-6のように他のスキルやサブエージェントから校正を求められたとき、またはユーザーが文章レビューを依頼したときに起動する。
 
 ---
 
