@@ -113,5 +113,5 @@ if [ -n "$(find "$ROOT/plan" -type f ! -empty -newer "$SESSION_START_FILE" 2>/de
 fi
 
 # 計画なし → ハードブロック（解除は記録しない＝計画を書くまで止め続ける）
-hook_emit_decision deny PreToolUse "ERROR: この作業の計画が plan/ にありません（このセッションで plan/ へ書き込まれたファイルがありません）。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: Task tool で plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/ への書き込みは対象外です。"
+hook_emit_decision deny PreToolUse "ERROR: この作業の計画が plan/ にありません（このセッションで plan/ へ書き込まれたファイルがありません）。WHY: 実装に着手する前にアプローチ・目的・手順を plan/ に書き出すルールです（CLAUDE.md「作業記録ディレクトリ」）。FIX: plan-writer サブエージェント（subagent_type: plan-writer）を呼び出し、plan/<task>.md を作成してから実装系の編集を再実行してください。plan-writer は背景・決定事項・未解決・ネクストアクション・完了条件の5枠テンプレを型として持ちます。explore/・plan/ への書き込みは対象外です。"
 exit 2

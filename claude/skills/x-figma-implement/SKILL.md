@@ -21,9 +21,6 @@ allowed-tools:
   - mcp__playwright__browser_hover
   - mcp__playwright__browser_snapshot
   - mcp__figma__get_metadata
-  - TaskCreate
-  - TaskUpdate
-  - TaskList
 ---
 
 # figma-implement
@@ -56,20 +53,6 @@ Figma URLや「このデザインを実装して」のように依頼された�
 | `references/project-verification.md` | スクショ・getComputedStyle・getBoundingClientRect・画像差分・a11yツリー | Step 7 |
 
 各Stepで、まず`references/project-instructions.md`の該当見出しを確認します。記載があればそれを最優先します。記載がなければ各referenceの手順で自律判断します。
-
-## タスク登録（実行開始時に必ず実施）
-
-フローを開始する前に、全ステップを`TaskCreate`で登録します。各ステップを開始するとき`TaskUpdate`で`in_progress`へ、完了したとき`completed`へ更新します。
-
-| # | subject | blockedBy |
-|---|---------|-----------|
-| 1 | Step 1: 入力チェック | — |
-| 2 | Step 2: プロジェクト構造を把握する | 1 |
-| 3 | Step 3: コンポーネントを選定する | 2 |
-| 4 | Step 4: アイコン・画像を準備する | 3 |
-| 5 | Step 5: マークアップ役割を確定する | 4 |
-| 6 | Step 6: スタイルを実装する | 5 |
-| 7 | Step 7: 自己検証サイクル | 6 |
 
 ## Step 1: 入力チェック
 
