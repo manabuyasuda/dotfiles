@@ -1,0 +1,32 @@
+name: check-skill-invocation
+
+# スキルの自動起動を止める指定が、Claude Code / Cursor 用の frontmatter と
+# Codex 用の agents/openai.yaml で一致することを検証する。
+# 片方だけを書いてCLIごとに挙動が分かれる事故を CI で機械的に止める。
+
+on:
+  pull_request:
+    paths:
+      - 'claude/skills/**/SKILL.md'
+      - 'claude/skills/**/agents/openai.yaml'
+      - 'scripts/check-skill-invocation.sh'
+      - '.github/workflows/check-skill-invocation.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'claude/skills/**/SKILL.md'
+      - 'claude/skills/**/agents/openai.yaml'
+      - 'scripts/check-skill-invocation.sh'
+      - '.github/workflows/check-skill-invocation.yml'
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - run: bash scripts/check-skill-invocation.sh

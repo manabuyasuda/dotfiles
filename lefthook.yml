@@ -71,6 +71,12 @@ pre-commit:
           echo "$out"
           exit 1
         fi
+    skill-invocation-drift:
+      # Codex は disable-model-invocation を解釈せず agents/openai.yaml を読む。
+      # 片方だけを書いた状態は、どのCLIで試すかによって自動起動する/しないが
+      # 分かれるため、コミットのたびに両方の一致を検査する。
+      glob: "{claude/skills/**/SKILL.md,claude/skills/**/openai.yaml,scripts/check-skill-invocation.sh}"
+      run: bash scripts/check-skill-invocation.sh
     cursor-permissions-drift:
       glob: "{claude/settings.json,cursor/cli-permissions.json}"
       run: |

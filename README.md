@@ -485,6 +485,8 @@ Codexは`disable-model-invocation`を解釈しないため、Codexだけは`open
 
 自動起動を許すと、そのスキルのfrontmatter `description`が全セッションの初期コンテキストへ常駐します。#200はこの常駐分を約4,200字から約600字へ減らすために全スキルを手動専用にし、本文からスキル名で連鎖起動される`x-grilling`と`x-figma-implement`を例外にしました。その後、`commit-message-writer`のStep 5-6から校正に使う`x-japanese-writing-review`を3つめの例外に加え、descriptionの約240字を常駐させています。自動起動を増やすと初期コンテキストが1スキルあたり200〜300字増えるため、常駐させる価値があるスキルに限ってください。
 
+2ファイルの指定が食い違っていないかは、`scripts/check-skill-invocation.sh`が検査します。pre-commit（`lefthook.yml`の`skill-invocation-drift`）と`.github/workflows/check-skill-invocation.yml`の両方から実行されるため、片方だけを書いたままコミットするとコミットが失敗します。
+
 自動起動の可否を変えたあとは、Claude Codeではセッションを開始してスキル一覧に現れるかを確認し、CursorとCodexでは`description`にある依頼文を入力して起動するかを確認します。CLIごとに結果が違った場合は[AGENT-DIFFERENCES.md](AGENT-DIFFERENCES.md)へ実測として記録します。
 
 ## 運用
