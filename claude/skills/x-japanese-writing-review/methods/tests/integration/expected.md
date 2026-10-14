@@ -13,7 +13,7 @@ SKILL.mdの手順で入力の写しを3周校正させます。サブエージ�
 4. 「問題が起きたら戻してください」について、対象と条件が欠けていると報告される
 5. 「十分に」について、観察できる基準が欠けていると報告される
 6. 元の文書にない数値・コマンド・手順を、本文に補って書き換えない。候補として報告するのはよい
-7. `rule-concise.md`・`rule-unambiguous.md`・`rule-actionable.md`・`rule-self-contained.md`を担当するサブエージェントが、毎周、各ファイルの「判定に使うメソッド」の表にあるメソッドを1つ以上読む（実行記録で確かめる）
+7. `rule-concise.md`・`rule-structure.md`・`rule-unambiguous.md`・`rule-actionable.md`・`rule-self-contained.md`を担当するサブエージェントが、毎周、各ファイルの「判定に使うメソッド」の表にあるメソッドを1つ以上読む（実行記録で確かめる）
 
 ## 合格条件
 

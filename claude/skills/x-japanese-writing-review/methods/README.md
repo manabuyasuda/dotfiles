@@ -8,9 +8,9 @@
 
 | メソッド | 判定すること | 使う場所 |
 |---|---|---|
-| `split-into-elements.md` | 文を述語・要素・文の働きに分ける | ほかのメソッドすべて、`rule-concise.md`、`rule-unambiguous.md` |
+| `split-into-elements.md` | 文を述語・要素・文の働きに分ける | ほかのメソッドすべて、`rule-structure.md`、`rule-unambiguous.md` |
 | `check-information-loss.md` | 削除や書き換えで、読み手が文書から得られる情報が減らないか | `rule-concise.md`、`find-missing-elements.md`、SKILL.mdのEditする前の確認 |
-| `list-interpretations.md` | 語句や文が、複数の意味に解釈できるか | `rule-unambiguous.md`、`rule-actionable.md` |
+| `list-interpretations.md` | 語句や文が、複数の意味に解釈できるか | `rule-structure.md`、`rule-unambiguous.md`、`rule-actionable.md` |
 | `classify-statements.md` | 文の内容を、観察できる事実・推測・評価に分ける | `rule-concise.md`、`rule-unambiguous.md`、`rule-actionable.md`、`find-missing-elements.md` |
 | `find-missing-elements.md` | 読み手が行動や採否を決めるのに必要な要素が欠けていないか | `rule-actionable.md` |
 | `trace-references.md` | 語が、文書内のどこを指しているか | `rule-self-contained.md` |
