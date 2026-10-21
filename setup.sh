@@ -16,6 +16,7 @@ SYMLINKS=(
   "claude/settings.json:.claude/settings.json"
   "claude/keybindings.json:.claude/keybindings.json"
   "claude/statusline.sh:.claude/statusline.sh"
+  "claude/pstack-models.md:.claude/pstack-models.md"
   "cursor/statusline.sh:.cursor/statusline.sh"
   "claude/skills:.claude/skills"
   "claude/skills:.cursor/skills"
