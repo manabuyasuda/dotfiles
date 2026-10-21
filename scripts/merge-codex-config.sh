@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # codex/config.toml の内容を ~/.codex/config.toml に反映する。
-# Codex が書き込む [projects.*] と [hooks.*] は既存ファイルから保持する。
+# Codex が書き込む [projects.*]、[hooks.*]、[tui.model_availability_nux] は既存ファイルから保持する。
 # dotfiles の codex/config.toml が ~/.codex/config.toml の正とする。
 
 set -euo pipefail
@@ -17,9 +17,16 @@ fi
 
 mkdir -p "$(dirname "$TARGET")"
 
+# 「最初の [projects.* からファイル末尾まで」をまとめて保持する方式は使わない。
+# その範囲の後ろにある dotfiles 管理のセクション（[mcp_servers.*] 等）まで残り、
+# dotfiles 側と重複して config.toml を読み込めなくなるため、セクション名で選ぶ。
+# トップレベルのキー（/model が書く model・model_reasoning_effort）は保持しない。
 extract_runtime_sections() {
   local file="$1"
-  awk '/^\[(projects\.|hooks\.)/,0' "$file"
+  awk '
+    /^\[/ { keep = ($0 ~ /^\[(projects\.|hooks\.|hooks\]|tui\.model_availability_nux\])/) }
+    keep { print }
+  ' "$file"
 }
 
 RUNTIME=""
@@ -40,7 +47,7 @@ fi
 mv "${TARGET}.tmp" "$TARGET"
 
 if [[ -n "$RUNTIME" ]]; then
-  echo "[MERGE] ${TARGET} (dotfiles + local projects/hooks preserved)"
+  echo "[MERGE] ${TARGET} (dotfiles + local projects/hooks/tui state preserved)"
 else
   echo "[MERGE] ${TARGET} (dotfiles config applied)"
 fi

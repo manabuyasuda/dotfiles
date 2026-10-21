@@ -91,7 +91,7 @@ CLIの挙動についての記載には、根拠を2つのどちらかで示し�
 | `permissions.allow` / `permissions.deny` | そのまま読みます | 記法を変換して`cli-config.json`へ反映します | 届きません。hookのシェル層で代替します |
 | `permissions.defaultMode` | 読みます | 届きません | 届きません |
 | `env` | 自動で読みます | hookのアダプターが明示的に読み込みます | hookのラッパが明示的に読み込みます |
-| `model` | 読みます | dotfilesの管理対象外です | `codex/config.toml`の`model`で別に指定します |
+| `model` | 読みます | dotfilesの管理対象外です | `zsh/.zshrc`の`codex`関数が起動時の`-m`で指定します。`/model`が`~/.codex/config.toml`へ保存するため、`codex/config.toml`には書きません |
 | `statusLine` | 読みます | `cursor/cli-statusline.json`で別に指定します | `config.toml`の`[tui] status_line`で別に指定します |
 | `language` / `outputStyle` / `effortLevel` | 読みます | 相当する設定がありません | `model_verbosity`と`model_reasoning_summary`が近い設定です |
 | `enabledPlugins` / `autoMode` / `theme` | 読みます | 相当する設定がありません | 相当する設定がありません |

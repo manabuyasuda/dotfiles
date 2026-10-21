@@ -1,6 +1,7 @@
 {
   "env": {
-    "EXPECTED_GH_ACCOUNT": "manabuyasuda"
+    "EXPECTED_GH_ACCOUNT": "manabuyasuda",
+    "ENABLE_LSP_TOOL": "1"
   },
   "permissions": {
     "allow": [
@@ -165,7 +166,7 @@
     "defaultMode": "auto",
     "disableBypassPermissionsMode": "disable"
   },
-  "model": "claude-fable-5-1[1m]",
+  "model": "claude-opus-5-5",
   "hooks": {
     "SessionStart": [
       {

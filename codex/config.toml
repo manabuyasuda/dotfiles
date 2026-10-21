@@ -1,10 +1,20 @@
 # Codex ユーザー設定（dotfiles）。
-# [projects.*] と [hooks.state.*] は Codex が ~/.codex/config.toml に書き込むため、
+# [projects.*]、[hooks.state.*]、[tui.model_availability_nux] は Codex が ~/.codex/config.toml に書き込むため、
 # setup.sh の merge-codex-config.sh がローカル状態を保持してマージします。
 
-model = "gpt-5.6-luna"
+# model と model_reasoning_effort はここに書かない。TUI の /model は選んだ値を
+# ~/.codex/config.toml へ保存するため、ここに書くと切り替えるたびに実ファイルと食い違う。
+# 起動時の既定（gpt-6.1-sol / high）は zsh/.zshrc の codex 関数が -m / -c で指定する。
 model_verbosity = "low"
 model_reasoning_summary = "concise"
+
+# サンドボックス外で実行する承認を、ユーザーではなくレビュー用サブエージェントが判定する。
+# 危険なコマンドは hooks.json の PreToolUse hook がこの判定とは別に止める。
+approvals_reviewer = "auto_review"
+
+# [sandbox_workspace_write] network_access はここで有効にしない。ここはすべてのリポジトリに
+# 適用され、プロダクトのデータを持つリポジトリからも外部へ送信できてしまうため。
+# 機密を含まないリポジトリだけ、そのリポジトリの .codex/config.toml で有効にする。
 
 [tui]
 status_line = [
@@ -15,3 +25,6 @@ status_line = [
   "git-branch",
 ]
 status_line_use_colors = true
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"

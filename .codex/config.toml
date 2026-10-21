@@ -1,0 +1,5 @@
+# dotfiles リポジトリだけに適用する Codex 設定（trusted のときだけ読み込まれる）。
+# このリポジトリには外部へ送ると問題になるデータがないため、サンドボックス内のネットワーク接続を許す。
+
+[sandbox_workspace_write]
+network_access = true
