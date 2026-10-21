@@ -17,6 +17,15 @@ pre-commit:
       # glob を付けない。codex/hooks.json をステージしたコミットだけで見ると、
       # 信頼し直さないまま先へ進んだあと二度と検知できない。判定はスクリプト側。
       run: bash scripts/check-codex-hooks-trust.sh
+    codex-config:
+      # merge で dotfiles 管理のセクションが重複すると ~/.codex/config.toml を読み込めなくなる。
+      # codex/config.toml に model を書き戻すと /model の保存と食い違うため、ここで止める。
+      glob: "{codex/config.toml,scripts/merge-codex-config.sh,codex/tests/merge-codex-config.test.sh}"
+      run: |
+        if ! out=$(bash codex/tests/merge-codex-config.test.sh 2>&1); then
+          echo "$out"
+          exit 1
+        fi
     check-symlinks:
       glob: "{setup.sh,claude/settings.json}"
       run: bash scripts/check-claude-symlinks.sh

@@ -8,6 +8,7 @@
     "generate:permissions": "bash scripts/generate-permissions.sh",
     "test:deny-rules": "bash claude/tests/deny-rules.test.sh",
     "test:codex-rules": "bash codex/tests/setup-codex-rules.test.sh",
+    "test:codex-config": "bash codex/tests/merge-codex-config.test.sh",
     "prepare": "lefthook install"
   },
   "devDependencies": {

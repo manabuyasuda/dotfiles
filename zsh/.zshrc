@@ -18,5 +18,12 @@ alias pip="sfw pip"
 alias uv="sfw uv"
 alias cargo="sfw cargo"
 
+# Codex を gpt-6.1-sol / reasoning high で起動する。
+# codex/config.toml に model を書かない理由は同ファイルのコメントを参照。
+# 起動時の -m / -c は ~/.codex/config.toml より優先されるため、/model で切り替えて保存されても次の起動で戻る。
+codex() {
+  command codex -m gpt-6.1-sol -c 'model_reasoning_effort="high"' "$@"
+}
+
 # local overrides (not tracked in dotfiles)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

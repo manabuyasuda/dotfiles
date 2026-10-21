@@ -11,7 +11,7 @@ dotfiles/
 ├── macos.sh              # macOS設定の自動適用スクリプト
 ├── Brewfile              # Homebrewパッケージ一覧
 ├── zsh/
-│   ├── .zshrc            # シェル設定（mise, direnv, PATH）
+│   ├── .zshrc            # シェル設定（mise, direnv, PATH, codex 関数）
 │   ├── .zprofile         # ログインシェル設定（Homebrew）
 │   └── .zshenv           # 全シェル共通の環境変数
 ├── git/
@@ -37,7 +37,7 @@ dotfiles/
 │   └── cli-statusline.json
 ├── codex/
 │   ├── README.md         # フック実装の補足（運用は README.md）
-│   ├── config.toml       # Codex CLI 設定（model・TUI 等）
+│   ├── config.toml       # Codex CLI 設定（承認・TUI・MCP 等。model は書かない）
 │   ├── hooks.json        # Codex フック登録
 │   ├── hooks/wrap/       # claude/hooks 呼び出しラッパ
 │   ├── rules/            # Git管理するprefix_rule（npm install 禁止等）
@@ -424,7 +424,7 @@ Claude Code・Cursor・Codexで、同じガード・permissions・ルール・�
 
 | ホームのパス | dotfiles | 内容 |
 |-------------|----------|------|
-| `~/.codex/config.toml` | `codex/config.toml`（merge） | モデル・TUI status line 等。`[projects.*]`と`[hooks.state.*]`はCodexがローカルに追記します |
+| `~/.codex/config.toml` | `codex/config.toml`（merge） | 承認・TUI status line・MCP 等。`[projects.*]`、`[hooks.state.*]`、`[tui.model_availability_nux]`はCodexがローカルに追記します |
 | `~/.codex/AGENTS.md` | `claude/CLAUDE.md`（symlink） | グローバル指示 |
 | `~/.codex/hooks.json` | `codex/hooks.json` | フック登録 |
 | `~/.codex/hooks/wrap/` | `codex/hooks/wrap/` | `claude/hooks/`呼び出しラッパ |
@@ -433,7 +433,11 @@ Claude Code・Cursor・Codexで、同じガード・permissions・ルール・�
 | `~/.codex/agents/` | `codex/agents/` | サブエージェント TOML（生成物） |
 | `~/.agents/skills/` | `claude/skills`（symlink） | スキル |
 
-`~/.codex/config.toml`はシンボリックリンクにしません。`setup.sh`が`scripts/merge-codex-config.sh`で`codex/config.toml`を反映し、既存のフックtrust（`[hooks.state.*]`）とプロジェクトtrust（`[projects.*]`）は保持します。
+`~/.codex/config.toml`はシンボリックリンクにしません。`setup.sh`が`scripts/merge-codex-config.sh`で`codex/config.toml`を反映し、Codexが書き込むセクション（`[projects.*]`、`[hooks.*]`、`[tui.model_availability_nux]`）だけを名前で選んで保持します。それ以外のセクションとトップレベルのキーは、`codex/config.toml`の内容で置き換えます。
+
+Codexの起動は次のように設定しています。
+
+- モデル：zshの`codex`関数（`zsh/.zshrc`）が、`-m gpt-6.1-sol -c 'model_reasoning_effort="high"'`を付けて起動します。TUIの`/model`は選んだ値を`~/.codex/config.toml`へ保存しますが、起動時の引数のほうが優先されるため、次に起動したときはgpt-6.1-sol / highに戻ります。`codex/config.toml`に`model`を書くと、`/model`で切り替えるたびに実ファイルと食い違うため書きません（`npm run test:codex-config`とpre-commitで検査します）
 
 Codex CLIでは次も踏まえます。
 
@@ -458,7 +462,7 @@ Codex CLIでは次も踏まえます。
 | Codex サブエージェント | `claude/agents/*/SUBAGENT.md` | `./scripts/generate-codex-agents.sh` → `git add codex/agents/` | 生成物は`codex/agents/*.toml`。`setup.sh`で`~/.codex/agents`へリンクします |
 | Codex フック登録 | `codex/hooks.json`, `codex/hooks/wrap/` | なし | 本体は`claude/hooks/`。SessionStart/PostToolUseはラッパでJSON形式へ変換します。初回および定義変更後はTUIの`/hooks`でtrustが必要です |
 | Codex rules | `codex/rules/*.rules` | `npm run test:codex-rules` | `~/.codex/rules`は実ディレクトリにし、Git管理するルールだけをファイル単位でリンクします。Codexが生成する`default.rules`はホーム側に残します |
-| Codex config.toml | `codex/config.toml` | `./scripts/merge-codex-config.sh` | `[projects.*]`と`[hooks.state.*]`はローカル状態として保持します。TUIの`/statusline`で変えた`[tui]`は`~/.codex/config.toml`に直接書き込まれるため、dotfilesへ取り込むときは手動コピーします |
+| Codex config.toml | `codex/config.toml` | `./scripts/merge-codex-config.sh` → `npm run test:codex-config` | `[projects.*]`、`[hooks.*]`、`[tui.model_availability_nux]`はローカル状態として保持します。`model`は書きません（起動時の既定は`zsh/.zshrc`の`codex`関数で変えます）。TUIの`/statusline`で変えた`[tui]`は`~/.codex/config.toml`に直接書き込まれるため、dotfilesへ取り込むときは手動コピーします |
 | Codex グローバル指示 | `claude/CLAUDE.md` | なし | `~/.codex/AGENTS.md`へシンボリックリンクを張ります |
 | グローバル指示 | `claude/CLAUDE.md` | `./scripts/generate-cursor-rules.sh` → `git add cursor/rules/global-instructions.mdc` | 生成物は`cursor/rules/global-instructions.mdc`。再生成を忘れた場合はlefthookの`cursor-rules-drift`がpre-commitで検出します |
 | denyするパス・命令 | `permissions/deny-rules.json` | `./scripts/generate-permissions.sh` → `git add claude/settings.json claude/hooks/pre-tool-use/deny-rules.txt` | 生成物を直接編集しません。再生成を忘れた場合はlefthookの`permissions-drift`とCIの`permissions-test`が検出します |
