@@ -1,0 +1,132 @@
+{
+  "judge/rule-actionable@opus": {
+    "hash": "ca8a68c0913ab4f757493c5d23c711ff609c83443e813e62c262172886944b48",
+    "passed": true,
+    "failed_cases": [],
+    "models": [],
+    "ran_at": "2026-10-19T04:52:49+00:00"
+  },
+  "judge/rule-concise@opus": {
+    "hash": "20e34bfe7a466eaeae67de411fac573bdcea7d3b0690aef88f850c134d6d57b7",
+    "passed": true,
+    "failed_cases": [],
+    "models": [],
+    "ran_at": "2026-10-19T04:18:56+00:00"
+  },
+  "judge/rule-formatting@opus": {
+    "hash": "eb24d944c8f44b607f9bdca1985d32571c8e4bdb8e858dffbf74f53436940c3d",
+    "passed": true,
+    "failed_cases": [],
+    "models": [],
+    "ran_at": "2026-10-19T04:32:51+00:00"
+  },
+  "judge/rule-self-contained@opus": {
+    "hash": "df7e8643207904e27a6651c48b424d53fcae6b9aa6ef56d769efd769fa83a364",
+    "passed": true,
+    "failed_cases": [],
+    "models": [],
+    "ran_at": "2026-10-19T03:38:41+00:00"
+  },
+  "judge/rule-structure@opus": {
+    "hash": "2f53844fcfb3d36fd7a72bf44c768066825c0cab7b1357fb040da88f7242e93b",
+    "passed": true,
+    "failed_cases": [],
+    "models": [],
+    "ran_at": "2026-10-19T04:25:15+00:00"
+  },
+  "judge/rule-unambiguous@opus": {
+    "hash": "f730b6571ed4eb93a31450e58d00d47a58691f37e3e69829061c747455902037",
+    "passed": true,
+    "failed_cases": [],
+    "models": [],
+    "ran_at": "2026-10-19T04:40:41+00:00"
+  },
+  "rule-actionable@opus": {
+    "hash": "f86d2d5adc4cbb87696f562704bec4e55bf4cfc5ee17fdef644d8173270e4c85",
+    "passed": false,
+    "failed_cases": [
+      "claim-grounds"
+    ],
+    "models": [
+      "claude-opus-5"
+    ],
+    "ran_at": "2026-10-19T05:03:49+00:00"
+  },
+  "rule-concise@opus": {
+    "hash": "824f00eaa524d319b670dbce0ce40b295f55a407e61e56579516b0e3f231fd82",
+    "passed": true,
+    "failed_cases": [],
+    "models": [
+      "claude-opus-5"
+    ],
+    "ran_at": "2026-10-19T04:23:24+00:00"
+  },
+  "rule-concise@sonnet": {
+    "hash": "ce02ff826a4de9f63dc7138d0c9a7b4f3c8b403f8616afce8b91199990211553",
+    "passed": true,
+    "failed_cases": [],
+    "models": [
+      "claude-sonnet-4-6"
+    ],
+    "ran_at": "2026-10-16T05:10:40+00:00"
+  },
+  "rule-formatting@opus": {
+    "hash": "31e3b93b1208e8042031a8c6d68b374e41278fd6192d8094ab75d2f35e54fafd",
+    "passed": true,
+    "failed_cases": [],
+    "models": [
+      "claude-opus-5"
+    ],
+    "ran_at": "2026-10-19T04:37:50+00:00"
+  },
+  "rule-self-contained@opus": {
+    "hash": "52d60cf415ff69784385e7e4382ba31b9ce99d35f9e132988b582b9c5850c7d9",
+    "passed": true,
+    "failed_cases": [],
+    "models": [
+      "claude-opus-5"
+    ],
+    "ran_at": "2026-10-19T04:17:24+00:00"
+  },
+  "rule-self-contained@sonnet": {
+    "hash": "efccaa33c9ec1d46efcd679b3441b3a4fda8b38f14e9f031b97d74337ed42ec4",
+    "passed": true,
+    "failed_cases": [],
+    "models": [
+      "claude-sonnet-4-6"
+    ],
+    "ran_at": "2026-10-16T04:50:52+00:00"
+  },
+  "rule-structure@opus": {
+    "hash": "c72262116ed54af1099c1e19a0dd7c790b4510e27d0924b5090491f56d65e8db",
+    "passed": true,
+    "failed_cases": [],
+    "models": [
+      "claude-opus-5"
+    ],
+    "ran_at": "2026-10-19T04:31:19+00:00"
+  },
+  "rule-structure@sonnet": {
+    "hash": "8bd6dd2cee22438d0ccc55907aa0d5a70f6bfaa967ae072d8b60603995dbdea2",
+    "passed": false,
+    "failed_cases": [
+      "one-topic-per-paragraph",
+      "topic-sentence-first"
+    ],
+    "models": [
+      "claude-sonnet-4-6"
+    ],
+    "ran_at": "2026-10-16T09:42:20+00:00"
+  },
+  "rule-unambiguous@opus": {
+    "hash": "3e65aca408953a208cbdc9ea1345d382c3777cea8e38b60540f42e6ec27dac66",
+    "passed": false,
+    "failed_cases": [
+      "kango-compound-noun"
+    ],
+    "models": [
+      "claude-opus-5"
+    ],
+    "ran_at": "2026-10-19T04:50:35+00:00"
+  }
+}

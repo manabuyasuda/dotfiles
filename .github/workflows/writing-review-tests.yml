@@ -1,0 +1,25 @@
+name: writing-review-tests
+
+# x-japanese-writing-review のテスト結果（tests/results.json）が、現在のスキルの
+# ファイルと一致し、全テストが全モデルで合格しているかを検査する。
+# LLMのテストはローカルで実行して結果をコミットする（ユーザー判断、2026-10-15）。
+# CIでLLMを呼ばないのは、PRごとにサブスク枠を大量に消費し、1時間を超えるおそれがあるため。
+#
+# paths で絞らない。このジョブは必須チェックなので、実行されないPRはマージできなくなる。
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - run: python3 claude/skills/x-japanese-writing-review/tests/run.py verify

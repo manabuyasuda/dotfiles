@@ -1,0 +1,5 @@
+# x-japanese-writing-reviewのテスト入力は、校正させる違反を意図的に含む。
+# textlint --fix が違反を直すと、スキルが違反を検知できたかを確かめられなくなる。
+claude/skills/x-japanese-writing-review/tests/rules/*/input.md
+# 期待結果には、判定の参考にする不合格の例（違反を含む文）を書く。
+claude/skills/x-japanese-writing-review/tests/rules/*/expected.md
