@@ -1,6 +1,7 @@
 {
   "env": {
-    "EXPECTED_GH_ACCOUNT": "manabuyasuda"
+    "EXPECTED_GH_ACCOUNT": "manabuyasuda",
+    "ENABLE_LSP_TOOL": "1"
   },
   "permissions": {
     "allow": [

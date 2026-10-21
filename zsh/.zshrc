@@ -25,5 +25,7 @@ codex() {
   command codex -m gpt-6.1-sol -c 'model_reasoning_effort="high"' "$@"
 }
 
-# local overrides (not tracked in dotfiles)
+# ~/.zshrc.local（dotfiles 管理外）には、公開できない値（アカウントID・会社固有の設定）と
+# そのマシンだけで使う設定を置く。dotfiles は公開リポジトリのため、ここには書けない。
+# Claude Code の環境変数は zsh を経由しない起動（IDE 等）にも効くよう claude/settings.json の env に置く。
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

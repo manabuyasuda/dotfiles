@@ -501,6 +501,14 @@ Codexは`disable-model-invocation`を解釈しないため、Codexだけは`open
 
 シンボリックリンク経由なので、`~/.zshrc`などを直接編集すればリポジトリ内のファイルが更新されます。
 
+zshの設定は、公開してよいかとマシンごとに違うかで置き場所を分けます。
+
+| ファイル | 置くもの |
+|---|---|
+| `zsh/.zshrc`（公開） | 公開してよく、どのマシンでも同じにする設定 |
+| `~/.zshrc.local`（dotfiles管理外） | 公開できない値（アカウントID、会社固有の設定）と、そのマシンだけで使う設定。`.zshrc`の末尾で読み込みます |
+| `claude/settings.json`の`env` | Claude Codeの環境変数。zshで設定すると、IDEのようにzshを経由しない起動に反映されないためです |
+
 ```bash
 cd ~/MY/dotfiles
 git diff
