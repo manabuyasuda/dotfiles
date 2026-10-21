@@ -435,9 +435,11 @@ Claude Code・Cursor・Codexで、同じガード・permissions・ルール・�
 
 `~/.codex/config.toml`はシンボリックリンクにしません。`setup.sh`が`scripts/merge-codex-config.sh`で`codex/config.toml`を反映し、Codexが書き込むセクション（`[projects.*]`、`[hooks.*]`、`[tui.model_availability_nux]`）だけを名前で選んで保持します。それ以外のセクションとトップレベルのキーは、`codex/config.toml`の内容で置き換えます。
 
-Codexの起動は次のように設定しています。
+Codexの起動と承認は次のように設定しています。
 
 - モデル：zshの`codex`関数（`zsh/.zshrc`）が、`-m gpt-6.1-sol -c 'model_reasoning_effort="high"'`を付けて起動します。TUIの`/model`は選んだ値を`~/.codex/config.toml`へ保存しますが、起動時の引数のほうが優先されるため、次に起動したときはgpt-6.1-sol / highに戻ります。`codex/config.toml`に`model`を書くと、`/model`で切り替えるたびに実ファイルと食い違うため書きません（`npm run test:codex-config`とpre-commitで検査します）
+- 承認：`approvals_reviewer = "auto_review"`で、サンドボックス外での実行の承認をレビュー用サブエージェントが判定します。危険なコマンドは、この判定とは別に`codex/hooks.json`のPreToolUse hookが止めます
+- ネットワーク：`codex/config.toml`では`[sandbox_workspace_write] network_access`を有効にしません。この設定はすべてのリポジトリに適用され、プロダクトのデータを持つリポジトリからも外部へ送信できてしまうためです。機密を含まないリポジトリだけ、リポジトリ直下の`.codex/config.toml`で`network_access = true`を書きます（Codexはtrustedのリポジトリでだけ読み込みます）。今はdotfilesリポジトリだけが対象です
 
 Codex CLIでは次も踏まえます。
 

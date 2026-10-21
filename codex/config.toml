@@ -8,6 +8,14 @@
 model_verbosity = "low"
 model_reasoning_summary = "concise"
 
+# サンドボックス外で実行する承認を、ユーザーではなくレビュー用サブエージェントが判定する。
+# 危険なコマンドは hooks.json の PreToolUse hook がこの判定とは別に止める。
+approvals_reviewer = "auto_review"
+
+# [sandbox_workspace_write] network_access はここで有効にしない。ここはすべてのリポジトリに
+# 適用され、プロダクトのデータを持つリポジトリからも外部へ送信できてしまうため。
+# 機密を含まないリポジトリだけ、そのリポジトリの .codex/config.toml で有効にする。
+
 [tui]
 status_line = [
   "model-with-reasoning",
