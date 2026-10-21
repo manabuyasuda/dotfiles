@@ -295,7 +295,16 @@
   },
   "enabledPlugins": {
     "skill-creator@claude-plugins-official": true,
-    "claude-code-setup@claude-plugins-official": true
+    "claude-code-setup@claude-plugins-official": true,
+    "pstack@pstack-claude": true
+  },
+  "extraKnownMarketplaces": {
+    "pstack-claude": {
+      "source": {
+        "source": "github",
+        "repo": "michael-denyer/pstack-claude"
+      }
+    }
   },
   "outputStyle": "Concise",
   "language": "日本語",

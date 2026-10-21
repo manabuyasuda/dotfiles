@@ -98,6 +98,10 @@ cp -r .agents/skills/* .claude/skills/
 
 詳細は [skills-sh.md](skills-sh.md) を参照。
 
+### pstack
+
+設計・検証・レビューの手順をまとめたスキル集。Claude Codeにはプラグインとして導入している。導入・運用・削除の手順と、既存スキルとの関係は [pstack.md](pstack.md) を参照。
+
 ---
 
 ## エージェント一覧
