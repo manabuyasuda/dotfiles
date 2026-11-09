@@ -29,3 +29,8 @@ codex() {
 # そのマシンだけで使う設定を置く。dotfiles は公開リポジトリのため、ここには書けない。
 # Claude Code の環境変数は zsh を経由しない起動（IDE 等）にも効くよう claude/settings.json の env に置く。
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# Vite+ bin (https://viteplus.dev)
+if [[ -r "$HOME/.config/vite-plus/env" ]]; then
+  source "$HOME/.config/vite-plus/env"
+fi

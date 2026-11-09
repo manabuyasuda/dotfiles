@@ -4,3 +4,8 @@ export PATH="$HOME/.local/share/mise/shims:$PATH"
 # OrbStack の CLI（docker / docker-compose 等）。初回起動時に ~/.orbstack/bin が作られる
 export PATH="$HOME/.orbstack/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
+
+# Vite+ bin (https://viteplus.dev)
+if [[ -r "$HOME/.config/vite-plus/env" ]]; then
+  source "$HOME/.config/vite-plus/env"
+fi
