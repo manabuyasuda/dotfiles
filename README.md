@@ -234,6 +234,35 @@ NPM_CONFIG_MIN_RELEASE_AGE=0 mise install npm:vercel@latest
 NPM_CONFIG_MIN_RELEASE_AGE=0 mise install
 ```
 
+##### agent-browserを使う
+
+ブラウザ操作用CLIのagent-browserは、`mise/config.toml`で管理します。バージョン指定は`latest`とし、このツールには`minimum_release_age = "5d"`を指定して、公開から5日以上経過した版を選びます。miseの組み込みインストーラーでも待機期間を適用するため、npm設定には依存しません。
+
+CLIと専用のChrome for Testingを取得します。
+
+```bash
+mise install npm:agent-browser
+mise exec -- agent-browser install
+```
+
+ページの表示と要素の取得を確認します。`snapshot -i`にリンクの参照が表示されることを確認します。
+
+```bash
+mise exec -- agent-browser --version
+mise exec -- agent-browser skills get core
+mise exec -- agent-browser --session setup-check open https://example.com
+mise exec -- agent-browser --session setup-check snapshot -i
+mise exec -- agent-browser --session setup-check close
+```
+
+更新時は`mise upgrade npm:agent-browser`を実行し、上の動作確認を再実行します。`agent-browser upgrade`は使わず、miseで更新を管理します。
+
+操作手順を取得する案内は`claude/CLAUDE.md`で管理し、`setup.sh`の既存リンクによって`~/.claude/CLAUDE.md`と`~/.codex/AGENTS.md`の両方へ適用します。Cursor向けの指示は`bash scripts/generate-cursor-rules.sh`で生成します。
+
+ブラウザ本体と認証状態は端末内に保存し、Gitでは管理しません。`~/.agent-browser`全体をdotfilesへリンクしないでください。
+
+参考: [agent-browserの導入手順](https://agent-browser.dev/installation)、[CLIと同じ版の操作手順を取得する方法](https://agent-browser.dev/skills)、[miseの公開後待機設定](https://mise.jdx.dev/configuration/settings.html#minimum_release_age)
+
 #### 8. SSH鍵を設定してGitHubに登録する
 
 GitHubアカウントごとに鍵とホストエイリアスを分けて管理します。個人アカウントは`my`、案件・会社アカウントは案件名など任意のプレフィックスをホスト名に付けます。
