@@ -15,6 +15,8 @@ yarn = "latest"
 "npm:@lhci/cli" = "latest"
 "npm:@redocly/cli" = "latest"
 "npm:@socketsecurity/cli" = "latest"
+# npm以外の取得経路でも公開直後の版を避けるため、mise側で5日を指定する。
+"npm:agent-browser" = { version = "latest", minimum_release_age = "5d" }
 "npm:bundle-phobia-cli" = "latest"
 # npm: ツールはすべて latest。公開5日未満の版は ~/.npmrc の min-release-age=5 に
 # 拒否され mise install が ETARGET で失敗することがある。バージョンは固定せず、
