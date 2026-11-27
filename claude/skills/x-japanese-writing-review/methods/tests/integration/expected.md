@@ -2,7 +2,7 @@
 
 # 統合テストの期待結果
 
-SKILL.mdの手順で入力の写しを3周校正させます。サブエージェントへの指示は、SKILL.mdの文言をそのまま使わせます。
+SKILL.mdの手順で入力の写しを2周校正させます。サブエージェントへの指示は、SKILL.mdの文言をそのまま使わせます。
 
 - `../check-information-loss/integration-input.md`：期待は`../check-information-loss/expected.md`の「統合テスト」に書いています
 - `input-actionable.md`：次をすべて満たすことを期待します
